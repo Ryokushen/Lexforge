@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Lightbulb, Send } from "lucide-react";
 import type { SessionWord } from "@/lib/types";
 
 interface RecallPromptProps {
@@ -42,24 +43,27 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
       exit={{ opacity: 0, x: -40 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto border-primary/10">
         <CardContent className="pt-6 space-y-6">
           <div className="flex items-center justify-between">
-            <Badge variant="outline">{tierLabel}</Badge>
+            <Badge variant="outline" className="text-xs">
+              {tierLabel}
+            </Badge>
             {showHint && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-sm text-muted-foreground font-mono"
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-1.5 text-sm text-amber-500 font-mono"
               >
-                Starts with &ldquo;{word.word[0].toUpperCase()}&rdquo; &middot;{" "}
+                <Lightbulb className="size-3.5" />
+                &ldquo;{word.word[0].toUpperCase()}&rdquo; &middot;{" "}
                 {word.word.length} letters
-              </motion.span>
+              </motion.div>
             )}
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
               Definition
             </p>
             <motion.p
@@ -76,9 +80,9 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="space-y-1"
+              className="space-y-1.5 rounded-lg bg-muted/50 p-3"
             >
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
                 Example
               </p>
               <p className="text-sm text-muted-foreground italic">
@@ -90,19 +94,24 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <Input
               ref={inputRef}
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="Type the word..."
-              className="text-lg h-12"
+              className="text-lg h-12 bg-muted/30 border-border/60 focus:border-primary/50"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
             />
             <div className="flex gap-2">
-              <Button type="submit" className="flex-1" disabled={!answer.trim()}>
+              <Button
+                type="submit"
+                className="flex-1 gap-2"
+                disabled={!answer.trim()}
+              >
+                <Send className="size-4" />
                 Submit
               </Button>
               {!showHint && (
@@ -110,7 +119,9 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
                   type="button"
                   variant="ghost"
                   onClick={() => setShowHint(true)}
+                  className="gap-1.5 text-muted-foreground"
                 >
+                  <Lightbulb className="size-4" />
                   Hint
                 </Button>
               )}

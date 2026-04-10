@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { playTick } from "@/lib/sounds";
+import { Replace } from "lucide-react";
 import type { ContextSentence } from "@/lib/types";
 
 interface ContextPromptProps {
@@ -50,10 +51,13 @@ export function ContextPrompt({
       exit={{ opacity: 0, x: -40 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto border-primary/10">
         <CardContent className="pt-6 space-y-6">
           <div className="flex items-center gap-2">
-            <Badge variant="outline">Context Mode</Badge>
+            <Badge variant="outline" className="gap-1 text-xs">
+              <Replace className="size-3" />
+              Context Mode
+            </Badge>
             <span className="text-xs text-muted-foreground">
               Replace the weak word with a more precise one
             </span>
@@ -66,7 +70,7 @@ export function ContextPrompt({
             className="text-lg leading-relaxed"
           >
             {parts[0]}
-            <span className="bg-yellow-200/50 dark:bg-yellow-500/20 px-1 rounded font-semibold">
+            <span className="inline-block bg-amber-500/15 text-amber-400 dark:text-amber-300 px-1.5 py-0.5 rounded-md font-semibold border border-amber-500/20">
               {sentence.weakWord}
             </span>
             {parts[1]}
@@ -84,10 +88,10 @@ export function ContextPrompt({
                   variant={selected === choice ? "default" : "outline"}
                   className={`h-12 text-base w-full transition-all ${
                     selected === choice
-                      ? "scale-95"
+                      ? "scale-95 shadow-md shadow-primary/20"
                       : selected !== null
-                        ? "opacity-50"
-                        : ""
+                        ? "opacity-40"
+                        : "hover:border-primary/40"
                   }`}
                   onClick={() => handleSelect(choice)}
                   disabled={selected !== null}
