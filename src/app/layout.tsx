@@ -16,6 +16,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Memory & Vocabulary",
   description: "Gamified RPG vocabulary trainer powered by spaced repetition",
+  applicationName: "M&V",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "M&V",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
