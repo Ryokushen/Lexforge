@@ -2,12 +2,13 @@ import { db } from "./db";
 import { addWordWithCard } from "./scheduler";
 import { SEED_WORDS } from "./seed-words";
 
-/** Seed the database with Tier 1 words if empty. */
+/** Seed the database with words, adding any new ones from SEED_WORDS. */
 export async function seedDatabase(): Promise<void> {
-  const count = await db.words.count();
-  if (count > 0) return; // already seeded
+  const existing = await db.words.toArray();
+  const existingWords = new Set(existing.map((w) => w.word.toLowerCase()));
 
   for (const seed of SEED_WORDS) {
+    if (existingWords.has(seed.word.toLowerCase())) continue;
     await addWordWithCard({
       word: seed.word,
       definition: seed.definition,
