@@ -7,6 +7,7 @@ import { useSession } from "@/hooks/use-session";
 import { RecallPrompt } from "@/components/session/recall-prompt";
 import { ContextPrompt } from "@/components/session/context-prompt";
 import { ReviewResult } from "@/components/session/review-result";
+import { SpeedPrompt } from "@/components/session/speed-prompt";
 import { SessionProgress } from "@/components/session/session-progress";
 import { XPAward } from "@/components/session/xp-award";
 import { BattleScene } from "@/components/session/battle-scene";
@@ -24,6 +25,7 @@ export default function SessionPage() {
     summary,
     currentMode,
     currentContextSentence,
+    currentSpeedChoices,
     startSession,
     submitAnswer,
     nextWord,
@@ -106,6 +108,16 @@ export default function SessionPage() {
       {state === "active" && currentMode === "recall" && (
         <RecallPrompt sessionWord={currentWord} onSubmit={submitAnswer} />
       )}
+
+      {state === "active" &&
+        currentMode === "speed" &&
+        currentSpeedChoices && (
+          <SpeedPrompt
+            sessionWord={currentWord}
+            choices={currentSpeedChoices}
+            onSubmit={submitAnswer}
+          />
+        )}
 
       {state === "active" &&
         currentMode === "context" &&

@@ -64,15 +64,16 @@ const CORRECT_PER_STAT_POINT = 10;
 /** Calculate stat gains from session results. */
 export function calculateStatGains(results: SessionResult[]): Partial<RPGStats> {
   const correct = results.filter((r) => r.correct).length;
-  // MVP: only Recall and Retention stats
-  // Recall = from Recall Mode answers, Retention = from spaced review
-  // For MVP, all answers contribute to both since we only have Recall Mode
+  const speedCorrect = results.filter((r) => r.correct && r.mode === "speed").length;
+
   const recallGain = Math.floor(correct / CORRECT_PER_STAT_POINT);
   const retentionGain = Math.floor(correct / CORRECT_PER_STAT_POINT);
+  const perceptionGain = Math.floor(speedCorrect / CORRECT_PER_STAT_POINT);
 
   const gains: Partial<RPGStats> = {};
   if (recallGain > 0) gains.recall = recallGain;
   if (retentionGain > 0) gains.retention = retentionGain;
+  if (perceptionGain > 0) gains.perception = perceptionGain;
   return gains;
 }
 

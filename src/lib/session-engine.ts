@@ -60,6 +60,42 @@ export function gradeContextAnswer(
   return { rating: 1, correct: false };
 }
 
+const SPEED_FAST_MS = 3000;
+const SPEED_TIMEOUT_MS = 8000;
+
+/** Grade a speed mode answer: time-based rating. */
+export function gradeSpeedAnswer(
+  answer: string,
+  expected: string,
+  responseTimeMs: number,
+): { rating: 1 | 2 | 3 | 4; correct: boolean } {
+  const a = answer.trim().toLowerCase();
+  const e = expected.trim().toLowerCase();
+  if (a !== e) return { rating: 1, correct: false };
+  if (responseTimeMs < SPEED_FAST_MS) return { rating: 4, correct: true }; // Easy
+  return { rating: 3, correct: true }; // Good
+}
+
+/** Get 4 definition choices for speed mode: correct + 3 distractors. */
+export function getSpeedChoices(
+  word: Word,
+  allWords: SessionWord[],
+): { definitions: string[]; correctDefinition: string } {
+  const correctDef = word.definition;
+  const otherDefs = allWords
+    .filter((sw) => sw.word.id !== word.id)
+    .map((sw) => sw.word.definition);
+
+  // Shuffle and pick 3 distractors
+  const shuffled = [...otherDefs].sort(() => Math.random() - 0.5);
+  const distractors = shuffled.slice(0, 3);
+
+  // Combine and shuffle
+  const definitions = [...distractors, correctDef].sort(() => Math.random() - 0.5);
+
+  return { definitions, correctDefinition: correctDef };
+}
+
 /** Get a random context sentence for a word, if available. */
 export function getContextSentence(word: Word): ContextSentence | null {
   // Check word's own context sentences first
@@ -76,12 +112,14 @@ export function getContextSentence(word: Word): ContextSentence | null {
   return null;
 }
 
-/** Decide game mode for a session word. Context if sentence available, else Recall. */
+/** Decide game mode for a session word. Mix of recall, context, and speed. */
 export function pickMode(word: Word, forceMode?: GameMode): GameMode {
   if (forceMode) return forceMode;
+  const roll = Math.random();
+  // ~20% speed, ~30% context (if available), ~50% recall
+  if (roll < 0.2) return "speed";
   const hasContext = getContextSentence(word) !== null;
-  // Mix modes: ~40% context when available, 60% recall
-  if (hasContext && Math.random() < 0.4) return "context";
+  if (hasContext && roll < 0.5) return "context";
   return "recall";
 }
 
@@ -130,6 +168,8 @@ export async function processAnswer(
 
   if (manualRating) {
     gradeResult = { rating: manualRating, correct: manualRating >= 2 };
+  } else if (mode === "speed" && contextExpected) {
+    gradeResult = gradeSpeedAnswer(answer, contextExpected, responseTimeMs);
   } else if (mode === "context" && contextExpected) {
     gradeResult = gradeContextAnswer(answer, contextExpected);
   } else {

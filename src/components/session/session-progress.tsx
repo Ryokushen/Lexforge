@@ -25,7 +25,9 @@ export function SessionProgress({ current, total, results, currentMode }: Sessio
 
   const barGradient = currentMode === "recall"
     ? "from-primary to-primary/70"
-    : "from-emerald-500 to-emerald-400";
+    : currentMode === "speed"
+      ? "from-amber-500 to-amber-400"
+      : "from-emerald-500 to-emerald-400";
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-1">
