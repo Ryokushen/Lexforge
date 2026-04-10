@@ -9,6 +9,7 @@ import { ContextPrompt } from "@/components/session/context-prompt";
 import { ReviewResult } from "@/components/session/review-result";
 import { SessionProgress } from "@/components/session/session-progress";
 import { XPAward } from "@/components/session/xp-award";
+import { BattleScene } from "@/components/session/battle-scene";
 import { Button } from "@/components/ui/button";
 import { BookOpen, ArrowLeft } from "lucide-react";
 
@@ -37,7 +38,7 @@ export default function SessionPage() {
 
   if (state === "loading") {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-12 text-center">
+      <main className="max-w-2xl mx-auto px-4 py-4 text-center">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -52,7 +53,7 @@ export default function SessionPage() {
 
   if (state === "idle") {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-12 text-center space-y-6">
+      <main className="max-w-2xl mx-auto px-4 py-4 text-center space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -80,7 +81,7 @@ export default function SessionPage() {
 
   if (state === "complete" && summary) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-4">
         <XPAward
           summary={summary}
           onDone={() => {
@@ -97,8 +98,10 @@ export default function SessionPage() {
   const lastResult = results[results.length - 1] ?? null;
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <SessionProgress current={currentIndex} total={totalWords} />
+    <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+      <SessionProgress current={currentIndex} total={totalWords} results={results} currentMode={currentMode} />
+
+      <BattleScene totalWords={totalWords} results={results} lastResult={state === "reviewing" ? lastResult : null} />
 
       {state === "active" && currentMode === "recall" && (
         <RecallPrompt sessionWord={currentWord} onSubmit={submitAnswer} />

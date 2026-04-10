@@ -35,13 +35,14 @@ export function ReviewResult({
       transition={{ duration: 0.2 }}
     >
       <Card
-        className={`w-full max-w-2xl mx-auto border-2 transition-colors ${
+        size="sm"
+        className={`w-full max-w-2xl mx-auto transition-colors border-l-4 ${
           result.correct
-            ? "border-emerald-500/30 bg-emerald-500/5"
-            : "border-red-500/30 bg-red-500/5"
+            ? "border-l-emerald-500 ring-1 ring-emerald-500/15 bg-emerald-500/5"
+            : "border-l-red-500 ring-1 ring-red-500/15 bg-red-500/5"
         }`}
       >
-        <CardContent className="pt-6 space-y-6">
+        <CardContent className="space-y-4">
           <div className="text-center">
             <motion.div
               initial={{ scale: 0, rotate: -20 }}
@@ -52,12 +53,12 @@ export function ReviewResult({
                 damping: 15,
                 delay: 0.05,
               }}
-              className="mb-3 inline-flex"
+              className="mb-2 inline-flex"
             >
               {result.correct ? (
-                <CheckCircle2 className="size-14 text-emerald-500" />
+                <CheckCircle2 className="size-10 text-emerald-500" />
               ) : (
-                <XCircle className="size-14 text-red-500" />
+                <XCircle className="size-10 text-red-500" />
               )}
             </motion.div>
 
@@ -65,7 +66,7 @@ export function ReviewResult({
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-3xl font-bold"
+              className="text-2xl font-bold"
             >
               {word.word}
             </motion.h2>
