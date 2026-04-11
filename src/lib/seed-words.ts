@@ -1869,4 +1869,1392 @@ export const SEED_WORDS: SeedWord[] = [
     synonyms: ["beautiful", "elegant", "refined"],
     tier: 3,
   },
+
+  // ─── Tier 1: Verb replacements ─────────────────────────────────────
+
+  {
+    word: "assert",
+    definition: "State a fact or belief confidently and forcefully",
+    examples: [
+      "She asserted that the design flaw was present from the start.",
+      "He asserted his position clearly before the debate began.",
+    ],
+    synonyms: ["declare", "maintain", "contend"],
+    tier: 1,
+  },
+  {
+    word: "contend",
+    definition: "Assert something as a position in an argument; struggle to deal with",
+    examples: [
+      "The report contends that current safety standards are insufficient.",
+      "Engineers must contend with legacy constraints on every major feature.",
+    ],
+    synonyms: ["assert", "argue", "claim"],
+    tier: 1,
+  },
+  {
+    word: "acknowledge",
+    definition: "Accept or admit the existence or truth of something",
+    examples: [
+      "She acknowledged the mistake without deflecting blame onto the team.",
+      "The document acknowledges several unresolved risks in the approach.",
+    ],
+    synonyms: ["admit", "recognize", "concede"],
+    tier: 1,
+  },
+  {
+    word: "concur",
+    definition: "Be of the same opinion; agree",
+    examples: [
+      "All three reviewers concurred that the proposal was technically sound.",
+      "I concur with the assessment — the timeline is too aggressive.",
+    ],
+    synonyms: ["agree", "assent", "accord"],
+    tier: 1,
+  },
+  {
+    word: "acquiesce",
+    definition: "Accept something reluctantly but without protest",
+    examples: [
+      "The team acquiesced to the deadline despite reservations about quality.",
+      "He acquiesced to the policy change after voicing his concerns.",
+    ],
+    synonyms: ["comply", "yield", "consent"],
+    tier: 1,
+  },
+  {
+    word: "imply",
+    definition: "Suggest something without stating it explicitly",
+    examples: [
+      "The data implies a correlation, but does not prove causation.",
+      "His tone implied dissatisfaction even though he said nothing critical.",
+    ],
+    synonyms: ["suggest", "indicate", "insinuate"],
+    tier: 1,
+  },
+  {
+    word: "insinuate",
+    definition: "Suggest or hint in an indirect and typically unpleasant way",
+    examples: [
+      "She insinuated that the delays were caused by poor planning.",
+      "He never said it directly, but his questions insinuated doubt.",
+    ],
+    synonyms: ["hint", "imply", "intimate"],
+    tier: 1,
+  },
+  {
+    word: "manifest",
+    definition: "Show or demonstrate something clearly; become apparent",
+    examples: [
+      "The underlying tension eventually manifested as open conflict.",
+      "Poor architecture manifests as slow feature delivery over time.",
+    ],
+    synonyms: ["reveal", "display", "demonstrate"],
+    tier: 1,
+  },
+  {
+    word: "diverge",
+    definition: "Develop in a different direction; differ from a standard or norm",
+    examples: [
+      "The two implementations diverge significantly in how they handle errors.",
+      "At this point, opinions on the architecture diverge sharply.",
+    ],
+    synonyms: ["deviate", "differ", "separate"],
+    tier: 1,
+  },
+  {
+    word: "refute",
+    definition: "Prove a statement or theory to be wrong or false",
+    examples: [
+      "The latest benchmark data refutes the claim that the old system is faster.",
+      "She refuted each objection with clear evidence.",
+    ],
+    synonyms: ["disprove", "rebut", "counter"],
+    tier: 1,
+  },
+  {
+    word: "apprise",
+    definition: "Inform or tell someone about a situation",
+    examples: [
+      "Please apprise the stakeholders of any changes to the timeline.",
+      "She apprised the board of the security incident within the hour.",
+    ],
+    synonyms: ["inform", "notify", "brief"],
+    tier: 1,
+  },
+  {
+    word: "admonish",
+    definition: "Warn or reprimand someone firmly but not harshly",
+    examples: [
+      "The manager admonished the team for skipping the documentation step.",
+      "She admonished him gently, making clear it should not happen again.",
+    ],
+    synonyms: ["warn", "reprimand", "caution"],
+    tier: 1,
+  },
+  {
+    word: "bolster",
+    definition: "Strengthen or support; give a boost to",
+    examples: [
+      "Additional test coverage would bolster confidence before the release.",
+      "The new hire bolstered the team's capacity significantly.",
+    ],
+    synonyms: ["strengthen", "reinforce", "support"],
+    tier: 1,
+  },
+  {
+    word: "initiate",
+    definition: "Cause a process or action to begin",
+    examples: [
+      "She initiated the review process three weeks ahead of schedule.",
+      "The error initiates a rollback of the entire transaction.",
+    ],
+    synonyms: ["begin", "launch", "start"],
+    tier: 1,
+  },
+  {
+    word: "cease",
+    definition: "Come or bring to an end; stop",
+    examples: [
+      "Development on the legacy branch will cease at the end of the quarter.",
+      "The noise ceased the moment the presentation began.",
+    ],
+    synonyms: ["stop", "halt", "discontinue"],
+    tier: 1,
+  },
+  {
+    word: "foster",
+    definition: "Encourage the development of something over time",
+    examples: [
+      "Good documentation fosters knowledge sharing across the organization.",
+      "She deliberately fostered a culture of psychological safety on her team.",
+    ],
+    synonyms: ["nurture", "cultivate", "promote"],
+    tier: 1,
+  },
+  {
+    word: "contemplate",
+    definition: "Think carefully and at length about something; consider thoroughly",
+    examples: [
+      "Take time to contemplate the downstream effects before committing.",
+      "He contemplated a career change after the project was cancelled.",
+    ],
+    synonyms: ["consider", "ponder", "reflect on"],
+    tier: 1,
+  },
+  {
+    word: "ponder",
+    definition: "Think carefully, especially before making a decision",
+    examples: [
+      "She pondered the tradeoffs for days before choosing an approach.",
+      "He sat quietly, pondering the feedback he had just received.",
+    ],
+    synonyms: ["consider", "deliberate", "contemplate"],
+    tier: 1,
+  },
+  {
+    word: "fathom",
+    definition: "Understand after much thought; comprehend something difficult",
+    examples: [
+      "It was hard to fathom why such a critical bug had passed review.",
+      "I cannot fathom why this dependency was introduced without discussion.",
+    ],
+    synonyms: ["understand", "grasp", "comprehend"],
+    tier: 1,
+  },
+  {
+    word: "discern",
+    definition: "Perceive or recognize something not immediately obvious; distinguish",
+    examples: [
+      "It takes experience to discern which technical debt is truly dangerous.",
+      "She could discern the real concern beneath his surface-level objection.",
+    ],
+    synonyms: ["perceive", "detect", "distinguish"],
+    tier: 1,
+  },
+  {
+    word: "speculate",
+    definition: "Form a theory or conjecture without firm evidence",
+    examples: [
+      "We can only speculate about the root cause until the logs are recovered.",
+      "Analysts speculated that the company would announce layoffs by year-end.",
+    ],
+    synonyms: ["theorize", "conjecture", "hypothesize"],
+    tier: 1,
+  },
+  {
+    word: "ascertain",
+    definition: "Find out something for certain; make sure of",
+    examples: [
+      "We need to ascertain whether the data was corrupted before proceeding.",
+      "The audit was conducted to ascertain compliance with industry standards.",
+    ],
+    synonyms: ["determine", "establish", "verify"],
+    tier: 1,
+  },
+
+  // ─── Tier 1: Transitional / connective ─────────────────────────────
+
+  {
+    word: "moreover",
+    definition: "As a further matter; besides; in addition to what has been said",
+    examples: [
+      "The approach is faster; moreover, it requires less maintenance.",
+      "The design is elegant. Moreover, it scales to millions of users.",
+    ],
+    synonyms: ["furthermore", "additionally", "besides"],
+    tier: 1,
+  },
+  {
+    word: "consequently",
+    definition: "As a result or effect of a previous action or event",
+    examples: [
+      "The data pipeline failed; consequently, the report was not generated.",
+      "She left the company, and consequently the project lost its most experienced voice.",
+    ],
+    synonyms: ["therefore", "as a result", "hence"],
+    tier: 1,
+  },
+  {
+    word: "nevertheless",
+    definition: "In spite of that; notwithstanding; all the same",
+    examples: [
+      "The timeline was aggressive; nevertheless, the team delivered on time.",
+      "The evidence was thin. Nevertheless, the committee voted to proceed.",
+    ],
+    synonyms: ["nonetheless", "however", "yet"],
+    tier: 1,
+  },
+  {
+    word: "notwithstanding",
+    definition: "In spite of; without being prevented by",
+    examples: [
+      "Notwithstanding the budget cuts, the project met its original goals.",
+      "The risks are real, notwithstanding the optimistic projections.",
+    ],
+    synonyms: ["despite", "regardless of", "in spite of"],
+    tier: 1,
+  },
+  {
+    word: "conversely",
+    definition: "Introducing a statement that contrasts with or reverses what has just been said",
+    examples: [
+      "More features can attract users; conversely, they can overwhelm them.",
+      "Silence signals agreement in some cultures; conversely, it signals disagreement in others.",
+    ],
+    synonyms: ["on the other hand", "inversely", "contrariwise"],
+    tier: 1,
+  },
+  {
+    word: "albeit",
+    definition: "Though; even if — used to introduce a concession",
+    examples: [
+      "The fix worked, albeit with a minor performance trade-off.",
+      "The results were positive, albeit less dramatic than we had hoped.",
+    ],
+    synonyms: ["though", "even if", "although"],
+    tier: 1,
+  },
+  {
+    word: "whereas",
+    definition: "In contrast or comparison with the fact that",
+    examples: [
+      "The first system was synchronous, whereas the new one is fully event-driven.",
+      "Senior engineers prefer clarity, whereas junior engineers often over-engineer.",
+    ],
+    synonyms: ["while", "in contrast", "on the other hand"],
+    tier: 1,
+  },
+  {
+    word: "hence",
+    definition: "As a consequence; for this reason; therefore",
+    examples: [
+      "The service lacked retry logic; hence the cascade of failures.",
+      "The deadline was moved up; hence the need to cut scope.",
+    ],
+    synonyms: ["therefore", "thus", "consequently"],
+    tier: 1,
+  },
+  {
+    word: "thus",
+    definition: "As a result or consequence of this; in this way",
+    examples: [
+      "The dependency was removed, thus reducing the build time by half.",
+      "The team aligned early, thus avoiding costly rework later.",
+    ],
+    synonyms: ["therefore", "hence", "accordingly"],
+    tier: 1,
+  },
+  {
+    word: "accordingly",
+    definition: "In a way that is appropriate to the circumstances; consequently",
+    examples: [
+      "The scope changed significantly; the timeline was adjusted accordingly.",
+      "We identified the bottleneck and allocated resources accordingly.",
+    ],
+    synonyms: ["correspondingly", "therefore", "consequently"],
+    tier: 1,
+  },
+  {
+    word: "subsequently",
+    definition: "Coming after or following something in time or order",
+    examples: [
+      "The patch was applied and subsequently tested in staging.",
+      "She joined the team as a contractor and was subsequently brought on full-time.",
+    ],
+    synonyms: ["afterward", "later", "following"],
+    tier: 1,
+  },
+  {
+    word: "ultimately",
+    definition: "In the end; after everything has been considered",
+    examples: [
+      "Ultimately, the decision comes down to user trust.",
+      "We tried several approaches; ultimately, the simplest one worked best.",
+    ],
+    synonyms: ["finally", "in the end", "at last"],
+    tier: 1,
+  },
+  {
+    word: "fundamentally",
+    definition: "In a central or primary respect; at the most basic level",
+    examples: [
+      "The two architectures are fundamentally different in how they handle state.",
+      "This is not a process problem; it is fundamentally a communication problem.",
+    ],
+    synonyms: ["essentially", "basically", "at its core"],
+    tier: 1,
+  },
+  {
+    word: "notably",
+    definition: "In particular; especially; worthy of attention",
+    examples: [
+      "Several teams improved their delivery time; notably, the platform team cut theirs in half.",
+      "The proposal was well-received, notably by the engineering leadership.",
+    ],
+    synonyms: ["particularly", "especially", "significantly"],
+    tier: 1,
+  },
+  {
+    word: "henceforth",
+    definition: "From this time on; from now on",
+    examples: [
+      "Henceforth, all deployments must go through the new approval process.",
+      "The team agreed that henceforth no feature would ship without a test plan.",
+    ],
+    synonyms: ["hereafter", "from now on", "going forward"],
+    tier: 1,
+  },
+
+  // ─── Tier 1: Precision nouns and adjectives ─────────────────────────
+
+  {
+    word: "consensus",
+    definition: "General agreement reached by a group as a whole",
+    examples: [
+      "We reached consensus on the architecture after three rounds of review.",
+      "Without consensus, the decision kept getting relitigated at every meeting.",
+    ],
+    synonyms: ["agreement", "accord", "unanimity"],
+    tier: 1,
+  },
+  {
+    word: "allocation",
+    definition: "The action or process of distributing resources for a purpose",
+    examples: [
+      "The budget allocation for infrastructure was insufficient to support the growth plan.",
+      "Time allocation across projects needs to be revisited each quarter.",
+    ],
+    synonyms: ["distribution", "assignment", "apportionment"],
+    tier: 1,
+  },
+  {
+    word: "constraint",
+    definition: "A limitation or restriction; something that limits options",
+    examples: [
+      "The main constraint is not budget — it's available engineering time.",
+      "Design under constraint often produces more creative solutions.",
+    ],
+    synonyms: ["limitation", "restriction", "bound"],
+    tier: 1,
+  },
+  {
+    word: "incentive",
+    definition: "A thing that motivates or encourages someone to do something",
+    examples: [
+      "The bonus structure creates the right incentives for long-term thinking.",
+      "Without a clear incentive, adoption of the new tool will be slow.",
+    ],
+    synonyms: ["motivation", "inducement", "stimulus"],
+    tier: 1,
+  },
+  {
+    word: "mandate",
+    definition: "An official order or commission to do something; an authorization",
+    examples: [
+      "The new policy mandates a security review before any external release.",
+      "The team operates under a mandate to reduce infrastructure costs by 30%.",
+    ],
+    synonyms: ["directive", "order", "authorization"],
+    tier: 1,
+  },
+  {
+    word: "venture",
+    definition: "A risky or daring undertaking; dare to do something uncertain",
+    examples: [
+      "The joint venture required both companies to share proprietary data.",
+      "She ventured a prediction that few others were willing to make.",
+    ],
+    synonyms: ["enterprise", "undertaking", "endeavor"],
+    tier: 1,
+  },
+  {
+    word: "legitimate",
+    definition: "Conforming to the law or rules; valid and justifiable",
+    examples: [
+      "There are legitimate concerns about the privacy implications.",
+      "It is a legitimate question — we should address it head-on.",
+    ],
+    synonyms: ["valid", "justified", "lawful"],
+    tier: 1,
+  },
+  {
+    word: "pristine",
+    definition: "In its original condition; unspoiled; clean and fresh",
+    examples: [
+      "The staging environment should be restored to a pristine state before each test run.",
+      "The codebase was pristine when we inherited it; two years later, not so much.",
+    ],
+    synonyms: ["immaculate", "unspoiled", "flawless"],
+    tier: 1,
+  },
+  {
+    word: "deficient",
+    definition: "Not having enough of a specified quality or ingredient; lacking",
+    examples: [
+      "The onboarding process is deficient in technical depth.",
+      "The model was deficient in its handling of edge cases.",
+    ],
+    synonyms: ["lacking", "inadequate", "insufficient"],
+    tier: 1,
+  },
+  {
+    word: "dynamic",
+    definition: "Characterized by constant change, activity, or progress; energetic",
+    examples: [
+      "The market is dynamic — a strategy that worked last year may fail today.",
+      "She thrives in dynamic environments where priorities shift rapidly.",
+    ],
+    synonyms: ["changing", "active", "energetic"],
+    tier: 1,
+  },
+  {
+    word: "uniform",
+    definition: "Remaining the same in all cases; consistent and unvarying",
+    examples: [
+      "A uniform naming convention across all services reduces onboarding friction.",
+      "The experience should feel uniform regardless of which device the user is on.",
+    ],
+    synonyms: ["consistent", "standardized", "homogeneous"],
+    tier: 1,
+  },
+  {
+    word: "merit",
+    definition: "The quality of being particularly good or worthy; deserve",
+    examples: [
+      "The proposal has real merit and deserves serious consideration.",
+      "Decisions should be made on merit, not seniority.",
+    ],
+    synonyms: ["value", "worth", "quality"],
+    tier: 1,
+  },
+  {
+    word: "execution",
+    definition: "The carrying out or putting into effect of a plan or order; performance",
+    examples: [
+      "The strategy was sound; the failure was in execution.",
+      "Flawless execution separates successful projects from endless ones.",
+    ],
+    synonyms: ["implementation", "performance", "delivery"],
+    tier: 1,
+  },
+  {
+    word: "contentious",
+    definition: "Causing or likely to cause an argument; controversial",
+    examples: [
+      "The decision to deprecate the old API was contentious among long-term users.",
+      "Avoid contentious topics in the all-hands and address them in smaller forums.",
+    ],
+    synonyms: ["controversial", "disputed", "divisive"],
+    tier: 1,
+  },
+  {
+    word: "tenable",
+    definition: "Able to be maintained or defended against criticism; reasonable",
+    examples: [
+      "That position is no longer tenable given the new evidence.",
+      "A single-server architecture is tenable at this stage but will not scale.",
+    ],
+    synonyms: ["defensible", "maintainable", "reasonable"],
+    tier: 1,
+  },
+  {
+    word: "indeterminate",
+    definition: "Not exactly known, established, or defined; unclear",
+    examples: [
+      "The root cause remains indeterminate pending further analysis.",
+      "The timeline is indeterminate until we understand the full scope.",
+    ],
+    synonyms: ["uncertain", "unclear", "undefined"],
+    tier: 1,
+  },
+  {
+    word: "apparent",
+    definition: "Clearly visible or understood; obvious",
+    examples: [
+      "It was apparent to everyone in the room that the rollout had failed.",
+      "The performance gains were apparent within hours of the deployment.",
+    ],
+    synonyms: ["obvious", "evident", "clear"],
+    tier: 1,
+  },
+
+  // ─── Tier 1: Emotion / quality adjectives ──────────────────────────
+
+  {
+    word: "magnificent",
+    definition: "Impressively beautiful, elaborate, or extravagant in scale",
+    examples: [
+      "The cathedral-style architecture of the codebase was magnificent but impractical.",
+      "She delivered a magnificent keynote that left the audience speechless.",
+    ],
+    synonyms: ["splendid", "grand", "spectacular"],
+    tier: 1,
+  },
+  {
+    word: "courageous",
+    definition: "Not deterred by danger or pain; brave and resolute",
+    examples: [
+      "It was courageous to push back on leadership when everyone else stayed silent.",
+      "Making a courageous decision means accepting risk for the right reasons.",
+    ],
+    synonyms: ["brave", "bold", "valiant"],
+    tier: 1,
+  },
+  {
+    word: "sincere",
+    definition: "Free from pretense or deceit; proceeding from genuine feelings",
+    examples: [
+      "Her apology was sincere and immediately defused the tension.",
+      "He made a sincere effort to understand the concerns before responding.",
+    ],
+    synonyms: ["genuine", "heartfelt", "honest"],
+    tier: 1,
+  },
+  {
+    word: "restless",
+    definition: "Unable to rest or relax; constantly seeking change or activity",
+    examples: [
+      "He grew restless in the role once the technical challenges were solved.",
+      "A restless mind can be an asset in fast-changing fields.",
+    ],
+    synonyms: ["unsettled", "agitated", "uneasy"],
+    tier: 1,
+  },
+  {
+    word: "unmotivated",
+    definition: "Lacking enthusiasm or incentive; not driven to act",
+    examples: [
+      "Repetitive, low-impact work left the team feeling unmotivated.",
+      "An unmotivated engineer rarely produces their best work.",
+    ],
+    synonyms: ["uninspired", "apathetic", "disengaged"],
+    tier: 1,
+  },
+  {
+    word: "inconsiderate",
+    definition: "Thoughtlessly causing inconvenience or harm to others",
+    examples: [
+      "Merging without running the tests is inconsiderate to everyone downstream.",
+      "Scheduling a two-hour meeting with no agenda is inconsiderate of people's time.",
+    ],
+    synonyms: ["thoughtless", "insensitive", "careless"],
+    tier: 1,
+  },
+  {
+    word: "drastic",
+    definition: "Likely to have a strong or far-reaching effect; severe",
+    examples: [
+      "A full rewrite is a drastic step that should be considered carefully.",
+      "The budget cuts were so drastic that three teams were eliminated overnight.",
+    ],
+    synonyms: ["extreme", "severe", "radical"],
+    tier: 1,
+  },
+  {
+    word: "fulfilling",
+    definition: "Making someone satisfied and happy because of fully developing their abilities or character",
+    examples: [
+      "She found the mentorship role more fulfilling than the technical track.",
+      "Work that aligns with your values tends to be more fulfilling.",
+    ],
+    synonyms: ["satisfying", "rewarding", "gratifying"],
+    tier: 1,
+  },
+  {
+    word: "breathtaking",
+    definition: "Astonishing or awe-inspiring in quality, scale, or complexity",
+    examples: [
+      "The visualization of the live data pipeline was breathtaking in its complexity.",
+      "Her command of the negotiation was breathtaking — she anticipated every move.",
+    ],
+    synonyms: ["stunning", "astonishing", "awe-inspiring"],
+    tier: 1,
+  },
+  {
+    word: "thought-provoking",
+    definition: "Stimulating careful consideration or reflection",
+    examples: [
+      "The book raised thought-provoking questions about the ethics of AI.",
+      "His talk was thought-provoking rather than prescriptive, which made it more valuable.",
+    ],
+    synonyms: ["stimulating", "challenging", "provocative"],
+    tier: 1,
+  },
+  {
+    word: "intriguing",
+    definition: "Arousing one's curiosity or interest; fascinating",
+    examples: [
+      "The anomaly in the data was intriguing enough to justify a deeper investigation.",
+      "She posed an intriguing hypothesis that no one had considered before.",
+    ],
+    synonyms: ["fascinating", "captivating", "curious"],
+    tier: 1,
+  },
+
+  // ─── Tier 2: Professional / analytical ─────────────────────────────
+
+  {
+    word: "reproach",
+    definition: "Express disapproval or disappointment at someone's conduct",
+    examples: [
+      "He accepted the reproach quietly and committed to doing better.",
+      "Her tone carried a gentle reproach that was more effective than anger.",
+    ],
+    synonyms: ["rebuke", "censure", "criticism"],
+    tier: 2,
+  },
+  {
+    word: "repudiate",
+    definition: "Refuse to accept or be associated with; reject as having no authority",
+    examples: [
+      "The company repudiated the vendor's interpretation of the contract.",
+      "She repudiated the accusation with documented evidence.",
+    ],
+    synonyms: ["reject", "disavow", "deny"],
+    tier: 2,
+  },
+  {
+    word: "diatribe",
+    definition: "A forceful and bitter verbal attack against someone or something",
+    examples: [
+      "His post-mortem turned into a diatribe against the entire review process.",
+      "A ten-minute diatribe in a team meeting rarely changes anything.",
+    ],
+    synonyms: ["tirade", "rant", "harangue"],
+    tier: 2,
+  },
+  {
+    word: "polemic",
+    definition: "A strong written or spoken attack on someone's opinions or actions",
+    examples: [
+      "The article read less like analysis and more like a polemic.",
+      "She wrote a polemic against the industry's obsession with growth metrics.",
+    ],
+    synonyms: ["attack", "diatribe", "argument"],
+    tier: 2,
+  },
+  {
+    word: "denigrate",
+    definition: "Criticize unfairly; disparage or belittle",
+    examples: [
+      "He had a habit of denigrating others' contributions in public forums.",
+      "The memo denigrated the previous team's work without acknowledging its constraints.",
+    ],
+    synonyms: ["disparage", "belittle", "deprecate"],
+    tier: 2,
+  },
+  {
+    word: "deride",
+    definition: "Express contempt for; ridicule or mock",
+    examples: [
+      "Critics derided the product as a feature-length bug report.",
+      "The proposal was initially derided but later proved correct.",
+    ],
+    synonyms: ["mock", "ridicule", "scorn"],
+    tier: 2,
+  },
+  {
+    word: "invective",
+    definition: "Insulting, abusive, or highly critical language",
+    examples: [
+      "His review was full of invective that made it impossible to extract useful feedback.",
+      "Skilled debaters argue without resorting to invective.",
+    ],
+    synonyms: ["abuse", "vitriol", "denunciation"],
+    tier: 2,
+  },
+  {
+    word: "discord",
+    definition: "Disagreement between people; lack of harmony",
+    examples: [
+      "The reorganization sowed discord across teams that had worked well together.",
+      "Creative discord is healthy; personal conflict is not.",
+    ],
+    synonyms: ["conflict", "disagreement", "friction"],
+    tier: 2,
+  },
+  {
+    word: "subordinate",
+    definition: "Lower in rank or position; treat as less important",
+    examples: [
+      "In this model, short-term metrics are subordinate to long-term health.",
+      "She managed her subordinates with both firmness and respect.",
+    ],
+    synonyms: ["secondary", "junior", "lower-ranking"],
+    tier: 2,
+  },
+  {
+    word: "personnel",
+    definition: "People employed in an organization; the department managing employees",
+    examples: [
+      "The project requires personnel with both legal and technical expertise.",
+      "Personnel changes at the top disrupted six months of planning.",
+    ],
+    synonyms: ["staff", "workforce", "employees"],
+    tier: 2,
+  },
+  {
+    word: "procedure",
+    definition: "An established or official way of doing something",
+    examples: [
+      "Following the procedure prevented a repeat of last quarter's outage.",
+      "There is no procedure for this scenario — we need to write one.",
+    ],
+    synonyms: ["process", "protocol", "method"],
+    tier: 2,
+  },
+  {
+    word: "portfolio",
+    definition: "A range of products, investments, or projects held by an organization or person",
+    examples: [
+      "The product portfolio needs pruning — we are supporting too many initiatives.",
+      "Her portfolio of work showed a consistent eye for interaction design.",
+    ],
+    synonyms: ["collection", "range", "suite"],
+    tier: 2,
+  },
+  {
+    word: "enterprise",
+    definition: "A project or undertaking requiring boldness and energy; a business organization",
+    examples: [
+      "The migration was a two-year enterprise that touched every part of the system.",
+      "Enterprise customers have compliance requirements that consumer products can ignore.",
+    ],
+    synonyms: ["undertaking", "venture", "organization"],
+    tier: 2,
+  },
+  {
+    word: "strategic",
+    definition: "Relating to the identification of long-term goals and the means to achieve them",
+    examples: [
+      "Hiring this person is a strategic investment in our infrastructure team.",
+      "Not every decision needs to be strategic — some just need to be done.",
+    ],
+    synonyms: ["planned", "deliberate", "long-term"],
+    tier: 2,
+  },
+  {
+    word: "establish",
+    definition: "Set up on a firm or permanent basis; initiate or bring into being",
+    examples: [
+      "We need to establish clear ownership before the project scales.",
+      "The pilot program established that the approach was viable.",
+    ],
+    synonyms: ["found", "create", "institute"],
+    tier: 2,
+  },
+  {
+    word: "coordination",
+    definition: "The organization of different elements to work together effectively",
+    examples: [
+      "Poor coordination between teams caused the two features to conflict on release day.",
+      "Effective coordination is the invisible work that makes complex projects succeed.",
+    ],
+    synonyms: ["organization", "synchronization", "collaboration"],
+    tier: 2,
+  },
+  {
+    word: "exigency",
+    definition: "An urgent need or demand; a pressing situation requiring immediate action",
+    examples: [
+      "The exigency of the outage required skipping the normal change process.",
+      "Leaders must balance long-term planning with day-to-day exigencies.",
+    ],
+    synonyms: ["urgency", "necessity", "emergency"],
+    tier: 2,
+  },
+  {
+    word: "supposition",
+    definition: "A belief held without proof or certainty; an assumption",
+    examples: [
+      "The entire plan rests on the supposition that the vendor will deliver on time.",
+      "We should distinguish between verified facts and working suppositions.",
+    ],
+    synonyms: ["assumption", "hypothesis", "presumption"],
+    tier: 2,
+  },
+  {
+    word: "prowess",
+    definition: "Skill or expertise in a particular activity; superior ability",
+    examples: [
+      "Her technical prowess was matched only by her ability to communicate clearly.",
+      "The team's debugging prowess became legendary within the organization.",
+    ],
+    synonyms: ["skill", "mastery", "expertise"],
+    tier: 2,
+  },
+  {
+    word: "mastery",
+    definition: "Comprehensive knowledge or skill in a subject or accomplishment",
+    examples: [
+      "Mastery of the domain took years of deliberate practice.",
+      "He had mastery over the data layer but struggled with the UI.",
+    ],
+    synonyms: ["expertise", "proficiency", "command"],
+    tier: 2,
+  },
+  {
+    word: "authenticity",
+    definition: "The quality of being genuine, original, and true to one's own character",
+    examples: [
+      "Customers respond to authenticity in brand communication.",
+      "Authenticity in leadership builds more trust than polished performance.",
+    ],
+    synonyms: ["genuineness", "integrity", "sincerity"],
+    tier: 2,
+  },
+  {
+    word: "epiphany",
+    definition: "A moment of sudden and great revelation or realization",
+    examples: [
+      "The epiphany came during a walk — the whole architecture suddenly made sense.",
+      "Her epiphany about the user's actual goal reshaped the entire product direction.",
+    ],
+    synonyms: ["revelation", "insight", "realization"],
+    tier: 2,
+  },
+  {
+    word: "fulfillment",
+    definition: "Satisfaction or happiness as a result of fully developing one's abilities or achieving one's goals",
+    examples: [
+      "Shipping work that genuinely helps people brings a sense of fulfillment no bonus can match.",
+      "He found fulfillment in mentoring others after years of individual contribution.",
+    ],
+    synonyms: ["satisfaction", "gratification", "achievement"],
+    tier: 2,
+  },
+  {
+    word: "integrity",
+    definition: "The quality of being honest and having strong moral principles; structural soundness",
+    examples: [
+      "She maintained her integrity even under pressure to manipulate the results.",
+      "The integrity of the data must be verified before any analysis begins.",
+    ],
+    synonyms: ["honesty", "uprightness", "soundness"],
+    tier: 2,
+  },
+  {
+    word: "empathy",
+    definition: "The ability to understand and share the feelings of another",
+    examples: [
+      "Empathy for the user is what separates good product decisions from technically correct ones.",
+      "Leading with empathy during a crisis earns loyalty that outlasts the difficulty.",
+    ],
+    synonyms: ["understanding", "compassion", "sensitivity"],
+    tier: 2,
+  },
+  {
+    word: "core",
+    definition: "The central or most important part of something; fundamental",
+    examples: [
+      "At its core, this is a trust problem, not a technical one.",
+      "The core functionality must be solid before we add optional features.",
+    ],
+    synonyms: ["center", "essence", "foundation"],
+    tier: 2,
+  },
+  {
+    word: "consistent",
+    definition: "Acting or done in the same way over time; compatible with other facts",
+    examples: [
+      "Consistent communication keeps remote teams aligned without constant meetings.",
+      "The results are consistent with our hypothesis, though not conclusive.",
+    ],
+    synonyms: ["steady", "reliable", "uniform"],
+    tier: 2,
+  },
+  {
+    word: "enhance",
+    definition: "Improve or increase the quality, value, or extent of something",
+    examples: [
+      "The new animation enhances the sense of responsiveness without adding latency.",
+      "Regular retrospectives enhance the team's ability to self-correct.",
+    ],
+    synonyms: ["improve", "augment", "elevate"],
+    tier: 2,
+  },
+  {
+    word: "elevate",
+    definition: "Raise to a higher level; improve the quality or status of",
+    examples: [
+      "Strong documentation elevates the entire codebase, not just the module it covers.",
+      "Her feedback elevated the proposal from good to genuinely excellent.",
+    ],
+    synonyms: ["raise", "lift", "advance"],
+    tier: 2,
+  },
+  {
+    word: "resonate",
+    definition: "Evoke a feeling of shared meaning or importance; have an effect on someone",
+    examples: [
+      "The message resonated with engineers who had dealt with the same pain.",
+      "A vision that resonates across the organization aligns effort without constant direction.",
+    ],
+    synonyms: ["connect", "strike a chord", "ring true"],
+    tier: 2,
+  },
+  {
+    word: "fortify",
+    definition: "Strengthen mentally or physically; reinforce against attack",
+    examples: [
+      "Adding rate limiting will fortify the API against abuse.",
+      "She fortified her argument with additional evidence before the second review.",
+    ],
+    synonyms: ["strengthen", "reinforce", "harden"],
+    tier: 2,
+  },
+  {
+    word: "circumscribe",
+    definition: "Restrict the range or activity of something; define the limits of",
+    examples: [
+      "The legal agreement circumscribed the scope of what each party could build.",
+      "His authority was circumscribed by the board's oversight committee.",
+    ],
+    synonyms: ["restrict", "limit", "confine"],
+    tier: 2,
+  },
+  {
+    word: "promulgate",
+    definition: "Promote or make widely known; formally put a law or rule into effect",
+    examples: [
+      "The new security policy was promulgated across the organization last quarter.",
+      "She used the conference talk to promulgate the team's methodology.",
+    ],
+    synonyms: ["publicize", "disseminate", "enact"],
+    tier: 2,
+  },
+  {
+    word: "adjudicate",
+    definition: "Make a formal judgment or decision about a problem or dispute",
+    examples: [
+      "A neutral party was brought in to adjudicate the disagreement between the two teams.",
+      "The committee adjudicated the competing proposals in a closed session.",
+    ],
+    synonyms: ["judge", "arbitrate", "decide"],
+    tier: 2,
+  },
+  {
+    word: "obviate",
+    definition: "Remove a need or difficulty; prevent or eliminate",
+    examples: [
+      "Automating the check obviates the need for a manual review step.",
+      "A shared data model would obviate most of the synchronization issues.",
+    ],
+    synonyms: ["prevent", "eliminate", "preclude"],
+    tier: 2,
+  },
+  {
+    word: "preclude",
+    definition: "Prevent from happening or make impossible in advance",
+    examples: [
+      "The NDA precludes us from disclosing the details to a third party.",
+      "Early alignment precluded most of the conflicts that plagued the previous project.",
+    ],
+    synonyms: ["prevent", "prohibit", "bar"],
+    tier: 2,
+  },
+  {
+    word: "abrogate",
+    definition: "Repeal or do away with a law, right, or formal agreement",
+    examples: [
+      "The new legislation abrogated the protections the previous regulation had provided.",
+      "One party cannot unilaterally abrogate the terms of a signed contract.",
+    ],
+    synonyms: ["repeal", "revoke", "annul"],
+    tier: 2,
+  },
+  {
+    word: "attenuate",
+    definition: "Reduce the force, effect, or value of something; weaken",
+    examples: [
+      "Adding a caching layer attenuates the load on the primary database.",
+      "The manager's presence attenuated the tension in the room considerably.",
+    ],
+    synonyms: ["weaken", "reduce", "diminish"],
+    tier: 2,
+  },
+
+  // ─── Tier 3: Power / intellectual words ────────────────────────────
+
+  {
+    word: "ethereal",
+    definition: "Extremely delicate and light in a way that seems too perfect for this world",
+    examples: [
+      "The user interface had an ethereal quality — functional yet almost weightless.",
+      "The project existed in an ethereal state between vision and reality for years.",
+    ],
+    synonyms: ["delicate", "otherworldly", "gossamer"],
+    tier: 3,
+  },
+  {
+    word: "sublime",
+    definition: "Of such excellence or beauty as to inspire great admiration; elevated",
+    examples: [
+      "The simplicity of the final design was, after years of complexity, almost sublime.",
+      "She possessed a sublime grasp of the tradeoffs that others spent careers learning.",
+    ],
+    synonyms: ["magnificent", "elevated", "transcendent"],
+    tier: 3,
+  },
+  {
+    word: "inefficacious",
+    definition: "Not producing the desired effect; failing to achieve results",
+    examples: [
+      "The workaround proved inefficacious under high load conditions.",
+      "Repeated inefficacious interventions eroded trust in the change management process.",
+    ],
+    synonyms: ["ineffective", "futile", "powerless"],
+    tier: 3,
+  },
+  {
+    word: "obstreperous",
+    definition: "Noisy and difficult to control; stubbornly resistant",
+    examples: [
+      "The obstreperous stakeholder derailed three consecutive planning sessions.",
+      "An obstreperous minority can block progress if the process allows it.",
+    ],
+    synonyms: ["unruly", "disruptive", "clamorous"],
+    tier: 3,
+  },
+  {
+    word: "perspicacious",
+    definition: "Having a ready insight into things; shrewdly perceptive",
+    examples: [
+      "Her perspicacious reading of the competitive landscape gave the team months of advantage.",
+      "A perspicacious reviewer catches what the author intended, not just what was written.",
+    ],
+    synonyms: ["insightful", "astute", "discerning"],
+    tier: 3,
+  },
+  {
+    word: "sagacious",
+    definition: "Having or showing keen mental discernment and good judgment",
+    examples: [
+      "His sagacious advice saved the company from a strategic mistake.",
+      "Sagacious leaders know when to push forward and when to wait.",
+    ],
+    synonyms: ["wise", "astute", "judicious"],
+    tier: 3,
+  },
+  {
+    word: "erudite",
+    definition: "Having or showing great knowledge or learning",
+    examples: [
+      "Her erudite explanation connected distributed systems theory to everyday practice.",
+      "The erudite commentary in the code comments made the library a pleasure to work with.",
+    ],
+    synonyms: ["learned", "scholarly", "knowledgeable"],
+    tier: 3,
+  },
+  {
+    word: "loquacious",
+    definition: "Tending to talk a great deal; talkative",
+    examples: [
+      "His loquacious style worked well in client presentations but slowed down standups.",
+      "A loquacious architect can either illuminate or bury the key point — choose your moment.",
+    ],
+    synonyms: ["talkative", "verbose", "garrulous"],
+    tier: 3,
+  },
+  {
+    word: "taciturn",
+    definition: "Reserved or uncommunicative in speech; saying little",
+    examples: [
+      "The most taciturn engineer on the team was also the most perceptive.",
+      "A taciturn response in a code review can be as confusing as a verbose one.",
+    ],
+    synonyms: ["reticent", "reserved", "quiet"],
+    tier: 3,
+  },
+  {
+    word: "sanguine",
+    definition: "Optimistic or positive, especially in a difficult situation",
+    examples: [
+      "He remained sanguine about the deadline despite the mounting delays.",
+      "A sanguine outlook helps morale but should not substitute for honest assessment.",
+    ],
+    synonyms: ["optimistic", "hopeful", "confident"],
+    tier: 3,
+  },
+  {
+    word: "phlegmatic",
+    definition: "Having an unemotional and stolidly calm disposition; not easily excited",
+    examples: [
+      "Her phlegmatic response to the crisis steadied everyone around her.",
+      "A phlegmatic engineer under pressure rarely makes rash decisions.",
+    ],
+    synonyms: ["calm", "stoic", "impassive"],
+    tier: 3,
+  },
+  {
+    word: "ebullient",
+    definition: "Cheerful and full of energy; exuberant",
+    examples: [
+      "Her ebullient energy was infectious and lifted the team during long sprints.",
+      "His ebullient personality made him a natural fit for customer-facing roles.",
+    ],
+    synonyms: ["exuberant", "enthusiastic", "vivacious"],
+    tier: 3,
+  },
+  {
+    word: "truculent",
+    definition: "Eager or quick to argue or fight; aggressively defiant",
+    examples: [
+      "His truculent manner in code reviews alienated contributors who could have been allies.",
+      "A truculent response to feedback rarely improves the outcome.",
+    ],
+    synonyms: ["aggressive", "combative", "belligerent"],
+    tier: 3,
+  },
+  {
+    word: "petulant",
+    definition: "Childishly sulky or bad-tempered; irritably impatient",
+    examples: [
+      "His petulant reaction to the scope change undermined his credibility with leadership.",
+      "Petulant behavior in a public forum signals poor emotional regulation.",
+    ],
+    synonyms: ["sulky", "irritable", "sullen"],
+    tier: 3,
+  },
+  {
+    word: "insouciant",
+    definition: "Showing a casual lack of concern; carefree to the point of indifference",
+    examples: [
+      "His insouciant attitude toward deadlines became untenable as the stakes rose.",
+      "She carried an insouciant air that disguised a very deliberate way of working.",
+    ],
+    synonyms: ["carefree", "nonchalant", "indifferent"],
+    tier: 3,
+  },
+  {
+    word: "diffident",
+    definition: "Modest or shy owing to a lack of self-confidence",
+    examples: [
+      "She was diffident in large meetings despite having the strongest technical opinions.",
+      "A diffident candidate can be overlooked even when their skills are exceptional.",
+    ],
+    synonyms: ["shy", "reserved", "modest"],
+    tier: 3,
+  },
+  {
+    word: "obsequious",
+    definition: "Obedient or attentive to an excessive or servile degree",
+    examples: [
+      "His obsequious manner around executives masked a sharper agenda.",
+      "Obsequious agreement in reviews might feel polite, but it fails the author.",
+    ],
+    synonyms: ["sycophantic", "fawning", "servile"],
+    tier: 3,
+  },
+  {
+    word: "supercilious",
+    definition: "Behaving or looking as if one thinks they are superior to others; disdainful",
+    examples: [
+      "His supercilious dismissal of junior engineers' ideas damaged team morale.",
+      "A supercilious tone in documentation signals that the author values cleverness over clarity.",
+    ],
+    synonyms: ["condescending", "disdainful", "arrogant"],
+    tier: 3,
+  },
+  {
+    word: "verisimilitude",
+    definition: "The appearance of being true or real; believable accuracy",
+    examples: [
+      "The simulation achieved enough verisimilitude to be useful for training.",
+      "Good technical writing requires verisimilitude — the examples must feel real.",
+    ],
+    synonyms: ["realism", "plausibility", "authenticity"],
+    tier: 3,
+  },
+  {
+    word: "simulacrum",
+    definition: "An image or representation of something; an unsatisfactory imitation",
+    examples: [
+      "The prototype was a simulacrum of the final product, useful for feedback but not deployment.",
+      "The process became a simulacrum of agile — the rituals without the principles.",
+    ],
+    synonyms: ["replica", "imitation", "representation"],
+    tier: 3,
+  },
+  {
+    word: "zeitgeist",
+    definition: "The defining spirit or mood of a particular period in history",
+    examples: [
+      "The product caught the zeitgeist perfectly and became synonymous with the era.",
+      "Understanding the zeitgeist helps you predict which technical ideas will gain traction.",
+    ],
+    synonyms: ["spirit of the age", "ethos", "climate"],
+    tier: 3,
+  },
+  {
+    word: "schadenfreude",
+    definition: "Pleasure derived from the misfortunes or failures of others",
+    examples: [
+      "There was an uncomfortable hint of schadenfreude in the industry's reaction to the outage.",
+      "Schadenfreude at a competitor's failure is natural; letting it guide strategy is dangerous.",
+    ],
+    synonyms: ["malicious pleasure", "gloating", "spite"],
+    tier: 3,
+  },
+  {
+    word: "weltanschauung",
+    definition: "A comprehensive worldview or philosophy; a particular conception of the world",
+    examples: [
+      "His weltanschauung shaped every product decision, for better and worse.",
+      "Company culture is really a collective weltanschauung — shared assumptions about how things work.",
+    ],
+    synonyms: ["worldview", "philosophy", "outlook"],
+    tier: 3,
+  },
+  {
+    word: "raison d'être",
+    definition: "The most important reason or purpose for someone's or something's existence",
+    examples: [
+      "Reducing latency is the product's raison d'être — every feature decision flows from it.",
+      "When a company loses its raison d'être, mission statements become hollow.",
+    ],
+    synonyms: ["purpose", "reason for being", "mission"],
+    tier: 3,
+  },
+  {
+    word: "incandescent",
+    definition: "Emitting light or brilliance as if from great internal heat; extremely impressive",
+    examples: [
+      "Her incandescent presentation lit up a room full of weary executives.",
+      "The incandescent clarity of the final design made all earlier iterations seem murky.",
+    ],
+    synonyms: ["brilliant", "radiant", "luminous"],
+    tier: 3,
+  },
+  {
+    word: "resplendent",
+    definition: "Attractive and impressive through being richly colorful or sumptuous",
+    examples: [
+      "The redesigned dashboard was resplendent — every detail deliberate, every color purposeful.",
+      "She arrived at the presentation resplendent with confidence and precision.",
+    ],
+    synonyms: ["magnificent", "splendid", "dazzling"],
+    tier: 3,
+  },
+  {
+    word: "mellifluous",
+    definition: "Sweet or musical; pleasant to hear",
+    examples: [
+      "His mellifluous voice made even the most technical explanation easy to follow.",
+      "The mellifluous prose of the documentation made it a pleasure to read.",
+    ],
+    synonyms: ["dulcet", "harmonious", "euphonious"],
+    tier: 3,
+  },
+  {
+    word: "sonorous",
+    definition: "Producing a full, deep, or rich sound; imposingly grand",
+    examples: [
+      "The sonorous cadence of her closing argument left the room silent for a moment.",
+      "A sonorous name for a product or feature can carry as much weight as the product itself.",
+    ],
+    synonyms: ["resonant", "rich", "full-toned"],
+    tier: 3,
+  },
+  {
+    word: "dulcet",
+    definition: "Sweet and soothing, especially to the ear",
+    examples: [
+      "The dulcet tones of the notification sound were designed to calm rather than alarm.",
+      "Her dulcet explanation of the error made a frustrating bug feel manageable.",
+    ],
+    synonyms: ["sweet", "melodious", "gentle"],
+    tier: 3,
+  },
+  {
+    word: "indefatigable",
+    definition: "Persisting tirelessly; never showing signs of weariness",
+    examples: [
+      "Her indefatigable pursuit of the root cause finally paid off after three days.",
+      "The indefatigable energy he brought to the final sprint kept the team moving.",
+    ],
+    synonyms: ["tireless", "relentless", "inexhaustible"],
+    tier: 3,
+  },
+  {
+    word: "inexorable",
+    definition: "Impossible to stop or prevent; continuing without regard for human will",
+    examples: [
+      "The inexorable march of technical debt eventually forces a reckoning.",
+      "Market consolidation felt inexorable — every small player was being absorbed.",
+    ],
+    synonyms: ["relentless", "unstoppable", "inevitable"],
+    tier: 3,
+  },
+  {
+    word: "implacable",
+    definition: "Unable to be appeased or pacified; unwilling to be moved",
+    examples: [
+      "The implacable demands of the regulator left no room for creative compliance.",
+      "She was implacable on the question of code quality, regardless of timeline pressure.",
+    ],
+    synonyms: ["unrelenting", "unyielding", "inflexible"],
+    tier: 3,
+  },
+  {
+    word: "intransigent",
+    definition: "Refusing to change one's views or agree to a compromise",
+    examples: [
+      "The vendor was intransigent on pricing, which ultimately ended the negotiation.",
+      "Intransigent stakeholders must be escalated, not endured.",
+    ],
+    synonyms: ["uncompromising", "inflexible", "obstinate"],
+    tier: 3,
+  },
+  {
+    word: "redoubtable",
+    definition: "Deserving to be feared or respected; formidably impressive",
+    examples: [
+      "She built a redoubtable reputation as someone who ships without cutting corners.",
+      "Facing a redoubtable competitor forced the team to raise their own standards.",
+    ],
+    synonyms: ["formidable", "impressive", "commanding"],
+    tier: 3,
+  },
 ];

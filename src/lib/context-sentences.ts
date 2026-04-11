@@ -1370,4 +1370,1220 @@ export const CONTEXT_SENTENCES: Record<string, ContextSentence[]> = {
       distractors: ["adaptable", "multifaceted", "capable"],
     },
   ],
+  discernible: [
+    {
+      sentence: "There was no **noticeable** difference between the two versions in our testing.",
+      weakWord: "noticeable",
+      answer: "discernible",
+      distractors: ["measurable", "obvious", "visible"],
+    },
+  ],
+  commensurate: [
+    {
+      sentence: "Her salary should be **matching** with her level of experience and responsibility.",
+      weakWord: "matching",
+      answer: "commensurate",
+      distractors: ["proportionate", "equivalent", "suitable"],
+    },
+  ],
+  juxtapose: [
+    {
+      sentence: "The report **places side by side** the company's public statements with its actual emissions data.",
+      weakWord: "places side by side",
+      answer: "juxtapose",
+      distractors: ["compares", "contrasts", "aligns"],
+    },
+  ],
+  precedent: [
+    {
+      sentence: "Approving this request would set a **standard** that every other team will expect to follow.",
+      weakWord: "standard",
+      answer: "precedent",
+      distractors: ["example", "pattern", "expectation"],
+    },
+  ],
+  prolific: [
+    {
+      sentence: "She is one of the most **productive** writers on the team, shipping three features per sprint.",
+      weakWord: "productive",
+      answer: "prolific",
+      distractors: ["efficient", "active", "busy"],
+    },
+  ],
+  corroborate: [
+    {
+      sentence: "A second review was run to **confirm** the initial findings before publishing.",
+      weakWord: "confirm",
+      answer: "corroborate",
+      distractors: ["verify", "support", "validate"],
+    },
+  ],
+  impetus: [
+    {
+      sentence: "The customer complaints provided the **push** for a complete product redesign.",
+      weakWord: "push",
+      answer: "impetus",
+      distractors: ["reason", "motivation", "trigger"],
+    },
+  ],
+  truncate: [
+    {
+      sentence: "The talk was **cut short** to fit the conference schedule, leaving out the Q&A.",
+      weakWord: "cut short",
+      answer: "truncate",
+      distractors: ["shortened", "trimmed", "condensed"],
+    },
+  ],
+  verbose: [
+    {
+      sentence: "His emails are so **wordy** that the key point is always buried in the third paragraph.",
+      weakWord: "wordy",
+      answer: "verbose",
+      distractors: ["lengthy", "rambling", "long-winded"],
+    },
+  ],
+  disseminate: [
+    {
+      sentence: "The findings were **shared** across all departments by end of week.",
+      weakWord: "shared",
+      answer: "disseminate",
+      distractors: ["circulated", "distributed", "spread"],
+    },
+  ],
+  recalcitrant: [
+    {
+      sentence: "The **stubborn** vendor refused to address the defects even after three escalations.",
+      weakWord: "stubborn",
+      answer: "recalcitrant",
+      distractors: ["difficult", "uncooperative", "resistant"],
+    },
+  ],
+  tacit: [
+    {
+      sentence: "There was an **unspoken** agreement that no one would bring up the failed launch.",
+      weakWord: "unspoken",
+      answer: "tacit",
+      distractors: ["implicit", "silent", "understood"],
+    },
+  ],
+  untenable: [
+    {
+      sentence: "The current workload is completely **unsustainable** — three people are doing the work of eight.",
+      weakWord: "unsustainable",
+      answer: "untenable",
+      distractors: ["unreasonable", "impossible", "indefensible"],
+    },
+  ],
+  exemplary: [
+    {
+      sentence: "Her **outstanding** work ethic set the bar for every new hire on the team.",
+      weakWord: "outstanding",
+      answer: "exemplary",
+      distractors: ["exceptional", "model", "ideal"],
+    },
+  ],
+  nostalgic: [
+    {
+      sentence: "Revisiting the original product made him feel **sentimental** about how far the team had come.",
+      weakWord: "sentimental",
+      answer: "nostalgic",
+      distractors: ["wistful", "emotional", "reflective"],
+    },
+  ],
+  assert: [
+    {
+      sentence: "She **stated firmly** that the data breach was caused by a third-party vendor.",
+      weakWord: "stated firmly",
+      answer: "assert",
+      distractors: ["claimed", "argued", "insisted"],
+    },
+  ],
+  contend: [
+    {
+      sentence: "The report **argues** that current safety regulations are not sufficient.",
+      weakWord: "argues",
+      answer: "contends",
+      distractors: ["claims", "suggests", "maintains"],
+    },
+  ],
+  acknowledge: [
+    {
+      sentence: "He **admitted** the mistake openly and without deflecting blame onto the team.",
+      weakWord: "admitted",
+      answer: "acknowledged",
+      distractors: ["accepted", "recognized", "conceded"],
+    },
+  ],
+  concur: [
+    {
+      sentence: "All three reviewers **agreed** that the proposal was technically sound.",
+      weakWord: "agreed",
+      answer: "concurred",
+      distractors: ["concluded", "confirmed", "decided"],
+    },
+  ],
+  acquiesce: [
+    {
+      sentence: "The team **gave in** to the deadline despite having serious reservations about quality.",
+      weakWord: "gave in",
+      answer: "acquiesced",
+      distractors: ["complied", "yielded", "accepted"],
+    },
+  ],
+  imply: [
+    {
+      sentence: "The data **suggests** a link between screen time and reduced focus, but doesn't prove it.",
+      weakWord: "suggests",
+      answer: "implies",
+      distractors: ["indicates", "hints at", "insinuates"],
+    },
+  ],
+  insinuate: [
+    {
+      sentence: "He never said it directly, but his questions seemed to **hint** that the project was mismanaged.",
+      weakWord: "hint",
+      answer: "insinuate",
+      distractors: ["suggest", "imply", "intimate"],
+    },
+  ],
+  manifest: [
+    {
+      sentence: "The underlying tension in the team eventually **showed up** as open conflict in the all-hands.",
+      weakWord: "showed up",
+      answer: "manifested",
+      distractors: ["appeared", "emerged", "surfaced"],
+    },
+  ],
+  diverge: [
+    {
+      sentence: "At this point, the two implementations **split** significantly in how they handle authentication.",
+      weakWord: "split",
+      answer: "diverge",
+      distractors: ["differ", "separate", "deviate"],
+    },
+  ],
+  refute: [
+    {
+      sentence: "The new benchmark data clearly **disproves** the claim that the old system is faster.",
+      weakWord: "disproves",
+      answer: "refutes",
+      distractors: ["counters", "challenges", "rebuts"],
+    },
+  ],
+  apprise: [
+    {
+      sentence: "Please **inform** all stakeholders of the timeline change before end of day.",
+      weakWord: "inform",
+      answer: "apprise",
+      distractors: ["notify", "brief", "update"],
+    },
+  ],
+  admonish: [
+    {
+      sentence: "The manager **warned** the team firmly about skipping the documentation step.",
+      weakWord: "warned",
+      answer: "admonished",
+      distractors: ["reprimanded", "cautioned", "reminded"],
+    },
+  ],
+  bolster: [
+    {
+      sentence: "Additional test coverage would **strengthen** confidence in the release.",
+      weakWord: "strengthen",
+      answer: "bolster",
+      distractors: ["reinforce", "support", "increase"],
+    },
+  ],
+  initiate: [
+    {
+      sentence: "She **started** the review process three weeks ahead of the original schedule.",
+      weakWord: "started",
+      answer: "initiated",
+      distractors: ["launched", "began", "triggered"],
+    },
+  ],
+  cease: [
+    {
+      sentence: "Development on the old branch will **stop** at the end of the quarter.",
+      weakWord: "stop",
+      answer: "cease",
+      distractors: ["halt", "end", "discontinue"],
+    },
+  ],
+  foster: [
+    {
+      sentence: "Good documentation **encourages** knowledge sharing across the whole organization.",
+      weakWord: "encourages",
+      answer: "fosters",
+      distractors: ["promotes", "supports", "nurtures"],
+    },
+  ],
+  contemplate: [
+    {
+      sentence: "Take time to **think carefully about** the downstream effects before committing to this approach.",
+      weakWord: "think carefully about",
+      answer: "contemplate",
+      distractors: ["consider", "evaluate", "assess"],
+    },
+  ],
+  ponder: [
+    {
+      sentence: "She **thought over** the tradeoffs for days before choosing an architecture.",
+      weakWord: "thought over",
+      answer: "pondered",
+      distractors: ["considered", "weighed", "deliberated"],
+    },
+  ],
+  fathom: [
+    {
+      sentence: "It was hard to **understand** why such a critical bug had passed code review.",
+      weakWord: "understand",
+      answer: "fathom",
+      distractors: ["grasp", "comprehend", "imagine"],
+    },
+  ],
+  discern: [
+    {
+      sentence: "It takes experience to **tell** which technical debt is genuinely dangerous.",
+      weakWord: "tell",
+      answer: "discern",
+      distractors: ["recognize", "identify", "detect"],
+    },
+  ],
+  speculate: [
+    {
+      sentence: "Without the production logs, we can only **guess** about the root cause.",
+      weakWord: "guess",
+      answer: "speculate",
+      distractors: ["theorize", "estimate", "assume"],
+    },
+  ],
+  ascertain: [
+    {
+      sentence: "We need to **find out for certain** whether the data was corrupted before we proceed.",
+      weakWord: "find out for certain",
+      answer: "ascertain",
+      distractors: ["verify", "determine", "establish"],
+    },
+  ],
+  moreover: [
+    {
+      sentence: "The approach is faster; **on top of that**, it requires significantly less maintenance.",
+      weakWord: "on top of that",
+      answer: "moreover",
+      distractors: ["furthermore", "also", "additionally"],
+    },
+  ],
+  consequently: [
+    {
+      sentence: "The data pipeline failed; **as a result**, the report was not generated on time.",
+      weakWord: "as a result",
+      answer: "consequently",
+      distractors: ["therefore", "thus", "hence"],
+    },
+  ],
+  nevertheless: [
+    {
+      sentence: "The timeline was extremely aggressive; **even so**, the team delivered on schedule.",
+      weakWord: "even so",
+      answer: "nevertheless",
+      distractors: ["regardless", "still", "yet"],
+    },
+  ],
+  notwithstanding: [
+    {
+      sentence: "**In spite of** the budget cuts, the project still met its original goals.",
+      weakWord: "In spite of",
+      answer: "notwithstanding",
+      distractors: ["Despite", "Regardless of", "Even with"],
+    },
+  ],
+  conversely: [
+    {
+      sentence: "More features can attract users; **on the other hand**, they can overwhelm them.",
+      weakWord: "on the other hand",
+      answer: "conversely",
+      distractors: ["alternatively", "in contrast", "however"],
+    },
+  ],
+  albeit: [
+    {
+      sentence: "The fix worked, **though** with a minor performance trade-off.",
+      weakWord: "though",
+      answer: "albeit",
+      distractors: ["even if", "despite", "although"],
+    },
+  ],
+  whereas: [
+    {
+      sentence: "The first system was synchronous, **while** the new one is fully event-driven.",
+      weakWord: "while",
+      answer: "whereas",
+      distractors: ["although", "but", "however"],
+    },
+  ],
+  hence: [
+    {
+      sentence: "The service lacked retry logic; **for this reason** the failures cascaded.",
+      weakWord: "for this reason",
+      answer: "hence",
+      distractors: ["therefore", "thus", "consequently"],
+    },
+  ],
+  thus: [
+    {
+      sentence: "The dependency was removed, **thereby** reducing the build time by half.",
+      weakWord: "thereby",
+      answer: "thus",
+      distractors: ["therefore", "hence", "so"],
+    },
+  ],
+  accordingly: [
+    {
+      sentence: "The scope changed significantly; the timeline was adjusted **in response**.",
+      weakWord: "in response",
+      answer: "accordingly",
+      distractors: ["therefore", "consequently", "as a result"],
+    },
+  ],
+  subsequently: [
+    {
+      sentence: "The patch was applied and **later** tested thoroughly in staging.",
+      weakWord: "later",
+      answer: "subsequently",
+      distractors: ["afterward", "then", "following"],
+    },
+  ],
+  ultimately: [
+    {
+      sentence: "We tried several approaches; **in the end**, the simplest one worked best.",
+      weakWord: "in the end",
+      answer: "ultimately",
+      distractors: ["finally", "eventually", "at last"],
+    },
+  ],
+  fundamentally: [
+    {
+      sentence: "This is not a process problem; it is **at its core** a communication problem.",
+      weakWord: "at its core",
+      answer: "fundamentally",
+      distractors: ["essentially", "basically", "inherently"],
+    },
+  ],
+  notably: [
+    {
+      sentence: "Several teams improved delivery times; **in particular**, the platform team cut theirs in half.",
+      weakWord: "in particular",
+      answer: "notably",
+      distractors: ["especially", "specifically", "particularly"],
+    },
+  ],
+  henceforth: [
+    {
+      sentence: "**From now on**, all deployments must go through the new approval process.",
+      weakWord: "From now on",
+      answer: "henceforth",
+      distractors: ["Going forward", "Hereafter", "Subsequently"],
+    },
+  ],
+  consensus: [
+    {
+      sentence: "We finally reached **agreement** on the architecture after three rounds of review.",
+      weakWord: "agreement",
+      answer: "consensus",
+      distractors: ["alignment", "approval", "conclusion"],
+    },
+  ],
+  allocation: [
+    {
+      sentence: "The **distribution** of budget across teams needs to be revisited every quarter.",
+      weakWord: "distribution",
+      answer: "allocation",
+      distractors: ["assignment", "division", "breakdown"],
+    },
+  ],
+  constraint: [
+    {
+      sentence: "The main **limitation** is not budget — it's available engineering time.",
+      weakWord: "limitation",
+      answer: "constraint",
+      distractors: ["restriction", "barrier", "obstacle"],
+    },
+  ],
+  incentive: [
+    {
+      sentence: "Without a clear **motivation**, adoption of the new tool will remain slow.",
+      weakWord: "motivation",
+      answer: "incentive",
+      distractors: ["reason", "reward", "encouragement"],
+    },
+  ],
+  mandate: [
+    {
+      sentence: "The team operates under an **order** to reduce infrastructure costs by thirty percent.",
+      weakWord: "order",
+      answer: "mandate",
+      distractors: ["directive", "requirement", "goal"],
+    },
+  ],
+  venture: [
+    {
+      sentence: "The joint **undertaking** required both companies to share proprietary data.",
+      weakWord: "undertaking",
+      answer: "venture",
+      distractors: ["project", "deal", "partnership"],
+    },
+  ],
+  legitimate: [
+    {
+      sentence: "There are **valid** concerns about the privacy implications of this feature.",
+      weakWord: "valid",
+      answer: "legitimate",
+      distractors: ["real", "genuine", "reasonable"],
+    },
+  ],
+  pristine: [
+    {
+      sentence: "The staging environment should be restored to a **clean** state before each test run.",
+      weakWord: "clean",
+      answer: "pristine",
+      distractors: ["fresh", "original", "untouched"],
+    },
+  ],
+  deficient: [
+    {
+      sentence: "The onboarding process is **lacking** in technical depth for new engineers.",
+      weakWord: "lacking",
+      answer: "deficient",
+      distractors: ["weak", "inadequate", "incomplete"],
+    },
+  ],
+  dynamic: [
+    {
+      sentence: "The market is so **fast-changing** that a strategy from last year may fail today.",
+      weakWord: "fast-changing",
+      answer: "dynamic",
+      distractors: ["volatile", "active", "shifting"],
+    },
+  ],
+  uniform: [
+    {
+      sentence: "A **consistent** naming convention across all services reduces onboarding friction.",
+      weakWord: "consistent",
+      answer: "uniform",
+      distractors: ["standardized", "common", "shared"],
+    },
+  ],
+  merit: [
+    {
+      sentence: "The proposal has real **value** and deserves serious consideration from the board.",
+      weakWord: "value",
+      answer: "merit",
+      distractors: ["worth", "quality", "potential"],
+    },
+  ],
+  execution: [
+    {
+      sentence: "The strategy was sound; the failure was in **delivery**.",
+      weakWord: "delivery",
+      answer: "execution",
+      distractors: ["implementation", "performance", "follow-through"],
+    },
+  ],
+  contentious: [
+    {
+      sentence: "The decision to deprecate the old API was **controversial** among long-term users.",
+      weakWord: "controversial",
+      answer: "contentious",
+      distractors: ["disputed", "divisive", "sensitive"],
+    },
+  ],
+  tenable: [
+    {
+      sentence: "That position is no longer **defensible** given the new evidence we uncovered.",
+      weakWord: "defensible",
+      answer: "tenable",
+      distractors: ["sustainable", "reasonable", "supportable"],
+    },
+  ],
+  indeterminate: [
+    {
+      sentence: "The root cause remains **unclear** pending a deeper analysis of the logs.",
+      weakWord: "unclear",
+      answer: "indeterminate",
+      distractors: ["unknown", "undefined", "uncertain"],
+    },
+  ],
+  apparent: [
+    {
+      sentence: "It was **obvious** to everyone in the room that the rollout had failed.",
+      weakWord: "obvious",
+      answer: "apparent",
+      distractors: ["clear", "evident", "plain"],
+    },
+  ],
+  magnificent: [
+    {
+      sentence: "She delivered a truly **impressive** keynote that left the audience speechless.",
+      weakWord: "impressive",
+      answer: "magnificent",
+      distractors: ["spectacular", "grand", "brilliant"],
+    },
+  ],
+  courageous: [
+    {
+      sentence: "It was very **brave** to push back on leadership when everyone else stayed silent.",
+      weakWord: "brave",
+      answer: "courageous",
+      distractors: ["bold", "daring", "resolute"],
+    },
+  ],
+  sincere: [
+    {
+      sentence: "Her apology was **genuine** and immediately defused the tension in the room.",
+      weakWord: "genuine",
+      answer: "sincere",
+      distractors: ["heartfelt", "honest", "authentic"],
+    },
+  ],
+  restless: [
+    {
+      sentence: "He grew **unsettled** in the role once the main technical challenges were solved.",
+      weakWord: "unsettled",
+      answer: "restless",
+      distractors: ["bored", "frustrated", "disengaged"],
+    },
+  ],
+  unmotivated: [
+    {
+      sentence: "Repetitive, low-impact work left the team feeling **uninspired**.",
+      weakWord: "uninspired",
+      answer: "unmotivated",
+      distractors: ["disengaged", "apathetic", "disinterested"],
+    },
+  ],
+  inconsiderate: [
+    {
+      sentence: "Scheduling a two-hour meeting with no agenda is **thoughtless** of people's time.",
+      weakWord: "thoughtless",
+      answer: "inconsiderate",
+      distractors: ["rude", "selfish", "careless"],
+    },
+  ],
+  drastic: [
+    {
+      sentence: "A full rewrite is a very **extreme** step that should be considered carefully.",
+      weakWord: "extreme",
+      answer: "drastic",
+      distractors: ["radical", "severe", "sweeping"],
+    },
+  ],
+  fulfilling: [
+    {
+      sentence: "She found the mentorship role far more **rewarding** than the individual contributor track.",
+      weakWord: "rewarding",
+      answer: "fulfilling",
+      distractors: ["satisfying", "meaningful", "gratifying"],
+    },
+  ],
+  breathtaking: [
+    {
+      sentence: "Her command of the negotiation was **astonishing** — she anticipated every move.",
+      weakWord: "astonishing",
+      answer: "breathtaking",
+      distractors: ["stunning", "remarkable", "impressive"],
+    },
+  ],
+  "thought-provoking": [
+    {
+      sentence: "His talk raised some truly **challenging** questions about the ethics of AI.",
+      weakWord: "challenging",
+      answer: "thought-provoking",
+      distractors: ["stimulating", "interesting", "provocative"],
+    },
+  ],
+  intriguing: [
+    {
+      sentence: "The anomaly in the data was **interesting** enough to justify a full investigation.",
+      weakWord: "interesting",
+      answer: "intriguing",
+      distractors: ["fascinating", "curious", "puzzling"],
+    },
+  ],
+  reproach: [
+    {
+      sentence: "Her tone carried a gentle **criticism** that was more effective than outright anger.",
+      weakWord: "criticism",
+      answer: "reproach",
+      distractors: ["rebuke", "censure", "disapproval"],
+    },
+  ],
+  repudiate: [
+    {
+      sentence: "The company firmly **rejected** the vendor's interpretation of the contract.",
+      weakWord: "rejected",
+      answer: "repudiated",
+      distractors: ["denied", "disputed", "refuted"],
+    },
+  ],
+  diatribe: [
+    {
+      sentence: "His post-mortem turned into a **rant** against the entire review process.",
+      weakWord: "rant",
+      answer: "diatribe",
+      distractors: ["tirade", "attack", "lecture"],
+    },
+  ],
+  polemic: [
+    {
+      sentence: "The article read less like analysis and more like a **attack** on the entire industry.",
+      weakWord: "attack",
+      answer: "polemic",
+      distractors: ["diatribe", "argument", "critique"],
+    },
+  ],
+  denigrate: [
+    {
+      sentence: "He had a habit of **belittling** others' contributions in public forums.",
+      weakWord: "belittling",
+      answer: "denigrate",
+      distractors: ["disparage", "undermine", "dismiss"],
+    },
+  ],
+  deride: [
+    {
+      sentence: "Critics **mocked** the product as a feature-length bug report.",
+      weakWord: "mocked",
+      answer: "derided",
+      distractors: ["ridiculed", "dismissed", "scorned"],
+    },
+  ],
+  invective: [
+    {
+      sentence: "His review was full of **abusive language** that buried any useful feedback.",
+      weakWord: "abusive language",
+      answer: "invective",
+      distractors: ["vitriol", "insults", "hostility"],
+    },
+  ],
+  discord: [
+    {
+      sentence: "The reorganization created real **conflict** across teams that had worked well together.",
+      weakWord: "conflict",
+      answer: "discord",
+      distractors: ["tension", "friction", "disagreement"],
+    },
+  ],
+  subordinate: [
+    {
+      sentence: "In this model, short-term metrics are **secondary** to long-term organizational health.",
+      weakWord: "secondary",
+      answer: "subordinate",
+      distractors: ["lower", "less important", "minor"],
+    },
+  ],
+  personnel: [
+    {
+      sentence: "The project requires **staff** with both legal and technical expertise.",
+      weakWord: "staff",
+      answer: "personnel",
+      distractors: ["employees", "people", "members"],
+    },
+  ],
+  procedure: [
+    {
+      sentence: "Following the **process** prevented a repeat of last quarter's major outage.",
+      weakWord: "process",
+      answer: "procedure",
+      distractors: ["protocol", "method", "routine"],
+    },
+  ],
+  portfolio: [
+    {
+      sentence: "The product **range** needs pruning — we are supporting too many initiatives.",
+      weakWord: "range",
+      answer: "portfolio",
+      distractors: ["collection", "suite", "lineup"],
+    },
+  ],
+  enterprise: [
+    {
+      sentence: "The platform migration was a two-year **undertaking** that touched every part of the system.",
+      weakWord: "undertaking",
+      answer: "enterprise",
+      distractors: ["project", "initiative", "effort"],
+    },
+  ],
+  strategic: [
+    {
+      sentence: "Hiring this engineer is a **planned** investment in the long-term infrastructure team.",
+      weakWord: "planned",
+      answer: "strategic",
+      distractors: ["deliberate", "calculated", "intentional"],
+    },
+  ],
+  establish: [
+    {
+      sentence: "We need to **set up** clear ownership before the project scales any further.",
+      weakWord: "set up",
+      answer: "establish",
+      distractors: ["create", "define", "assign"],
+    },
+  ],
+  coordination: [
+    {
+      sentence: "Poor **organization** between teams caused the two features to conflict on release day.",
+      weakWord: "organization",
+      answer: "coordination",
+      distractors: ["communication", "alignment", "collaboration"],
+    },
+  ],
+  exigency: [
+    {
+      sentence: "The **urgency** of the outage required skipping the normal change approval process.",
+      weakWord: "urgency",
+      answer: "exigency",
+      distractors: ["severity", "crisis", "pressure"],
+    },
+  ],
+  supposition: [
+    {
+      sentence: "The entire plan rests on the **assumption** that the vendor will deliver on time.",
+      weakWord: "assumption",
+      answer: "supposition",
+      distractors: ["belief", "hypothesis", "expectation"],
+    },
+  ],
+  prowess: [
+    {
+      sentence: "Her technical **skill** was matched only by her ability to communicate clearly.",
+      weakWord: "skill",
+      answer: "prowess",
+      distractors: ["mastery", "expertise", "ability"],
+    },
+  ],
+  mastery: [
+    {
+      sentence: "True **expertise** in a domain takes years of deliberate, focused practice.",
+      weakWord: "expertise",
+      answer: "mastery",
+      distractors: ["proficiency", "command", "fluency"],
+    },
+  ],
+  authenticity: [
+    {
+      sentence: "Customers respond to **genuineness** in brand communication more than polished messaging.",
+      weakWord: "genuineness",
+      answer: "authenticity",
+      distractors: ["honesty", "sincerity", "integrity"],
+    },
+  ],
+  epiphany: [
+    {
+      sentence: "The **revelation** came during a walk — the whole architecture suddenly made sense.",
+      weakWord: "revelation",
+      answer: "epiphany",
+      distractors: ["realization", "insight", "breakthrough"],
+    },
+  ],
+  fulfillment: [
+    {
+      sentence: "Shipping work that genuinely helps people brings a **satisfaction** no bonus can match.",
+      weakWord: "satisfaction",
+      answer: "fulfillment",
+      distractors: ["gratification", "reward", "joy"],
+    },
+  ],
+  integrity: [
+    {
+      sentence: "She maintained her **honesty** even under pressure to manipulate the results.",
+      weakWord: "honesty",
+      answer: "integrity",
+      distractors: ["ethics", "principles", "character"],
+    },
+  ],
+  empathy: [
+    {
+      sentence: "**Understanding** the user's frustration is what separates good product decisions from technically correct ones.",
+      weakWord: "Understanding",
+      answer: "empathy",
+      distractors: ["Awareness", "Compassion", "Knowledge"],
+    },
+  ],
+  core: [
+    {
+      sentence: "At its **heart**, this is a trust problem, not a technical one.",
+      weakWord: "heart",
+      answer: "core",
+      distractors: ["center", "root", "foundation"],
+    },
+  ],
+  consistent: [
+    {
+      sentence: "**Steady** communication keeps remote teams aligned without constant check-in meetings.",
+      weakWord: "Steady",
+      answer: "consistent",
+      distractors: ["Regular", "Reliable", "Frequent"],
+    },
+  ],
+  enhance: [
+    {
+      sentence: "Regular retrospectives **improve** the team's ability to self-correct over time.",
+      weakWord: "improve",
+      answer: "enhance",
+      distractors: ["strengthen", "support", "boost"],
+    },
+  ],
+  elevate: [
+    {
+      sentence: "Her feedback **raised** the proposal from good to genuinely excellent.",
+      weakWord: "raised",
+      answer: "elevated",
+      distractors: ["improved", "upgraded", "transformed"],
+    },
+  ],
+  resonate: [
+    {
+      sentence: "A vision that **connects** with engineers aligns their effort without constant direction.",
+      weakWord: "connects",
+      answer: "resonates",
+      distractors: ["registers", "clicks", "lands"],
+    },
+  ],
+  fortify: [
+    {
+      sentence: "Adding rate limiting will **strengthen** the API against abuse and overload.",
+      weakWord: "strengthen",
+      answer: "fortify",
+      distractors: ["protect", "reinforce", "harden"],
+    },
+  ],
+  circumscribe: [
+    {
+      sentence: "The legal agreement **limited** the scope of what each party could independently build.",
+      weakWord: "limited",
+      answer: "circumscribed",
+      distractors: ["restricted", "constrained", "defined"],
+    },
+  ],
+  promulgate: [
+    {
+      sentence: "The new security policy was **announced** across the entire organization last quarter.",
+      weakWord: "announced",
+      answer: "promulgated",
+      distractors: ["distributed", "communicated", "published"],
+    },
+  ],
+  adjudicate: [
+    {
+      sentence: "A neutral party was brought in to **decide** the disagreement between the two teams.",
+      weakWord: "decide",
+      answer: "adjudicate",
+      distractors: ["resolve", "arbitrate", "settle"],
+    },
+  ],
+  obviate: [
+    {
+      sentence: "Automating the check would **remove** the need for a manual review step entirely.",
+      weakWord: "remove",
+      answer: "obviate",
+      distractors: ["eliminate", "prevent", "bypass"],
+    },
+  ],
+  preclude: [
+    {
+      sentence: "Early alignment **prevents** most of the conflicts that plagued the previous project.",
+      weakWord: "prevents",
+      answer: "precludes",
+      distractors: ["avoids", "stops", "eliminates"],
+    },
+  ],
+  abrogate: [
+    {
+      sentence: "The new legislation **repealed** the protections the previous regulation had provided.",
+      weakWord: "repealed",
+      answer: "abrogated",
+      distractors: ["removed", "cancelled", "overturned"],
+    },
+  ],
+  attenuate: [
+    {
+      sentence: "Adding a caching layer **reduces** the load on the primary database significantly.",
+      weakWord: "reduces",
+      answer: "attenuates",
+      distractors: ["decreases", "lessens", "lowers"],
+    },
+  ],
+  ethereal: [
+    {
+      sentence: "The user interface had an **delicate** quality — functional yet almost weightless.",
+      weakWord: "delicate",
+      answer: "ethereal",
+      distractors: ["refined", "airy", "light"],
+    },
+  ],
+  sublime: [
+    {
+      sentence: "The simplicity of the final design was, after years of complexity, almost **perfect**.",
+      weakWord: "perfect",
+      answer: "sublime",
+      distractors: ["magnificent", "transcendent", "exquisite"],
+    },
+  ],
+  inefficacious: [
+    {
+      sentence: "The workaround proved completely **ineffective** under high load conditions.",
+      weakWord: "ineffective",
+      answer: "inefficacious",
+      distractors: ["useless", "futile", "powerless"],
+    },
+  ],
+  obstreperous: [
+    {
+      sentence: "The **disruptive** stakeholder derailed three consecutive planning sessions.",
+      weakWord: "disruptive",
+      answer: "obstreperous",
+      distractors: ["unruly", "difficult", "uncooperative"],
+    },
+  ],
+  perspicacious: [
+    {
+      sentence: "Her **sharp** reading of the competitive landscape gave the team months of advantage.",
+      weakWord: "sharp",
+      answer: "perspicacious",
+      distractors: ["astute", "perceptive", "insightful"],
+    },
+  ],
+  sagacious: [
+    {
+      sentence: "His **wise** advice prevented the company from making a very costly strategic mistake.",
+      weakWord: "wise",
+      answer: "sagacious",
+      distractors: ["astute", "judicious", "prescient"],
+    },
+  ],
+  erudite: [
+    {
+      sentence: "Her **learned** explanation connected abstract theory to everyday engineering practice.",
+      weakWord: "learned",
+      answer: "erudite",
+      distractors: ["scholarly", "knowledgeable", "intellectual"],
+    },
+  ],
+  loquacious: [
+    {
+      sentence: "His **talkative** style worked well in client presentations but slowed down standups.",
+      weakWord: "talkative",
+      answer: "loquacious",
+      distractors: ["verbose", "garrulous", "chatty"],
+    },
+  ],
+  taciturn: [
+    {
+      sentence: "The most **quiet** engineer on the team was also consistently the most perceptive.",
+      weakWord: "quiet",
+      answer: "taciturn",
+      distractors: ["reserved", "reticent", "withdrawn"],
+    },
+  ],
+  sanguine: [
+    {
+      sentence: "He remained **optimistic** about the deadline despite the mounting delays.",
+      weakWord: "optimistic",
+      answer: "sanguine",
+      distractors: ["hopeful", "confident", "positive"],
+    },
+  ],
+  phlegmatic: [
+    {
+      sentence: "Her **calm** response to the crisis steadied everyone around her.",
+      weakWord: "calm",
+      answer: "phlegmatic",
+      distractors: ["stoic", "impassive", "composed"],
+    },
+  ],
+  ebullient: [
+    {
+      sentence: "Her **energetic** personality was infectious and lifted the team during long sprints.",
+      weakWord: "energetic",
+      answer: "ebullient",
+      distractors: ["enthusiastic", "exuberant", "vivacious"],
+    },
+  ],
+  truculent: [
+    {
+      sentence: "His **aggressive** manner in code reviews alienated contributors who could have been allies.",
+      weakWord: "aggressive",
+      answer: "truculent",
+      distractors: ["combative", "hostile", "belligerent"],
+    },
+  ],
+  petulant: [
+    {
+      sentence: "His **childish** reaction to the scope change undermined his credibility with leadership.",
+      weakWord: "childish",
+      answer: "petulant",
+      distractors: ["sulky", "irritable", "immature"],
+    },
+  ],
+  insouciant: [
+    {
+      sentence: "His **careless** attitude toward deadlines became a real problem as the stakes rose.",
+      weakWord: "careless",
+      answer: "insouciant",
+      distractors: ["nonchalant", "indifferent", "casual"],
+    },
+  ],
+  diffident: [
+    {
+      sentence: "She was **shy** in large meetings despite having the strongest technical opinions in the room.",
+      weakWord: "shy",
+      answer: "diffident",
+      distractors: ["reserved", "hesitant", "modest"],
+    },
+  ],
+  obsequious: [
+    {
+      sentence: "His **fawning** manner around executives masked a much sharper underlying agenda.",
+      weakWord: "fawning",
+      answer: "obsequious",
+      distractors: ["sycophantic", "servile", "submissive"],
+    },
+  ],
+  supercilious: [
+    {
+      sentence: "His **condescending** dismissal of junior engineers' ideas severely damaged team morale.",
+      weakWord: "condescending",
+      answer: "supercilious",
+      distractors: ["arrogant", "disdainful", "patronizing"],
+    },
+  ],
+  verisimilitude: [
+    {
+      sentence: "The simulation achieved enough **realism** to be genuinely useful for training purposes.",
+      weakWord: "realism",
+      answer: "verisimilitude",
+      distractors: ["authenticity", "accuracy", "plausibility"],
+    },
+  ],
+  simulacrum: [
+    {
+      sentence: "The process became a **imitation** of agile — the rituals without any of the principles.",
+      weakWord: "imitation",
+      answer: "simulacrum",
+      distractors: ["parody", "replica", "shadow"],
+    },
+  ],
+  zeitgeist: [
+    {
+      sentence: "The product caught the **spirit of the times** perfectly and became synonymous with the era.",
+      weakWord: "spirit of the times",
+      answer: "zeitgeist",
+      distractors: ["mood", "ethos", "trend"],
+    },
+  ],
+  schadenfreude: [
+    {
+      sentence: "There was an uncomfortable hint of **gloating** in the industry's reaction to the competitor's outage.",
+      weakWord: "gloating",
+      answer: "schadenfreude",
+      distractors: ["satisfaction", "delight", "relief"],
+    },
+  ],
+  weltanschauung: [
+    {
+      sentence: "His **worldview** shaped every product decision he made, for better and for worse.",
+      weakWord: "worldview",
+      answer: "weltanschauung",
+      distractors: ["philosophy", "perspective", "outlook"],
+    },
+  ],
+  "raison d'être": [
+    {
+      sentence: "Reducing latency is the product's core **purpose** — every feature decision flows from it.",
+      weakWord: "purpose",
+      answer: "raison d'être",
+      distractors: ["mission", "goal", "identity"],
+    },
+  ],
+  incandescent: [
+    {
+      sentence: "Her **brilliant** presentation lit up a room full of weary executives.",
+      weakWord: "brilliant",
+      answer: "incandescent",
+      distractors: ["luminous", "radiant", "dazzling"],
+    },
+  ],
+  resplendent: [
+    {
+      sentence: "The redesigned dashboard was truly **impressive** — every detail deliberate, every color purposeful.",
+      weakWord: "impressive",
+      answer: "resplendent",
+      distractors: ["magnificent", "splendid", "stunning"],
+    },
+  ],
+  mellifluous: [
+    {
+      sentence: "His **smooth** voice made even the most technical explanation easy to follow.",
+      weakWord: "smooth",
+      answer: "mellifluous",
+      distractors: ["dulcet", "harmonious", "pleasant"],
+    },
+  ],
+  sonorous: [
+    {
+      sentence: "The **deep** cadence of her closing argument left the room silent for a moment.",
+      weakWord: "deep",
+      answer: "sonorous",
+      distractors: ["resonant", "rich", "powerful"],
+    },
+  ],
+  dulcet: [
+    {
+      sentence: "The **gentle** notification sound was designed to calm rather than alarm the user.",
+      weakWord: "gentle",
+      answer: "dulcet",
+      distractors: ["soft", "sweet", "soothing"],
+    },
+  ],
+  indefatigable: [
+    {
+      sentence: "Her **tireless** pursuit of the root cause finally paid off after three days.",
+      weakWord: "tireless",
+      answer: "indefatigable",
+      distractors: ["relentless", "persistent", "inexhaustible"],
+    },
+  ],
+  inexorable: [
+    {
+      sentence: "The **unstoppable** march of technical debt eventually forces a major reckoning.",
+      weakWord: "unstoppable",
+      answer: "inexorable",
+      distractors: ["relentless", "inevitable", "unforgiving"],
+    },
+  ],
+  implacable: [
+    {
+      sentence: "She was **unyielding** on code quality, regardless of timeline pressure.",
+      weakWord: "unyielding",
+      answer: "implacable",
+      distractors: ["inflexible", "unrelenting", "firm"],
+    },
+  ],
+  intransigent: [
+    {
+      sentence: "The vendor was completely **unwilling to compromise** on pricing, which ended the negotiation.",
+      weakWord: "unwilling to compromise",
+      answer: "intransigent",
+      distractors: ["inflexible", "uncompromising", "stubborn"],
+    },
+  ],
+  redoubtable: [
+    {
+      sentence: "She built a **formidable** reputation as someone who ships without ever cutting corners.",
+      weakWord: "formidable",
+      answer: "redoubtable",
+      distractors: ["impressive", "commanding", "fearsome"],
+    },
+  ],
 };
