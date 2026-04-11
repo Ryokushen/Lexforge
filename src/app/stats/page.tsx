@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/db";
+import { useBootstrap } from "@/lib/bootstrap-context";
 import { useStats } from "@/hooks/use-stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -110,6 +111,7 @@ const TIER_INFO: Record<string, { label: string; color: string; bg: string; bord
 // ── Page ─────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
+  const { seedStatus } = useBootstrap();
   const { profile, dueCount, wordCount, loading } = useStats();
   const [recentLogs, setRecentLogs] = useState<ReviewLog[]>([]);
 
@@ -120,7 +122,7 @@ export default function StatsPage() {
       .limit(50)
       .toArray()
       .then(setRecentLogs);
-  }, []);
+  }, [seedStatus]);
 
   if (loading || !profile) {
     return (

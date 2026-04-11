@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { db, getOrCreateProfile } from "@/lib/db";
+import { useBootstrap } from "@/lib/bootstrap-context";
 import { getDueCount, getWordCount } from "@/lib/scheduler";
 import { getAvailableNewCount } from "@/lib/session-engine";
 import type { Difficulty, UserProfile } from "@/lib/types";
@@ -18,21 +19,26 @@ async function loadStatsSnapshot() {
 }
 
 export function useStats() {
+  const { seedStatus } = useBootstrap();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [dueCount, setDueCount] = useState(0);
   const [newCount, setNewCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const snapshot = await loadStatsSnapshot();
+  const applySnapshot = useCallback((snapshot: Awaited<ReturnType<typeof loadStatsSnapshot>>) => {
     setProfile(snapshot.profile);
     setDueCount(snapshot.dueCount);
     setNewCount(snapshot.newCount);
     setWordCount(snapshot.wordCount);
-    setLoading(false);
-  }, []);
+    setLoading(seedStatus === "seeding" && snapshot.wordCount === 0);
+  }, [seedStatus]);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const snapshot = await loadStatsSnapshot();
+    applySnapshot(snapshot);
+  }, [applySnapshot]);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,12 +46,7 @@ export function useStats() {
     async function loadInitialStats() {
       const snapshot = await loadStatsSnapshot();
       if (cancelled) return;
-
-      setProfile(snapshot.profile);
-      setDueCount(snapshot.dueCount);
-      setNewCount(snapshot.newCount);
-      setWordCount(snapshot.wordCount);
-      setLoading(false);
+      applySnapshot(snapshot);
     }
 
     void loadInitialStats();
@@ -53,7 +54,7 @@ export function useStats() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applySnapshot]);
 
   const setDifficulty = useCallback(async (difficulty: Difficulty) => {
     await db.userProfile.update(1, { difficulty });

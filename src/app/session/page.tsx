@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/use-session";
 import { useStats } from "@/hooks/use-stats";
+import { useBootstrap } from "@/lib/bootstrap-context";
 import { RecallPrompt } from "@/components/session/recall-prompt";
 import { ContextPrompt } from "@/components/session/context-prompt";
 import { ReviewResult } from "@/components/session/review-result";
@@ -18,7 +19,8 @@ import { BookOpen, ArrowLeft } from "lucide-react";
 
 export default function SessionPage() {
   const router = useRouter();
-  const { profile } = useStats();
+  const { profile, loading: statsLoading } = useStats();
+  const { seedStatus } = useBootstrap();
   const {
     state,
     currentWord,
@@ -38,12 +40,12 @@ export default function SessionPage() {
   } = useSession();
 
   useEffect(() => {
-    if (state === "idle" && profile) {
+    if (state === "idle" && profile && seedStatus !== "seeding") {
       startSession(profile.difficulty, profile.level);
     }
-  }, [state, startSession, profile]);
+  }, [state, startSession, profile, seedStatus]);
 
-  if (state === "loading") {
+  if (state === "loading" || statsLoading || (state === "idle" && seedStatus === "seeding")) {
     return (
       <main className="max-w-2xl mx-auto px-4 py-4 text-center">
         <motion.div
@@ -52,7 +54,9 @@ export default function SessionPage() {
           className="flex flex-col items-center gap-3"
         >
           <span className="text-3xl animate-pulse">&#x2694;&#xFE0F;</span>
-          <p className="text-muted-foreground text-sm">Preparing session...</p>
+          <p className="text-muted-foreground text-sm">
+            {seedStatus === "seeding" ? "Preparing your library..." : "Preparing session..."}
+          </p>
         </motion.div>
       </main>
     );

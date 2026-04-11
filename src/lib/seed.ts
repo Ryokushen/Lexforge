@@ -2,6 +2,8 @@ import { db } from "./db";
 import { addWordWithCard } from "./scheduler";
 import { SEED_WORDS } from "./seed-words";
 
+let seedPromise: Promise<void> | null = null;
+
 /** Seed the database with words, adding any new ones from SEED_WORDS. */
 export async function seedDatabase(): Promise<void> {
   const existing = await db.words.toArray();
@@ -20,4 +22,13 @@ export async function seedDatabase(): Promise<void> {
       createdAt: new Date(),
     });
   }
+}
+
+/** Run database seeding at most once per app session. */
+export function ensureSeedDatabase(): Promise<void> {
+  if (!seedPromise) {
+    seedPromise = seedDatabase();
+  }
+
+  return seedPromise;
 }

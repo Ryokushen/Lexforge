@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/db";
+import { useBootstrap } from "@/lib/bootstrap-context";
 import { addWordWithCard } from "@/lib/scheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,6 +109,7 @@ function WordRow({ word, isExpanded, onToggle }: { word: Word; isExpanded: boole
 
 export default function WordsPage() {
   const { profile } = useStats();
+  const { seedStatus } = useBootstrap();
   const playerLevel = profile?.level ?? 1;
   const [words, setWords] = useState<Word[]>([]);
   const [search, setSearch] = useState("");
@@ -140,7 +142,7 @@ export default function WordsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [seedStatus]);
 
   // Filter by tier + search
   const filtered = useMemo(() => {
@@ -215,6 +217,17 @@ export default function WordsPage() {
       </div>
     </Card>
   );
+
+  if (seedStatus === "seeding" && words.length === 0) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 py-4">
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
+          <span className="text-3xl animate-pulse">&#x2692;&#xFE0F;</span>
+          <p className="text-sm text-muted-foreground">Stocking your library...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-4 space-y-4">
