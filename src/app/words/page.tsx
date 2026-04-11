@@ -19,6 +19,11 @@ import { Plus, Search, BookOpen, ChevronDown, Lock } from "lucide-react";
 import { useStats } from "@/hooks/use-stats";
 import type { Word } from "@/lib/types";
 import { TIER_UNLOCK_LEVELS } from "@/lib/types";
+import {
+  isDuplicateWord,
+  isTierLocked,
+  type LibraryTierFilter,
+} from "@/lib/word-library";
 
 // ── Tier config ────────────────────────────────────────────────────────
 
@@ -35,8 +40,6 @@ const TIER_INFO: Record<string, { label: string; color: string; bg: string; bord
   "3": { label: "Power Words", color: "text-purple-500", bg: "bg-purple-500", border: "border-l-purple-500/40" },
   custom: { label: "Custom", color: "text-amber-500", bg: "bg-amber-500", border: "border-l-amber-500/40" },
 };
-
-type TierFilter = "all" | 1 | 2 | 3 | "custom";
 
 // ── Word row ───────────────────────────────────────────────────────────
 
@@ -108,13 +111,15 @@ export default function WordsPage() {
   const playerLevel = profile?.level ?? 1;
   const [words, setWords] = useState<Word[]>([]);
   const [search, setSearch] = useState("");
-  const [activeTier, setActiveTier] = useState<TierFilter>("all");
+  const [activeTier, setActiveTier] = useState<LibraryTierFilter>("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [newWord, setNewWord] = useState("");
   const [newDef, setNewDef] = useState("");
   const [newExample, setNewExample] = useState("");
+  const duplicateWord = isDuplicateWord(newWord, words);
+  const selectedTierLocked = isTierLocked(activeTier, playerLevel);
 
   const loadWords = useCallback(async () => {
     const all = await db.words.toArray();
@@ -172,7 +177,7 @@ export default function WordsPage() {
   }, [words]);
 
   const handleAdd = async () => {
-    if (!newWord.trim() || !newDef.trim()) return;
+    if (!newWord.trim() || !newDef.trim() || duplicateWord) return;
     await addWordWithCard({
       word: newWord.trim(),
       definition: newDef.trim(),
@@ -188,7 +193,7 @@ export default function WordsPage() {
     await loadWords();
   };
 
-  const tierFilters: { key: TierFilter; label: string }[] = [
+  const tierFilters: { key: LibraryTierFilter; label: string }[] = [
     { key: "all", label: "All" },
     { key: 1, label: "Tier 1" },
     { key: 2, label: "Tier 2" },
@@ -241,6 +246,11 @@ export default function WordsPage() {
                 value={newWord}
                 onChange={(e) => setNewWord(e.target.value)}
               />
+              {duplicateWord && (
+                <p className="text-sm text-red-500">
+                  This word is already in your library.
+                </p>
+              )}
               <Input
                 placeholder="Definition"
                 value={newDef}
@@ -254,7 +264,7 @@ export default function WordsPage() {
               <Button
                 onClick={handleAdd}
                 className="w-full"
-                disabled={!newWord.trim() || !newDef.trim()}
+                disabled={!newWord.trim() || !newDef.trim() || duplicateWord}
               >
                 Add to Library
               </Button>
@@ -280,6 +290,7 @@ export default function WordsPage() {
           const count = tierCounts[String(key)] || 0;
           const isActive = activeTier === key;
           const tierInfo = key !== "all" ? TIER_INFO[String(key)] : null;
+          const locked = isTierLocked(key, playerLevel);
 
           return (
             <Button
@@ -287,10 +298,12 @@ export default function WordsPage() {
               variant={isActive ? "default" : "ghost"}
               size="sm"
               onClick={() => setActiveTier(key)}
+              disabled={locked}
               className={`gap-1 text-xs shrink-0 ${
                 isActive && tierInfo ? `${tierInfo.bg} hover:${tierInfo.bg}/90` : ""
               }`}
             >
+              {locked && <Lock className="size-3" />}
               {label}
               <span className={`text-[10px] tabular-nums ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
                 {count}
@@ -336,6 +349,12 @@ export default function WordsPage() {
             );
           })}
         </div>
+      ) : selectedTierLocked ? (
+        <div className="rounded-xl bg-muted/10 border border-border/20 p-4 text-center text-sm text-muted-foreground/50">
+          <Lock className="size-5 mx-auto mb-1.5 opacity-40" />
+          Reach Level {TIER_UNLOCK_LEVELS[String(activeTier)]} to unlock{" "}
+          {TIER_INFO[String(activeTier)]?.label ?? "this tier"}
+        </div>
       ) : (
         // Filtered single-tier view
         filtered.length > 0 ? (
@@ -343,7 +362,7 @@ export default function WordsPage() {
         ) : null
       )}
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && !selectedTierLocked && (
         <div className="text-center py-8">
           <BookOpen className="size-7 text-muted-foreground/50 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">

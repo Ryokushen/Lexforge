@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,15 @@ export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps
   useEffect(() => {
     onSubmitRef.current = onSubmit;
   }, [onSubmit]);
+
+  const handleSelect = useCallback((definition: string) => {
+    if (selected || submittedRef.current) return;
+    playTick();
+    setSelected(definition);
+    submittedRef.current = true;
+    clearInterval(timerRef.current);
+    setTimeout(() => onSubmitRef.current(definition), 200);
+  }, [selected]);
 
   // Reset on new word
   useEffect(() => {
@@ -60,16 +69,7 @@ export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selected, choices]);
-
-  const handleSelect = (definition: string) => {
-    if (selected || submittedRef.current) return;
-    playTick();
-    setSelected(definition);
-    submittedRef.current = true;
-    clearInterval(timerRef.current);
-    setTimeout(() => onSubmitRef.current(definition), 200);
-  };
+  }, [selected, choices, handleSelect]);
 
   const pct = Math.max(0, 1 - elapsed / TIMEOUT_MS) * 100;
   const isWarning = elapsed > TIMEOUT_MS - WARNING_MS;

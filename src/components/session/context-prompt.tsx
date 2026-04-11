@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +37,13 @@ export function ContextPrompt({ sentence, onSubmit }: ContextPromptProps) {
 
   const parts = sentence.sentence.split(`**${sentence.weakWord}**`);
 
+  const handleSelect = useCallback((choice: string) => {
+    if (selected !== null) return;
+    playTick();
+    setSelected(choice);
+    setTimeout(() => onSubmit(choice), 300);
+  }, [onSubmit, selected]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (selected !== null) return;
@@ -48,13 +55,7 @@ export function ContextPrompt({ sentence, onSubmit }: ContextPromptProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selected, choices]);
-
-  const handleSelect = (choice: string) => {
-    playTick();
-    setSelected(choice);
-    setTimeout(() => onSubmit(choice), 300);
-  };
+  }, [selected, choices, handleSelect]);
 
   return (
     <motion.div

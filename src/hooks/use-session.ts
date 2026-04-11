@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
 import type {
   ContextSentence,
   GameMode,
@@ -37,6 +37,7 @@ export function useSession() {
     useState<ContextSentence | null>(null);
   const [currentSpeedChoices, setCurrentSpeedChoices] =
     useState<{ definitions: string[]; correctDefinition: string } | null>(null);
+  const submittingRef = useRef(false);
 
   const currentWord = words[currentIndex] ?? null;
   const sessionSeed = words[0]?.word.id ?? 0;
@@ -67,6 +68,7 @@ export function useSession() {
 
   const startSession = useCallback(async (difficulty?: "easy" | "normal" | "hard", level?: number) => {
     setState("loading");
+    submittingRef.current = false;
     const sessionWords = await loadSessionWords(difficulty ?? "normal", level ?? 1);
     if (sessionWords.length === 0) {
       setState("idle");
@@ -83,44 +85,50 @@ export function useSession() {
   }, [configurePrompt]);
 
   async function submitAnswer(answer: string, manualRating?: 1 | 2 | 3 | 4) {
-    if (!currentWord || state !== "active") return;
+    if (!currentWord || state !== "active" || submittingRef.current) return;
+    submittingRef.current = true;
 
-    const responseTimeMs = Date.now() - promptStartTime;
-    const expectedAnswer = currentMode === "association" && associationPhase === "create"
-      ? "__create__"
-      : currentMode === "speed"
-        ? currentSpeedChoices?.correctDefinition
-        : currentContextSentence?.answer;
+    try {
+      const responseTimeMs = Date.now() - promptStartTime;
+      const expectedAnswer = currentMode === "association" && associationPhase === "create"
+        ? "__create__"
+        : currentMode === "speed"
+          ? currentSpeedChoices?.correctDefinition
+          : currentContextSentence?.answer;
 
-    const { result } = await processAnswer(
-      currentWord,
-      answer,
-      responseTimeMs,
-      currentMode,
-      expectedAnswer,
-      manualRating,
-    );
+      const { result } = await processAnswer(
+        currentWord,
+        answer,
+        responseTimeMs,
+        currentMode,
+        expectedAnswer,
+        manualRating,
+      );
 
-    // Play sound based on result
-    if (result.correct) {
-      // Count consecutive correct for streak sound
-      const prevCorrectStreak = results
-        .slice()
-        .reverse()
-        .findIndex((r) => !r.correct);
-      const streak =
-        prevCorrectStreak === -1 ? results.length : prevCorrectStreak;
-      if (streak >= 2) {
-        playStreakCorrect();
+      // Play sound based on result
+      if (result.correct) {
+        // Count consecutive correct for streak sound
+        const prevCorrectStreak = results
+          .slice()
+          .reverse()
+          .findIndex((r) => !r.correct);
+        const streak =
+          prevCorrectStreak === -1 ? results.length : prevCorrectStreak;
+        if (streak >= 2) {
+          playStreakCorrect();
+        } else {
+          playCorrect();
+        }
       } else {
-        playCorrect();
+        playIncorrect();
       }
-    } else {
-      playIncorrect();
-    }
 
-    setResults((prev) => [...prev, result]);
-    setState("reviewing");
+      setResults((prev) => [...prev, result]);
+      setState("reviewing");
+    } catch (error) {
+      submittingRef.current = false;
+      throw error;
+    }
   }
 
   const nextWord = useCallback(async () => {
@@ -137,12 +145,14 @@ export function useSession() {
     } else {
       setCurrentIndex(nextIndex);
       setPromptStartTime(Date.now());
+      submittingRef.current = false;
       configurePrompt(words[nextIndex], words);
       setState("active");
     }
   }, [configurePrompt, currentIndex, words, results]);
 
   const resetSession = useCallback(() => {
+    submittingRef.current = false;
     setState("idle");
     setWords([]);
     setCurrentIndex(0);
