@@ -65,15 +65,18 @@ const CORRECT_PER_STAT_POINT = 10;
 export function calculateStatGains(results: SessionResult[]): Partial<RPGStats> {
   const correct = results.filter((r) => r.correct).length;
   const speedCorrect = results.filter((r) => r.correct && r.mode === "speed").length;
+  const associationCorrect = results.filter((r) => r.correct && r.mode === "association").length;
 
   const recallGain = Math.floor(correct / CORRECT_PER_STAT_POINT);
   const retentionGain = Math.floor(correct / CORRECT_PER_STAT_POINT);
   const perceptionGain = Math.floor(speedCorrect / CORRECT_PER_STAT_POINT);
+  const creativityGain = Math.floor(associationCorrect / CORRECT_PER_STAT_POINT);
 
   const gains: Partial<RPGStats> = {};
   if (recallGain > 0) gains.recall = recallGain;
   if (retentionGain > 0) gains.retention = retentionGain;
   if (perceptionGain > 0) gains.perception = perceptionGain;
+  if (creativityGain > 0) gains.creativity = creativityGain;
   return gains;
 }
 

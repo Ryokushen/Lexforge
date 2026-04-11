@@ -112,14 +112,15 @@ export function getContextSentence(word: Word): ContextSentence | null {
   return null;
 }
 
-/** Decide game mode for a session word. Mix of recall, context, and speed. */
+/** Decide game mode for a session word. Mix of all four modes. */
 export function pickMode(word: Word, forceMode?: GameMode): GameMode {
   if (forceMode) return forceMode;
   const roll = Math.random();
-  // ~20% speed, ~30% context (if available), ~50% recall
-  if (roll < 0.2) return "speed";
+  // ~15% association, ~15% speed, ~30% context (if available), ~40% recall
+  if (roll < 0.15) return "association";
+  if (roll < 0.30) return "speed";
   const hasContext = getContextSentence(word) !== null;
-  if (hasContext && roll < 0.5) return "context";
+  if (hasContext && roll < 0.60) return "context";
   return "recall";
 }
 
@@ -168,6 +169,9 @@ export async function processAnswer(
 
   if (manualRating) {
     gradeResult = { rating: manualRating, correct: manualRating >= 2 };
+  } else if (mode === "association" && contextExpected === "__create__") {
+    // Creating an association is always Good
+    gradeResult = { rating: 3, correct: true };
   } else if (mode === "speed" && contextExpected) {
     gradeResult = gradeSpeedAnswer(answer, contextExpected, responseTimeMs);
   } else if (mode === "context" && contextExpected) {

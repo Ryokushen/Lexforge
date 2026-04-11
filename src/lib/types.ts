@@ -73,7 +73,7 @@ export interface SessionResult {
   mode: GameMode;
 }
 
-export type GameMode = "recall" | "context" | "speed";
+export type GameMode = "recall" | "context" | "speed" | "association";
 
 export type SessionState =
   | "idle"

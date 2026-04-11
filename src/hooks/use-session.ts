@@ -40,6 +40,11 @@ export function useSession() {
 
   const currentWord = words[currentIndex] ?? null;
   const progress = words.length > 0 ? currentIndex / words.length : 0;
+  // Derive association phase from word data — no extra state needed
+  const associationPhase: "create" | "recall" | null =
+    currentMode === "association" && currentWord
+      ? currentWord.word.association ? "recall" : "create"
+      : null;
 
   const pickModeForWord = useCallback((word: SessionWord, allWords: SessionWord[]) => {
     const mode = pickMode(word.word);
@@ -94,9 +99,11 @@ export function useSession() {
       if (!currentWord || state !== "active") return;
 
       const responseTimeMs = Date.now() - promptStartTime;
-      const expectedAnswer = currentMode === "speed"
-        ? currentSpeedChoices?.correctDefinition
-        : currentContextSentence?.answer;
+      const expectedAnswer = currentMode === "association" && associationPhase === "create"
+        ? "__create__"
+        : currentMode === "speed"
+          ? currentSpeedChoices?.correctDefinition
+          : currentContextSentence?.answer;
 
       const { result } = await processAnswer(
         currentWord,
@@ -187,6 +194,7 @@ export function useSession() {
     currentMode,
     currentContextSentence,
     currentSpeedChoices,
+    associationPhase,
     startSession,
     submitAnswer,
     nextWord,
