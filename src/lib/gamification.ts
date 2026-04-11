@@ -165,6 +165,7 @@ export async function completeSession(
     totalCorrect: profile.totalCorrect + totalCorrect,
     totalReviewed: profile.totalReviewed + results.length,
     stats: newStats,
+    updatedAt: new Date().toISOString(),
   };
   await db.userProfile.put(updated);
 

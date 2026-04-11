@@ -11,6 +11,7 @@ export interface Word {
   tier: 1 | 2 | 3 | "custom";
   synonyms: string[];
   association?: string;
+  associationUpdatedAt?: string;
   contextSentences?: ContextSentence[];
   createdAt: Date;
 }
@@ -21,6 +22,7 @@ export interface ReviewCard {
   id?: number;
   wordId: number;
   card: Card; // ts-fsrs Card object (due, stability, difficulty, etc.)
+  updatedAt?: string;
 }
 
 export interface ReviewLog {
@@ -58,6 +60,7 @@ export interface UserProfile {
   totalReviewed: number;
   stats: RPGStats;
   difficulty: Difficulty;
+  updatedAt?: string;
 }
 
 /** Difficulty settings */

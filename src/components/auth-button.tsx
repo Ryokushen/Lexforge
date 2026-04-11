@@ -28,16 +28,31 @@ function formatLastSync(lastSyncAt: string | null): string {
   })}`;
 }
 
+function formatHistoryTimestamp(timestamp: string | null): string {
+  if (!timestamp) return "Never";
+
+  return new Date(timestamp).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function AuthButton() {
   const {
     user,
     loading,
     syncState,
     syncError,
+    lastSyncError,
     lastSyncAt,
+    lastSyncAttemptAt,
+    lastSyncErrorAt,
     isOnline,
     signIn,
     signOut,
+    syncNow,
     retrySync,
   } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
@@ -133,22 +148,60 @@ export function AuthButton() {
                   <StatusIcon className={`size-3 ${syncUi.iconClassName}`} />
                   {syncUi.label}
                 </Badge>
-                {(syncState === "error" || syncState === "offline") && (
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="xs"
-                    onClick={() => void retrySync()}
-                    disabled={!isOnline}
+                    onClick={() => void syncNow()}
+                    disabled={!isOnline || syncState === "syncing"}
                     className="gap-1 px-1.5"
                   >
-                    <RotateCcw className="size-3" />
-                    Retry
+                    {syncState === "syncing" ? (
+                      <LoaderCircle className="size-3 animate-spin" />
+                    ) : (
+                      <RotateCcw className="size-3" />
+                    )}
+                    Sync now
                   </Button>
-                )}
+                  {(syncState === "error" || syncState === "offline") && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => void retrySync()}
+                      disabled={!isOnline}
+                      className="gap-1 px-1.5"
+                    >
+                      <RotateCcw className="size-3" />
+                      Retry
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="mt-1 text-[10px] text-muted-foreground">
                 {syncUi.detail}
               </p>
+            </div>
+            <div className="rounded-md border border-border/50 bg-muted/20 px-2 py-2 text-[10px] text-muted-foreground space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span>Last attempt</span>
+                <span className="text-foreground/80">
+                  {formatHistoryTimestamp(lastSyncAttemptAt)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Last success</span>
+                <span className="text-foreground/80">
+                  {formatHistoryTimestamp(lastSyncAt)}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <span>Last error</span>
+                <span className="max-w-[11rem] text-right text-foreground/80">
+                  {lastSyncErrorAt
+                    ? `${formatHistoryTimestamp(lastSyncErrorAt)}${lastSyncError ? `: ${lastSyncError}` : ""}`
+                    : "None"}
+                </span>
+              </div>
             </div>
             <hr className="border-border/40" />
             <button

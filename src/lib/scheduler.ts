@@ -18,7 +18,11 @@ const f = fsrs(params);
 /** Create a new review card for a word. */
 export async function createReviewCard(wordId: number): Promise<ReviewCard> {
   const card = createEmptyCard();
-  const reviewCard: ReviewCard = { wordId, card };
+  const reviewCard: ReviewCard = {
+    wordId,
+    card,
+    updatedAt: new Date().toISOString(),
+  };
   const id = await db.reviewCards.add(reviewCard);
   return { ...reviewCard, id: id as number };
 }
@@ -30,7 +34,11 @@ export async function gradeCard(
 ): Promise<ReviewCard> {
   const result = f.repeat(reviewCard.card, new Date());
   const updated = result[grade].card;
-  const next: ReviewCard = { ...reviewCard, card: updated };
+  const next: ReviewCard = {
+    ...reviewCard,
+    card: updated,
+    updatedAt: new Date().toISOString(),
+  };
   await db.reviewCards.put(next);
   return next;
 }
@@ -83,7 +91,11 @@ export async function addWordWithCard(word: Omit<Word, "id">): Promise<{
     const wordId = (await db.words.add(word as Word)) as number;
     savedWord = { ...word, id: wordId } as Word;
     const card = createEmptyCard();
-    const rc: ReviewCard = { wordId, card };
+    const rc: ReviewCard = {
+      wordId,
+      card,
+      updatedAt: new Date().toISOString(),
+    };
     const cardId = (await db.reviewCards.add(rc)) as number;
     savedCard = { ...rc, id: cardId };
   });

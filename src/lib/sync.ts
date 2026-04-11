@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { db, getOrCreateProfile } from "./db";
+import type { ReviewCard, UserProfile, Word } from "./types";
 
 const SYNC_BATCH_SIZE = 100;
 export const CLOUD_SYNC_EVENT = "lexforge-cloud-sync";
@@ -9,6 +10,55 @@ export type CloudSyncEventDetail = {
   state: "syncing" | "synced" | "error";
   error?: string;
   lastSyncAt?: string;
+};
+
+type CloudProfileRow = {
+  id: string;
+  level: number;
+  xp: number;
+  xp_to_next_level: number;
+  hp: number;
+  max_hp: number;
+  current_streak: number;
+  longest_streak: number;
+  last_session_date?: string | null;
+  total_sessions: number;
+  total_correct: number;
+  total_reviewed: number;
+  stats: UserProfile["stats"];
+  difficulty: UserProfile["difficulty"];
+  updated_at?: string | null;
+};
+
+type CloudReviewCardRow = {
+  user_id: string;
+  word_key: string;
+  card: ReviewCard["card"];
+  updated_at?: string | null;
+};
+
+type CloudReviewLogRow = {
+  user_id: string;
+  word_key: string;
+  rating: number;
+  response_time_ms: number;
+  correct: boolean;
+  reviewed_at: string;
+  updated_at?: string | null;
+};
+
+type CloudAssociationRow = {
+  user_id: string;
+  word_key: string;
+  association: string;
+  updated_at?: string | null;
+};
+
+type CloudSnapshot = {
+  profile: CloudProfileRow | null;
+  reviewCards: CloudReviewCardRow[];
+  reviewLogs: CloudReviewLogRow[];
+  associations: CloudAssociationRow[];
 };
 
 function getErrorMessage(error: unknown): string {
@@ -23,9 +73,344 @@ function emitCloudSyncEvent(detail: CloudSyncEventDetail) {
   );
 }
 
+function toMillis(value?: string | Date | null): number {
+  if (!value) return 0;
+  const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function maxIso(...values: Array<string | null | undefined>): string {
+  const winner = values.reduce<string | null>((latest, current) => {
+    if (!current) return latest;
+    if (!latest) return current;
+    return toMillis(current) >= toMillis(latest) ? current : latest;
+  }, null);
+
+  return winner ?? new Date(0).toISOString();
+}
+
+function compareDateOnly(a?: string | null, b?: string | null): number {
+  if (!a && !b) return 0;
+  if (!a) return -1;
+  if (!b) return 1;
+  return a.localeCompare(b);
+}
+
+function chunkRows<T>(rows: T[]): T[][] {
+  const chunks: T[][] = [];
+
+  for (let i = 0; i < rows.length; i += SYNC_BATCH_SIZE) {
+    chunks.push(rows.slice(i, i + SYNC_BATCH_SIZE));
+  }
+
+  return chunks;
+}
+
+function normalizeProfile(profile: UserProfile): UserProfile {
+  return {
+    ...profile,
+    updatedAt:
+      profile.updatedAt
+      ?? (profile.lastSessionDate
+        ? new Date(profile.lastSessionDate).toISOString()
+        : new Date(0).toISOString()),
+  };
+}
+
+function cloudProfileToLocal(profile: CloudProfileRow): UserProfile {
+  return {
+    id: 1,
+    level: profile.level,
+    xp: profile.xp,
+    xpToNextLevel: profile.xp_to_next_level,
+    hp: profile.hp,
+    maxHp: profile.max_hp,
+    currentStreak: profile.current_streak,
+    longestStreak: profile.longest_streak,
+    lastSessionDate: profile.last_session_date ?? undefined,
+    totalSessions: profile.total_sessions,
+    totalCorrect: profile.total_correct,
+    totalReviewed: profile.total_reviewed,
+    stats: profile.stats,
+    difficulty: profile.difficulty,
+    updatedAt: profile.updated_at ?? new Date(0).toISOString(),
+  };
+}
+
+function normalizeReviewCard(card: ReviewCard): ReviewCard {
+  return {
+    ...card,
+    updatedAt:
+      card.updatedAt
+      ?? (card.card.last_review
+        ? new Date(card.card.last_review).toISOString()
+        : new Date(0).toISOString()),
+  };
+}
+
+function cloudCardToLocal(row: CloudReviewCardRow, wordId: number): ReviewCard {
+  return normalizeReviewCard({
+    wordId,
+    card: row.card,
+    updatedAt:
+      row.updated_at
+      ?? (row.card.last_review
+        ? new Date(row.card.last_review).toISOString()
+        : new Date(0).toISOString()),
+  });
+}
+
+function getCardProgressScore(card: ReviewCard["card"]): [number, number, number] {
+  return [
+    card.reps ?? 0,
+    toMillis(card.last_review),
+    toMillis(card.due),
+  ];
+}
+
+function shouldKeepLocalCard(localCard: ReviewCard, remoteCard: ReviewCard): boolean {
+  const localUpdated = toMillis(localCard.updatedAt);
+  const remoteUpdated = toMillis(remoteCard.updatedAt);
+
+  if (localUpdated !== remoteUpdated) {
+    return localUpdated > remoteUpdated;
+  }
+
+  const [localReps, localLastReview, localDue] = getCardProgressScore(localCard.card);
+  const [remoteReps, remoteLastReview, remoteDue] = getCardProgressScore(remoteCard.card);
+
+  if (localReps !== remoteReps) return localReps > remoteReps;
+  if (localLastReview !== remoteLastReview) return localLastReview > remoteLastReview;
+  if (localDue !== remoteDue) return localDue > remoteDue;
+
+  return true;
+}
+
+function mergeStats(
+  localStats: UserProfile["stats"],
+  remoteStats: UserProfile["stats"],
+): UserProfile["stats"] {
+  return {
+    recall: Math.max(localStats.recall, remoteStats.recall),
+    retention: Math.max(localStats.retention, remoteStats.retention),
+    perception: Math.max(localStats.perception, remoteStats.perception),
+    creativity: Math.max(localStats.creativity, remoteStats.creativity),
+  };
+}
+
+function pickMoreProgressedProfile(local: UserProfile, remote: UserProfile): UserProfile {
+  if (local.level !== remote.level) {
+    return local.level > remote.level ? local : remote;
+  }
+
+  if (local.xp !== remote.xp) {
+    return local.xp >= remote.xp ? local : remote;
+  }
+
+  return toMillis(local.updatedAt) >= toMillis(remote.updatedAt) ? local : remote;
+}
+
+function mergeProfiles(localProfile: UserProfile, cloudProfile: CloudProfileRow | null): UserProfile {
+  const local = normalizeProfile(localProfile);
+
+  if (!cloudProfile) return local;
+
+  const remote = cloudProfileToLocal(cloudProfile);
+  const newer = toMillis(local.updatedAt) >= toMillis(remote.updatedAt) ? local : remote;
+  const progressed = pickMoreProgressedProfile(local, remote);
+  const latestSessionDate =
+    compareDateOnly(local.lastSessionDate, remote.lastSessionDate) >= 0
+      ? local.lastSessionDate
+      : remote.lastSessionDate;
+
+  let currentStreak = newer.currentStreak;
+  if (compareDateOnly(local.lastSessionDate, remote.lastSessionDate) === 0) {
+    currentStreak = Math.max(local.currentStreak, remote.currentStreak);
+  } else if (latestSessionDate === local.lastSessionDate) {
+    currentStreak = local.currentStreak;
+  } else if (latestSessionDate === remote.lastSessionDate) {
+    currentStreak = remote.currentStreak;
+  }
+
+  return {
+    id: 1,
+    level: progressed.level,
+    xp: progressed.xp,
+    xpToNextLevel: progressed.xpToNextLevel,
+    hp: newer.hp,
+    maxHp: Math.max(local.maxHp, remote.maxHp),
+    currentStreak,
+    longestStreak: Math.max(local.longestStreak, remote.longestStreak, currentStreak),
+    lastSessionDate: latestSessionDate,
+    totalSessions: Math.max(local.totalSessions, remote.totalSessions),
+    totalCorrect: Math.max(local.totalCorrect, remote.totalCorrect),
+    totalReviewed: Math.max(local.totalReviewed, remote.totalReviewed),
+    stats: mergeStats(local.stats, remote.stats),
+    difficulty: newer.difficulty,
+    updatedAt: maxIso(local.updatedAt, remote.updatedAt),
+  };
+}
+
+async function fetchCloudSnapshot(user: User): Promise<CloudSnapshot> {
+  const [
+    profileResponse,
+    reviewCardsResponse,
+    reviewLogsResponse,
+    associationsResponse,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id),
+    supabase.from("review_cards").select("*").eq("user_id", user.id),
+    supabase.from("review_logs").select("*").eq("user_id", user.id),
+    supabase.from("word_associations").select("*").eq("user_id", user.id),
+  ]);
+
+  if (profileResponse.error) throw profileResponse.error;
+  if (reviewCardsResponse.error) throw reviewCardsResponse.error;
+  if (reviewLogsResponse.error) throw reviewLogsResponse.error;
+  if (associationsResponse.error) throw associationsResponse.error;
+
+  return {
+    profile: ((profileResponse.data as CloudProfileRow[] | null) ?? [])[0] ?? null,
+    reviewCards: (reviewCardsResponse.data as CloudReviewCardRow[] | null) ?? [],
+    reviewLogs: (reviewLogsResponse.data as CloudReviewLogRow[] | null) ?? [],
+    associations: (associationsResponse.data as CloudAssociationRow[] | null) ?? [],
+  };
+}
+
+async function reconcileProfile(cloudProfile: CloudProfileRow | null) {
+  const localProfile = await getOrCreateProfile();
+  const mergedProfile = mergeProfiles(localProfile, cloudProfile);
+
+  await db.userProfile.put(mergedProfile);
+  return mergedProfile;
+}
+
+async function reconcileReviewCards(cloudCards: CloudReviewCardRow[], words: Word[]) {
+  const wordIdMap = new Map(words.map((word) => [word.word, word.id]));
+  const localCards = (await db.reviewCards.toArray()).map(normalizeReviewCard);
+  const localCardsByWordId = new Map(localCards.map((card) => [card.wordId, card]));
+
+  for (const row of cloudCards) {
+    const wordId = wordIdMap.get(row.word_key);
+    if (!wordId) continue;
+
+    const remoteCard = cloudCardToLocal(row, wordId);
+    const localCard = localCardsByWordId.get(wordId);
+
+    if (!localCard) {
+      await db.reviewCards.add(remoteCard);
+      localCardsByWordId.set(wordId, remoteCard);
+      continue;
+    }
+
+    const winner = shouldKeepLocalCard(localCard, remoteCard) ? localCard : remoteCard;
+    if (winner !== localCard) {
+      await db.reviewCards.update(localCard.id!, winner);
+      localCardsByWordId.set(wordId, winner);
+      continue;
+    }
+
+    if (localCard.updatedAt !== winner.updatedAt) {
+      await db.reviewCards.update(localCard.id!, { updatedAt: winner.updatedAt });
+    }
+  }
+}
+
+async function reconcileReviewLogs(cloudLogs: CloudReviewLogRow[], words: Word[]) {
+  const wordIdMap = new Map(words.map((word) => [word.word, word.id]));
+  const existingLogs = await db.reviewLogs.toArray();
+  const existingKeys = new Set(
+    existingLogs.map(
+      (log) => `${log.wordId}:${log.reviewedAt.toISOString()}`,
+    ),
+  );
+
+  for (const row of cloudLogs) {
+    const wordId = wordIdMap.get(row.word_key);
+    if (!wordId) continue;
+
+    const reviewedAt = new Date(row.reviewed_at);
+    const logKey = `${wordId}:${reviewedAt.toISOString()}`;
+    if (existingKeys.has(logKey)) continue;
+
+    await db.reviewLogs.add({
+      wordId,
+      rating: row.rating as 1 | 2 | 3 | 4,
+      responseTimeMs: row.response_time_ms,
+      correct: row.correct,
+      reviewedAt,
+    });
+    existingKeys.add(logKey);
+  }
+}
+
+async function reconcileAssociations(cloudAssociations: CloudAssociationRow[], words: Word[]) {
+  const localWordsByKey = new Map(words.map((word) => [word.word, word]));
+
+  for (const row of cloudAssociations) {
+    const localWord = localWordsByKey.get(row.word_key);
+    if (!localWord) continue;
+
+    const localAssociation = localWord.association?.trim();
+    const cloudAssociation = row.association.trim();
+
+    if (!localAssociation) {
+      await db.words.update(localWord.id!, {
+        association: cloudAssociation,
+        associationUpdatedAt: row.updated_at ?? new Date(0).toISOString(),
+      });
+      localWordsByKey.set(row.word_key, {
+        ...localWord,
+        association: cloudAssociation,
+        associationUpdatedAt: row.updated_at ?? new Date(0).toISOString(),
+      });
+      continue;
+    }
+
+    if (localAssociation === cloudAssociation) {
+      const mergedUpdatedAt = maxIso(localWord.associationUpdatedAt, row.updated_at);
+      if (localWord.associationUpdatedAt !== mergedUpdatedAt) {
+        await db.words.update(localWord.id!, { associationUpdatedAt: mergedUpdatedAt });
+      }
+      continue;
+    }
+
+    const localUpdated = toMillis(localWord.associationUpdatedAt);
+    const cloudUpdated = toMillis(row.updated_at);
+
+    if (cloudUpdated > localUpdated) {
+      await db.words.update(localWord.id!, {
+        association: cloudAssociation,
+        associationUpdatedAt: row.updated_at ?? new Date(0).toISOString(),
+      });
+      localWordsByKey.set(row.word_key, {
+        ...localWord,
+        association: cloudAssociation,
+        associationUpdatedAt: row.updated_at ?? new Date(0).toISOString(),
+      });
+    } else if (!localWord.associationUpdatedAt) {
+      await db.words.update(localWord.id!, {
+        associationUpdatedAt: localWord.createdAt.toISOString(),
+      });
+    }
+  }
+}
+
+async function reconcileCloudState(user: User) {
+  const snapshot = await fetchCloudSnapshot(user);
+  const words = await db.words.toArray();
+
+  await reconcileReviewLogs(snapshot.reviewLogs, words);
+  await reconcileReviewCards(snapshot.reviewCards, words);
+  await reconcileAssociations(snapshot.associations, words);
+  const profile = await reconcileProfile(snapshot.profile);
+
+  return { profile };
+}
+
 /** Push local profile to Supabase. */
-async function pushProfile(user: User) {
-  const profile = await getOrCreateProfile();
+async function pushProfile(user: User, profileOverride?: UserProfile) {
+  const profile = normalizeProfile(profileOverride ?? await getOrCreateProfile());
   const { error } = await supabase.from("profiles").upsert({
     id: user.id,
     level: profile.level,
@@ -41,92 +426,33 @@ async function pushProfile(user: User) {
     total_reviewed: profile.totalReviewed,
     stats: profile.stats,
     difficulty: profile.difficulty,
-    updated_at: new Date().toISOString(),
+    updated_at: profile.updatedAt,
   });
-  if (error) console.error("Push profile error:", error);
-}
 
-/** Pull profile from Supabase into Dexie. */
-async function pullProfile(user: User): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !data) return false;
-
-  await db.userProfile.put({
-    id: 1,
-    level: data.level,
-    xp: data.xp,
-    xpToNextLevel: data.xp_to_next_level,
-    hp: data.hp,
-    maxHp: data.max_hp,
-    currentStreak: data.current_streak,
-    longestStreak: data.longest_streak,
-    lastSessionDate: data.last_session_date ?? undefined,
-    totalSessions: data.total_sessions,
-    totalCorrect: data.total_correct,
-    totalReviewed: data.total_reviewed,
-    stats: data.stats,
-    difficulty: data.difficulty,
-  });
-  return true;
+  if (error) throw error;
 }
 
 /** Push all review cards to Supabase. */
 async function pushReviewCards(user: User) {
-  const cards = await db.reviewCards.toArray();
+  const cards = (await db.reviewCards.toArray()).map(normalizeReviewCard);
   const words = await db.words.toArray();
-  const wordMap = new Map(words.map((w) => [w.id, w.word]));
+  const wordMap = new Map(words.map((word) => [word.id, word.word]));
 
   const rows = cards
-    .filter((rc) => wordMap.has(rc.wordId))
-    .map((rc) => ({
+    .filter((card) => wordMap.has(card.wordId))
+    .map((card) => ({
       user_id: user.id,
-      word_key: wordMap.get(rc.wordId)!,
-      card: rc.card,
-      updated_at: new Date().toISOString(),
+      word_key: wordMap.get(card.wordId)!,
+      card: card.card,
+      updated_at: card.updatedAt,
     }));
 
-  if (rows.length === 0) return;
-
-  for (let i = 0; i < rows.length; i += SYNC_BATCH_SIZE) {
-    const chunk = rows.slice(i, i + SYNC_BATCH_SIZE);
+  for (const chunk of chunkRows(rows)) {
     const { error } = await supabase
       .from("review_cards")
       .upsert(chunk, { onConflict: "user_id,word_key" });
-    if (error) console.error("Push cards error:", error);
-  }
-}
 
-/** Pull review cards from Supabase into Dexie. */
-async function pullReviewCards(user: User) {
-  const { data, error } = await supabase
-    .from("review_cards")
-    .select("*")
-    .eq("user_id", user.id);
-
-  if (error || !data || data.length === 0) return;
-
-  const words = await db.words.toArray();
-  const wordIdMap = new Map(words.map((w) => [w.word, w.id]));
-
-  for (const row of data) {
-    const wordId = wordIdMap.get(row.word_key);
-    if (!wordId) continue;
-
-    const existing = await db.reviewCards
-      .where("wordId")
-      .equals(wordId)
-      .first();
-
-    if (existing) {
-      await db.reviewCards.update(existing.id!, { card: row.card });
-    } else {
-      await db.reviewCards.add({ wordId, card: row.card });
-    }
+    if (error) throw error;
   }
 }
 
@@ -134,7 +460,7 @@ async function pullReviewCards(user: User) {
 async function pushReviewLogs(user: User) {
   const logs = await db.reviewLogs.toArray();
   const words = await db.words.toArray();
-  const wordMap = new Map(words.map((w) => [w.id, w.word]));
+  const wordMap = new Map(words.map((word) => [word.id, word.word]));
 
   const rows = logs
     .filter((log) => wordMap.has(log.wordId))
@@ -145,56 +471,15 @@ async function pushReviewLogs(user: User) {
       response_time_ms: log.responseTimeMs,
       correct: log.correct,
       reviewed_at: log.reviewedAt.toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: log.reviewedAt.toISOString(),
     }));
 
-  if (rows.length === 0) return;
-
-  // Requires a unique constraint on (user_id, word_key, reviewed_at).
-  for (let i = 0; i < rows.length; i += SYNC_BATCH_SIZE) {
-    const chunk = rows.slice(i, i + SYNC_BATCH_SIZE);
+  for (const chunk of chunkRows(rows)) {
     const { error } = await supabase
       .from("review_logs")
       .upsert(chunk, { onConflict: "user_id,word_key,reviewed_at" });
-    if (error) console.error("Push review logs error:", error);
-  }
-}
 
-/** Pull review logs from Supabase into Dexie without duplicating existing local logs. */
-async function pullReviewLogs(user: User) {
-  const { data, error } = await supabase
-    .from("review_logs")
-    .select("*")
-    .eq("user_id", user.id);
-
-  if (error || !data || data.length === 0) return;
-
-  const words = await db.words.toArray();
-  const wordIdMap = new Map(words.map((w) => [w.word, w.id]));
-  const existingLogs = await db.reviewLogs.toArray();
-  const existingKeys = new Set(
-    existingLogs.map(
-      (log) => `${log.wordId}:${log.reviewedAt.toISOString()}`,
-    ),
-  );
-
-  for (const row of data) {
-    const wordId = wordIdMap.get(row.word_key);
-    if (!wordId) continue;
-
-    const reviewedAt = new Date(row.reviewed_at);
-    const logKey = `${wordId}:${reviewedAt.toISOString()}`;
-
-    if (existingKeys.has(logKey)) continue;
-
-    await db.reviewLogs.add({
-      wordId,
-      rating: row.rating,
-      responseTimeMs: row.response_time_ms,
-      correct: row.correct,
-      reviewedAt,
-    });
-    existingKeys.add(logKey);
+    if (error) throw error;
   }
 }
 
@@ -202,102 +487,68 @@ async function pullReviewLogs(user: User) {
 async function pushAssociations(user: User) {
   const words = await db.words.toArray();
   const rows = words
-    .filter((w) => w.association)
-    .map((w) => ({
+    .filter((word) => word.association)
+    .map((word) => ({
       user_id: user.id,
-      word_key: w.word,
-      association: w.association!,
-      updated_at: new Date().toISOString(),
+      word_key: word.word,
+      association: word.association!,
+      updated_at: word.associationUpdatedAt ?? word.createdAt.toISOString(),
     }));
 
-  if (rows.length === 0) return;
+  for (const chunk of chunkRows(rows)) {
+    const { error } = await supabase
+      .from("word_associations")
+      .upsert(chunk, { onConflict: "user_id,word_key" });
 
-  const { error } = await supabase
-    .from("word_associations")
-    .upsert(rows, { onConflict: "user_id,word_key" });
-  if (error) console.error("Push associations error:", error);
-}
-
-/** Pull associations from Supabase into Dexie. */
-async function pullAssociations(user: User) {
-  const { data, error } = await supabase
-    .from("word_associations")
-    .select("*")
-    .eq("user_id", user.id);
-
-  if (error || !data || data.length === 0) return;
-
-  const words = await db.words.toArray();
-  const wordIdMap = new Map(words.map((w) => [w.word, w.id]));
-
-  for (const row of data) {
-    const wordId = wordIdMap.get(row.word_key);
-    if (wordId) {
-      await db.words.update(wordId, { association: row.association });
-    }
+    if (error) throw error;
   }
 }
 
-async function pushToCloudInternal(user: User) {
+async function pushToCloudInternal(
+  user: User,
+  reconciledState?: { profile: UserProfile },
+) {
   await Promise.all([
-    pushProfile(user),
+    pushProfile(user, reconciledState?.profile),
     pushReviewCards(user),
     pushReviewLogs(user),
     pushAssociations(user),
   ]);
 }
 
-/** Full pull from cloud. Call on login. */
-async function pullFromCloud(user: User) {
-  await Promise.all([
-    pullProfile(user),
-    pullReviewCards(user),
-    pullReviewLogs(user),
-    pullAssociations(user),
-  ]);
+async function reconcileAndPush(user: User) {
+  const reconciledState = await reconcileCloudState(user);
+  await pushToCloudInternal(user, reconciledState);
 }
 
-/** Full push to cloud. Call after session completion. */
+/** Full push to cloud. Call after session completion or manual sync. */
 export async function pushToCloud(user: User) {
   emitCloudSyncEvent({ state: "syncing" });
 
   try {
-    await pushToCloudInternal(user);
+    await reconcileAndPush(user);
     const lastSyncAt = new Date().toISOString();
     emitCloudSyncEvent({ state: "synced", lastSyncAt });
     return { lastSyncAt };
-  } catch (err) {
-    console.error("Cloud sync push failed:", err);
-    emitCloudSyncEvent({ state: "error", error: getErrorMessage(err) });
-    throw err;
+  } catch (error) {
+    console.error("Cloud sync push failed:", error);
+    emitCloudSyncEvent({ state: "error", error: getErrorMessage(error) });
+    throw error;
   }
 }
 
-/** Sync on login: check if cloud has data, pull if yes, push if no. */
+/** Sync on login by reconciling local and cloud data, then pushing the merged result. */
 export async function syncOnLogin(user: User) {
   emitCloudSyncEvent({ state: "syncing" });
 
   try {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", user.id)
-      .single();
-
-    if (data) {
-      // Cloud has data — pull it
-      await pullFromCloud(user);
-    } else {
-      // First login — push local data to cloud
-      await pushToCloudInternal(user);
-    }
-
+    await reconcileAndPush(user);
     const lastSyncAt = new Date().toISOString();
     emitCloudSyncEvent({ state: "synced", lastSyncAt });
     return { lastSyncAt };
-  } catch (err) {
-    console.error("Sync on login failed:", err);
-    emitCloudSyncEvent({ state: "error", error: getErrorMessage(err) });
-    throw err;
+  } catch (error) {
+    console.error("Sync on login failed:", error);
+    emitCloudSyncEvent({ state: "error", error: getErrorMessage(error) });
+    throw error;
   }
 }

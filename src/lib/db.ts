@@ -46,11 +46,24 @@ const DEFAULT_PROFILE: UserProfile = {
   totalReviewed: 0,
   stats: { recall: 0, retention: 0, perception: 0, creativity: 0 },
   difficulty: "normal" as const,
+  updatedAt: new Date().toISOString(),
 };
 
 export async function getOrCreateProfile(): Promise<UserProfile> {
   const existing = await db.userProfile.get(1);
-  if (existing) return existing;
+  if (existing) {
+    if (!existing.updatedAt) {
+      const updated = {
+        ...existing,
+        updatedAt: existing.lastSessionDate
+          ? new Date(existing.lastSessionDate).toISOString()
+          : new Date(0).toISOString(),
+      };
+      await db.userProfile.put(updated);
+      return updated;
+    }
+    return existing;
+  }
   await db.userProfile.put(DEFAULT_PROFILE);
   return DEFAULT_PROFILE;
 }

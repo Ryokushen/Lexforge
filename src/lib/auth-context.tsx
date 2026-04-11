@@ -5,11 +5,20 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import {
   CLOUD_SYNC_EVENT,
+  pushToCloud,
   syncOnLogin,
   type CloudSyncEventDetail,
 } from "./sync";
 
 const LAST_SYNC_STORAGE_KEY = "lexforge-last-sync-at";
+const LAST_SYNC_ATTEMPT_STORAGE_KEY = "lexforge-last-sync-attempt-at";
+const LAST_SYNC_ERROR_STORAGE_KEY = "lexforge-last-sync-error";
+const LAST_SYNC_ERROR_AT_STORAGE_KEY = "lexforge-last-sync-error-at";
+
+function readStorageValue(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(key);
+}
 
 export type CloudSyncState =
   | "idle"
@@ -23,10 +32,14 @@ interface AuthContextValue {
   loading: boolean;
   syncState: CloudSyncState;
   syncError: string | null;
+  lastSyncError: string | null;
   lastSyncAt: string | null;
+  lastSyncAttemptAt: string | null;
+  lastSyncErrorAt: string | null;
   isOnline: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  syncNow: () => Promise<void>;
   retrySync: () => Promise<void>;
 }
 
@@ -35,10 +48,14 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   syncState: "idle",
   syncError: null,
+  lastSyncError: null,
   lastSyncAt: null,
+  lastSyncAttemptAt: null,
+  lastSyncErrorAt: null,
   isOnline: true,
   signIn: async () => {},
   signOut: async () => {},
+  syncNow: async () => {},
   retrySync: async () => {},
 });
 
@@ -47,43 +64,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [syncState, setSyncState] = useState<CloudSyncState>("idle");
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [lastSyncError, setLastSyncError] = useState<string | null>(() =>
+    readStorageValue(LAST_SYNC_ERROR_STORAGE_KEY),
+  );
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(LAST_SYNC_STORAGE_KEY);
+    return readStorageValue(LAST_SYNC_STORAGE_KEY);
   });
+  const [lastSyncAttemptAt, setLastSyncAttemptAt] = useState<string | null>(() =>
+    readStorageValue(LAST_SYNC_ATTEMPT_STORAGE_KEY),
+  );
+  const [lastSyncErrorAt, setLastSyncErrorAt] = useState<string | null>(() =>
+    readStorageValue(LAST_SYNC_ERROR_AT_STORAGE_KEY),
+  );
   const [isOnline, setIsOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
 
-  const persistLastSync = useCallback((timestamp: string | null) => {
-    setLastSyncAt(timestamp);
-
+  const persistValue = useCallback((key: string, value: string | null) => {
     if (typeof window === "undefined") return;
 
-    if (timestamp) {
-      window.localStorage.setItem(LAST_SYNC_STORAGE_KEY, timestamp);
+    if (value) {
+      window.localStorage.setItem(key, value);
     } else {
-      window.localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
+      window.localStorage.removeItem(key);
     }
   }, []);
 
-  const runCloudSync = useCallback(async (currentUser: User) => {
+  const persistLastSync = useCallback((timestamp: string | null) => {
+    setLastSyncAt(timestamp);
+    persistValue(LAST_SYNC_STORAGE_KEY, timestamp);
+  }, [persistValue]);
+
+  const persistSyncAttempt = useCallback((timestamp: string | null) => {
+    setLastSyncAttemptAt(timestamp);
+    persistValue(LAST_SYNC_ATTEMPT_STORAGE_KEY, timestamp);
+  }, [persistValue]);
+
+  const clearCurrentSyncError = useCallback(() => {
+    setSyncError(null);
+  }, []);
+
+  const persistSyncError = useCallback((message: string, timestamp: string) => {
+    setSyncError(message);
+    setLastSyncError(message);
+    setLastSyncErrorAt(timestamp);
+    persistValue(LAST_SYNC_ERROR_STORAGE_KEY, message);
+    persistValue(LAST_SYNC_ERROR_AT_STORAGE_KEY, timestamp);
+  }, [persistValue]);
+
+  const runCloudSync = useCallback(async (currentUser: User, mode: "login" | "push" = "login") => {
+    const attemptAt = new Date().toISOString();
+    persistSyncAttempt(attemptAt);
+
     if (!navigator.onLine) {
       setSyncState("offline");
-      setSyncError(null);
+      clearCurrentSyncError();
       return;
     }
 
     try {
-      setSyncError(null);
-      await syncOnLogin(currentUser);
+      clearCurrentSyncError();
+      if (mode === "push") {
+        await pushToCloud(currentUser);
+      } else {
+        await syncOnLogin(currentUser);
+      }
     } catch (error) {
       setSyncState(navigator.onLine ? "error" : "offline");
-      setSyncError(
+      persistSyncError(
         error instanceof Error ? error.message : "Cloud sync failed",
+        new Date().toISOString(),
       );
     }
-  }, []);
+  }, [clearCurrentSyncError, persistSyncAttempt, persistSyncError]);
 
   useEffect(() => {
     // Get initial session
@@ -94,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         void runCloudSync(currentUser);
       } else {
+        clearCurrentSyncError();
         setSyncState(navigator.onLine ? "idle" : "offline");
       }
     });
@@ -106,14 +160,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (currentUser) {
           await runCloudSync(currentUser);
         } else {
-          setSyncError(null);
+          clearCurrentSyncError();
           setSyncState(navigator.onLine ? "idle" : "offline");
         }
       },
     );
 
     return () => subscription.unsubscribe();
-  }, [persistLastSync, runCloudSync]);
+  }, [clearCurrentSyncError, runCloudSync]);
 
   useEffect(() => {
     function handleSyncEvent(event: Event) {
@@ -121,25 +175,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (detail.state === "syncing") {
         setSyncState("syncing");
-        setSyncError(null);
+        clearCurrentSyncError();
         return;
       }
 
       if (detail.state === "synced") {
         const nextSyncAt = detail.lastSyncAt ?? new Date().toISOString();
         persistLastSync(nextSyncAt);
-        setSyncError(null);
+        clearCurrentSyncError();
         setSyncState(navigator.onLine ? "synced" : "offline");
         return;
       }
 
-      setSyncError(detail.error ?? "Cloud sync failed");
+      persistSyncError(
+        detail.error ?? "Cloud sync failed",
+        new Date().toISOString(),
+      );
       setSyncState(navigator.onLine ? "error" : "offline");
     }
 
     function handleOnline() {
       setIsOnline(true);
-      setSyncError(null);
+      clearCurrentSyncError();
 
       if (user) {
         void runCloudSync(user);
@@ -165,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [persistLastSync, runCloudSync, user]);
+  }, [clearCurrentSyncError, persistLastSync, persistSyncError, runCloudSync, user]);
 
   const signIn = useCallback(async () => {
     await supabase.auth.signInWithOAuth({
@@ -179,9 +236,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setSyncError(null);
+    clearCurrentSyncError();
     setSyncState(navigator.onLine ? "idle" : "offline");
-  }, []);
+  }, [clearCurrentSyncError]);
+
+  const syncNow = useCallback(async () => {
+    if (!user) return;
+    await runCloudSync(user, "push");
+  }, [runCloudSync, user]);
 
   const retrySync = useCallback(async () => {
     if (!user) return;
@@ -195,10 +257,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         syncState,
         syncError,
+        lastSyncError,
         lastSyncAt,
+        lastSyncAttemptAt,
+        lastSyncErrorAt,
         isOnline,
         signIn,
         signOut,
+        syncNow,
         retrySync,
       }}
     >

@@ -25,8 +25,10 @@ All notable changes to this project should be documented in this file.
 - Fixed dashboard stats initialization so changing difficulty no longer leaves the new-word count stale on first load
 - App startup now renders the nav and auth controls immediately while first-run seeding continues in the background
 - Auth menu now exposes real cloud-sync status, last successful sync time, and retry controls
+- Added a manual "Sync now" action plus attempt/success/error timestamps in the auth menu
 - Added global startup/offline banners plus retryable bootstrap failure states for the dashboard, session, and library screens
 - Review logs now sync to Supabase so daily new-word limits stay consistent across browsers and login pulls no longer duplicate existing local logs
+- Cloud sync now reconciles profile progress, review-card state, and word associations before pushing so newer cross-device changes win instead of being overwritten
 - Added a Supabase migration for the `review_logs` table, indexes, and RLS policies required by review-log sync, including compatibility upgrades for older table shapes
 - Stats page "Words Due" → "To Review" (only counts previously-seen cards past due date)
 - Updated `README.md` to reflect the shipped feature set

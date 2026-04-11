@@ -57,7 +57,10 @@ export function useStats() {
   }, [applySnapshot]);
 
   const setDifficulty = useCallback(async (difficulty: Difficulty) => {
-    await db.userProfile.update(1, { difficulty });
+    await db.userProfile.update(1, {
+      difficulty,
+      updatedAt: new Date().toISOString(),
+    });
     await refresh();
   }, [refresh]);
 

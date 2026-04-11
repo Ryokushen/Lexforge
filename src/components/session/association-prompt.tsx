@@ -33,7 +33,10 @@ export function AssociationPrompt({ sessionWord, phase, onSubmit }: AssociationP
     e.preventDefault();
     if (!input.trim()) return;
     // Save association to the word
-    await db.words.update(word.id!, { association: input.trim() });
+    await db.words.update(word.id!, {
+      association: input.trim(),
+      associationUpdatedAt: new Date().toISOString(),
+    });
     // Submit the word itself as the answer (always correct for create)
     onSubmit(word.word);
   };
