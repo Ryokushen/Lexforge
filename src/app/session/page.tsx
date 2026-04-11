@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/use-session";
+import { useStats } from "@/hooks/use-stats";
 import { RecallPrompt } from "@/components/session/recall-prompt";
 import { ContextPrompt } from "@/components/session/context-prompt";
 import { ReviewResult } from "@/components/session/review-result";
@@ -17,6 +18,7 @@ import { BookOpen, ArrowLeft } from "lucide-react";
 
 export default function SessionPage() {
   const router = useRouter();
+  const { profile } = useStats();
   const {
     state,
     currentWord,
@@ -35,10 +37,10 @@ export default function SessionPage() {
   } = useSession();
 
   useEffect(() => {
-    if (state === "idle") {
-      startSession();
+    if (state === "idle" && profile) {
+      startSession(profile.difficulty, profile.level);
     }
-  }, [state, startSession]);
+  }, [state, startSession, profile]);
 
   if (state === "loading") {
     return (

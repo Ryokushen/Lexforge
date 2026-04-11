@@ -15,6 +15,19 @@ db.version(1).stores({
   userProfile: "id",
 });
 
+db.version(2).stores({
+  words: "++id, word, tier",
+  reviewCards: "++id, wordId, card.due, card.state",
+  reviewLogs: "++id, wordId, reviewedAt",
+  userProfile: "id",
+}).upgrade((tx) => {
+  return tx.table("userProfile").toCollection().modify((profile) => {
+    if (!profile.difficulty) {
+      profile.difficulty = "normal";
+    }
+  });
+});
+
 export { db };
 
 // ── Default profile ─────────────────────────────────────────────────────
@@ -32,6 +45,7 @@ const DEFAULT_PROFILE: UserProfile = {
   totalCorrect: 0,
   totalReviewed: 0,
   stats: { recall: 0, retention: 0, perception: 0, creativity: 0 },
+  difficulty: "normal" as const,
 };
 
 export async function getOrCreateProfile(): Promise<UserProfile> {

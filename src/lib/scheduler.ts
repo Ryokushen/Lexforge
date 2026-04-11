@@ -49,10 +49,26 @@ export async function getDueCards(limit: number = 10): Promise<ReviewCard[]> {
   return due.slice(0, limit);
 }
 
-/** Get cards for new/unseen words (state === 0 = New). */
-export async function getNewCards(limit: number = 10): Promise<ReviewCard[]> {
+/** Get cards for new/unseen words (state === 0 = New), filtered by unlocked tiers. */
+export async function getNewCards(
+  limit: number = 10,
+  unlockedTiers?: (1 | 2 | 3 | "custom")[],
+): Promise<ReviewCard[]> {
   const all = await db.reviewCards.toArray();
-  const newCards = all.filter((rc) => rc.card.state === 0);
+  let newCards = all.filter((rc) => rc.card.state === 0);
+
+  // Filter by unlocked tiers if specified
+  if (unlockedTiers) {
+    const wordIds = new Set<number>();
+    const words = await db.words.toArray();
+    for (const w of words) {
+      if (unlockedTiers.includes(w.tier as 1 | 2 | 3 | "custom")) {
+        wordIds.add(w.id!);
+      }
+    }
+    newCards = newCards.filter((rc) => wordIds.has(rc.wordId));
+  }
+
   return newCards.slice(0, limit);
 }
 

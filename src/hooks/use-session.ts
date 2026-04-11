@@ -63,9 +63,9 @@ export function useSession() {
     }
   }, []);
 
-  const startSession = useCallback(async () => {
+  const startSession = useCallback(async (difficulty?: "easy" | "normal" | "hard", level?: number) => {
     setState("loading");
-    const sessionWords = await loadSessionWords();
+    const sessionWords = await loadSessionWords(difficulty ?? "normal", level ?? 1);
     if (sessionWords.length === 0) {
       setState("idle");
       return;

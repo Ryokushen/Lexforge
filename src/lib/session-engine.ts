@@ -4,6 +4,7 @@ import { completeSession } from "./gamification";
 import { CONTEXT_SENTENCES } from "./context-sentences";
 import type {
   ContextSentence,
+  Difficulty,
   GameMode,
   ReviewCard,
   ReviewLog,
@@ -12,8 +13,8 @@ import type {
   SessionWord,
   Word,
 } from "./types";
+import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "./types";
 
-const SESSION_SIZE = 10;
 const BATCH_SIZE = 4; // working memory capacity
 
 /** Levenshtein distance for fuzzy matching. */
@@ -124,14 +125,64 @@ export function pickMode(word: Word, forceMode?: GameMode): GameMode {
   return "recall";
 }
 
-/** Load words for a session: due cards first, backfill with new. */
-export async function loadSessionWords(): Promise<SessionWord[]> {
-  const dueCards = await getDueCards(SESSION_SIZE);
+/** Get unlocked tiers for a given level. */
+export function getUnlockedTiers(level: number): (1 | 2 | 3 | "custom")[] {
+  const tiers: (1 | 2 | 3 | "custom")[] = [];
+  for (const [tier, unlockLevel] of Object.entries(TIER_UNLOCK_LEVELS)) {
+    if (level >= unlockLevel) {
+      tiers.push(tier === "custom" ? "custom" : (Number(tier) as 1 | 2 | 3));
+    }
+  }
+  return tiers;
+}
+
+/** Count how many new words were introduced today. */
+async function getNewWordsIntroducedToday(): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10);
+  const logs = await db.reviewLogs.toArray();
+  // Count unique wordIds reviewed today that were first-time reviews
+  const todayLogs = logs.filter(
+    (l) => l.reviewedAt.toISOString().slice(0, 10) === today,
+  );
+  const wordIds = new Set(todayLogs.map((l) => l.wordId));
+
+  // Check which of those were their first-ever review
+  let newCount = 0;
+  for (const wordId of wordIds) {
+    const allLogsForWord = logs.filter((l) => l.wordId === wordId);
+    const firstReview = allLogsForWord.sort(
+      (a, b) => a.reviewedAt.getTime() - b.reviewedAt.getTime(),
+    )[0];
+    if (firstReview && firstReview.reviewedAt.toISOString().slice(0, 10) === today) {
+      newCount++;
+    }
+  }
+  return newCount;
+}
+
+/** Load words for a session: due cards first, backfill with new (respecting limits). */
+export async function loadSessionWords(
+  difficulty: Difficulty = "normal",
+  level: number = 1,
+): Promise<SessionWord[]> {
+  const config = DIFFICULTY_CONFIG[difficulty];
+  const sessionSize = config.sessionSize;
+  const unlockedTiers = getUnlockedTiers(level);
+
+  // Load due cards first (always allowed, no limit)
+  const dueCards = await getDueCards(sessionSize);
   let cards = [...dueCards];
 
-  if (cards.length < SESSION_SIZE) {
-    const newCards = await getNewCards(SESSION_SIZE - cards.length);
-    cards = [...cards, ...newCards];
+  // Backfill with new cards, respecting daily limit and tier gating
+  if (cards.length < sessionSize) {
+    const newWordsToday = await getNewWordsIntroducedToday();
+    const remainingNewAllowed = Math.max(0, config.newWordsPerDay - newWordsToday);
+    const slotsForNew = Math.min(sessionSize - cards.length, remainingNewAllowed);
+
+    if (slotsForNew > 0) {
+      const newCards = await getNewCards(slotsForNew, unlockedTiers);
+      cards = [...cards, ...newCards];
+    }
   }
 
   // Resolve words

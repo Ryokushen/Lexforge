@@ -41,6 +41,8 @@ export interface RPGStats {
   creativity: number;
 }
 
+export type Difficulty = "easy" | "normal" | "hard";
+
 export interface UserProfile {
   id: 1;
   level: number;
@@ -55,7 +57,23 @@ export interface UserProfile {
   totalCorrect: number;
   totalReviewed: number;
   stats: RPGStats;
+  difficulty: Difficulty;
 }
+
+/** Difficulty settings */
+export const DIFFICULTY_CONFIG: Record<Difficulty, { newWordsPerDay: number; sessionSize: number; label: string; description: string }> = {
+  easy: { newWordsPerDay: 5, sessionSize: 10, label: "Easy", description: "5 new words/day, ~5 min" },
+  normal: { newWordsPerDay: 10, sessionSize: 10, label: "Normal", description: "10 new words/day, ~10 min" },
+  hard: { newWordsPerDay: 20, sessionSize: 15, label: "Hard", description: "20 new words/day, ~15 min" },
+};
+
+/** Tier unlock levels */
+export const TIER_UNLOCK_LEVELS: Record<string, number> = {
+  "1": 1,
+  "2": 5,
+  "3": 10,
+  custom: 1,
+};
 
 // ── Session ─────────────────────────────────────────────────────────────
 

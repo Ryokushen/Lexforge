@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { db, getOrCreateProfile } from "@/lib/db";
 import { getDueCount, getWordCount } from "@/lib/scheduler";
-import type { UserProfile } from "@/lib/types";
+import type { Difficulty, UserProfile } from "@/lib/types";
 
 export function useStats() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -27,5 +27,10 @@ export function useStats() {
     refresh();
   }, [refresh]);
 
-  return { profile, dueCount, wordCount, loading, refresh };
+  const setDifficulty = useCallback(async (difficulty: Difficulty) => {
+    await db.userProfile.update(1, { difficulty });
+    refresh();
+  }, [refresh]);
+
+  return { profile, dueCount, wordCount, loading, refresh, setDifficulty };
 }

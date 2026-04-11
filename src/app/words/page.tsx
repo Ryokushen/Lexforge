@@ -15,8 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, BookOpen, ChevronDown } from "lucide-react";
+import { Plus, Search, BookOpen, ChevronDown, Lock } from "lucide-react";
+import { useStats } from "@/hooks/use-stats";
 import type { Word } from "@/lib/types";
+import { TIER_UNLOCK_LEVELS } from "@/lib/types";
 
 // ── Tier config ────────────────────────────────────────────────────────
 
@@ -102,6 +104,8 @@ function WordRow({ word, isExpanded, onToggle }: { word: Word; isExpanded: boole
 // ── Page ────────────────────────────────────────────────────────────────
 
 export default function WordsPage() {
+  const { profile } = useStats();
+  const playerLevel = profile?.level ?? 1;
   const [words, setWords] = useState<Word[]>([]);
   const [search, setSearch] = useState("");
   const [activeTier, setActiveTier] = useState<TierFilter>("all");
@@ -290,6 +294,8 @@ export default function WordsPage() {
         <div className="space-y-4">
           {grouped.map(({ tier, words: tierWords }) => {
             const info = TIER_INFO[tier];
+            const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
+            const isLocked = playerLevel < unlockLevel;
             return (
               <div key={tier} className="space-y-1.5">
                 <div className={`flex items-center gap-2 pl-2 border-l-2 ${info.border}`}>
@@ -299,8 +305,21 @@ export default function WordsPage() {
                   <span className="text-xs text-muted-foreground">
                     {info.label} ({tierWords.length})
                   </span>
+                  {isLocked && (
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
+                      <Lock className="size-2.5" />
+                      Unlocks at Level {unlockLevel}
+                    </span>
+                  )}
                 </div>
-                {renderWordList(tierWords)}
+                {isLocked ? (
+                  <div className="rounded-xl bg-muted/10 border border-border/20 p-4 text-center text-sm text-muted-foreground/50">
+                    <Lock className="size-5 mx-auto mb-1.5 opacity-40" />
+                    Reach Level {unlockLevel} to unlock {info.label}
+                  </div>
+                ) : (
+                  renderWordList(tierWords)
+                )}
               </div>
             );
           })}
