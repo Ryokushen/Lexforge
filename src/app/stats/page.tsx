@@ -110,7 +110,7 @@ const TIER_INFO: Record<string, { label: string; color: string; bg: string; bord
 // ── Page ─────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
-  const { profile, dueCount, wordCount, loading } = useStats();
+  const { profile, dueCount, newCount, wordCount, loading } = useStats();
   const [recentLogs, setRecentLogs] = useState<ReviewLog[]>([]);
 
   useEffect(() => {
@@ -332,7 +332,7 @@ export default function StatsPage() {
                   },
                   {
                     icon: Target,
-                    label: "Words Due",
+                    label: "To Review",
                     value: dueCount,
                     color: dueCount > 0 ? "text-amber-400" : "text-emerald-400",
                   },
@@ -449,7 +449,7 @@ export default function StatsPage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: "Due Now", value: dueCount, color: dueCount > 0 ? "text-amber-400" : "text-emerald-400" },
+                  { label: "To Review", value: dueCount, color: dueCount > 0 ? "text-amber-400" : "text-emerald-400" },
                   { label: "Reviewed", value: profile.totalReviewed, color: "text-primary" },
                   { label: "Correct %", value: `${lifetimeAccuracy}%`, color: accuracyColor(lifetimeAccuracy) },
                 ].map(({ label, value, color }) => (
