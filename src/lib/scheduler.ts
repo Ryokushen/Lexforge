@@ -96,11 +96,17 @@ export async function getWordCount(): Promise<number> {
   return db.words.count();
 }
 
-/** Get count of cards currently due. */
+/** Get count of cards currently due for review (already seen, past due date). */
 export async function getDueCount(): Promise<number> {
   const now = new Date();
   const all = await db.reviewCards.toArray();
-  return all.filter((rc) => new Date(rc.card.due) <= now).length;
+  return all.filter((rc) => rc.card.state !== 0 && new Date(rc.card.due) <= now).length;
+}
+
+/** Get count of new/unseen words available. */
+export async function getNewCount(): Promise<number> {
+  const all = await db.reviewCards.toArray();
+  return all.filter((rc) => rc.card.state === 0).length;
 }
 
 export { Rating };
