@@ -14,6 +14,8 @@ Your character's stats reflect your real cognitive training, not arbitrary point
 - Four live training modes: Recall, Context, Speed, and Association
 - Difficulty settings that control daily new-word intake
 - Tier gating that unlocks harder vocabulary as the player levels up
+- Supabase sync with GitHub OAuth for cross-device progress backup
+- Review-log sync that keeps daily limits consistent across browsers
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
@@ -51,7 +53,7 @@ Your character's stats reflect your real cognitive training, not arbitrary point
 | Sound | Web Audio API | Synthesized feedback tones, zero audio files |
 | UI | shadcn/ui + Tailwind | Accessible primitives, game feel comes from Framer Motion |
 | PWA | Serwist | Service worker generation and offline fallback |
-| Tooling | ESLint + TypeScript + Vitest | Lint/build are active; tests are not added yet |
+| Tooling | ESLint + TypeScript + Vitest | Lint, build, and unit tests are active |
 
 ## Architecture
 
@@ -88,7 +90,14 @@ npm run lint
 npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added.
+Create `.env.local` with your Supabase project URL and anon key:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added. If you sign in with GitHub, Lexforge also syncs profile state, review cards, review logs, and word associations to Supabase.
 
 ## Research Foundation
 
@@ -102,6 +111,5 @@ Built on research documented in the companion Obsidian vault:
 ## Roadmap
 
 - [ ] Web Push notifications ("Your words are decaying")
-- [ ] Supabase for multi-device sync (if needed)
-- [ ] Automated tests for scheduler, session grading, and progression logic
+- [ ] Broaden automated coverage beyond the current core sync/gameplay tests
 - [ ] More curated context sentences and association content

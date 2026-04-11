@@ -2,6 +2,8 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { db, getOrCreateProfile } from "./db";
 
+const SYNC_BATCH_SIZE = 100;
+
 /** Push local profile to Supabase. */
 async function pushProfile(user: User) {
   const profile = await getOrCreateProfile();
@@ -71,9 +73,8 @@ async function pushReviewCards(user: User) {
 
   if (rows.length === 0) return;
 
-  // Batch upsert in chunks of 100
-  for (let i = 0; i < rows.length; i += 100) {
-    const chunk = rows.slice(i, i + 100);
+  for (let i = 0; i < rows.length; i += SYNC_BATCH_SIZE) {
+    const chunk = rows.slice(i, i + SYNC_BATCH_SIZE);
     const { error } = await supabase
       .from("review_cards")
       .upsert(chunk, { onConflict: "user_id,word_key" });
@@ -107,6 +108,74 @@ async function pullReviewCards(user: User) {
     } else {
       await db.reviewCards.add({ wordId, card: row.card });
     }
+  }
+}
+
+/** Push review logs to Supabase so daily limits stay consistent across browsers. */
+async function pushReviewLogs(user: User) {
+  const logs = await db.reviewLogs.toArray();
+  const words = await db.words.toArray();
+  const wordMap = new Map(words.map((w) => [w.id, w.word]));
+
+  const rows = logs
+    .filter((log) => wordMap.has(log.wordId))
+    .map((log) => ({
+      user_id: user.id,
+      word_key: wordMap.get(log.wordId)!,
+      rating: log.rating,
+      response_time_ms: log.responseTimeMs,
+      correct: log.correct,
+      reviewed_at: log.reviewedAt.toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+  if (rows.length === 0) return;
+
+  // Requires a unique constraint on (user_id, word_key, reviewed_at).
+  for (let i = 0; i < rows.length; i += SYNC_BATCH_SIZE) {
+    const chunk = rows.slice(i, i + SYNC_BATCH_SIZE);
+    const { error } = await supabase
+      .from("review_logs")
+      .upsert(chunk, { onConflict: "user_id,word_key,reviewed_at" });
+    if (error) console.error("Push review logs error:", error);
+  }
+}
+
+/** Pull review logs from Supabase into Dexie without duplicating existing local logs. */
+async function pullReviewLogs(user: User) {
+  const { data, error } = await supabase
+    .from("review_logs")
+    .select("*")
+    .eq("user_id", user.id);
+
+  if (error || !data || data.length === 0) return;
+
+  const words = await db.words.toArray();
+  const wordIdMap = new Map(words.map((w) => [w.word, w.id]));
+  const existingLogs = await db.reviewLogs.toArray();
+  const existingKeys = new Set(
+    existingLogs.map(
+      (log) => `${log.wordId}:${log.reviewedAt.toISOString()}`,
+    ),
+  );
+
+  for (const row of data) {
+    const wordId = wordIdMap.get(row.word_key);
+    if (!wordId) continue;
+
+    const reviewedAt = new Date(row.reviewed_at);
+    const logKey = `${wordId}:${reviewedAt.toISOString()}`;
+
+    if (existingKeys.has(logKey)) continue;
+
+    await db.reviewLogs.add({
+      wordId,
+      rating: row.rating,
+      responseTimeMs: row.response_time_ms,
+      correct: row.correct,
+      reviewedAt,
+    });
+    existingKeys.add(logKey);
   }
 }
 
@@ -156,6 +225,7 @@ export async function pushToCloud(user: User) {
     await Promise.all([
       pushProfile(user),
       pushReviewCards(user),
+      pushReviewLogs(user),
       pushAssociations(user),
     ]);
   } catch (err) {
@@ -169,6 +239,7 @@ async function pullFromCloud(user: User) {
     await Promise.all([
       pullProfile(user),
       pullReviewCards(user),
+      pullReviewLogs(user),
       pullAssociations(user),
     ]);
   } catch (err) {
