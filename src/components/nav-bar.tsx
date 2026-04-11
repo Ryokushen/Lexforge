@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Swords, BookOpen, BarChart3, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AuthButton } from "@/components/auth-button";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -28,6 +29,7 @@ export function NavBar() {
         </Link>
 
         <nav className="flex items-center gap-1">
+          <AuthButton />
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active =
               href === "/" ? pathname === "/" : pathname.startsWith(href);

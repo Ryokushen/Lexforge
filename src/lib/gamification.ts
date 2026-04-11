@@ -1,4 +1,6 @@
 import { db, getOrCreateProfile } from "./db";
+import { supabase } from "./supabase";
+import { pushToCloud } from "./sync";
 import type { RPGStats, SessionResult, SessionSummary, UserProfile } from "./types";
 
 // ── XP ──────────────────────────────────────────────────────────────────
@@ -165,6 +167,11 @@ export async function completeSession(
     stats: newStats,
   };
   await db.userProfile.put(updated);
+
+  // Sync to cloud if logged in (fire and forget)
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session?.user) pushToCloud(session.user);
+  });
 
   return {
     results,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { seedDatabase } from "@/lib/seed";
 import { NavBar } from "@/components/nav-bar";
+import { AuthProvider } from "@/lib/auth-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -23,9 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <AuthProvider>
       <NavBar />
       <div className="flex-1">{children}</div>
-    </>
+    </AuthProvider>
   );
 }
