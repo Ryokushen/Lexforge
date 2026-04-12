@@ -6,22 +6,45 @@ import { Swords, Sparkles, BookOpen, RotateCcw, GraduationCap } from "lucide-rea
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { Difficulty } from "@/lib/types";
 
 interface QuestCardProps {
   dueCount: number;
   newCount: number;
   wordCount: number;
+  sessionSize: number;
+  difficulty: Difficulty;
 }
 
-export function QuestCard({ dueCount, newCount, wordCount }: QuestCardProps) {
+function pluralize(count: number, singular: string) {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+export function QuestCard({
+  dueCount,
+  newCount,
+  wordCount,
+  sessionSize,
+  difficulty,
+}: QuestCardProps) {
   const hasWork = dueCount > 0 || newCount > 0;
-  const summaryText =
+  const nextReviewCount = Math.min(dueCount, sessionSize);
+  const nextNewCount = Math.min(newCount, Math.max(0, sessionSize - nextReviewCount));
+  const backlogText =
     dueCount > 0 && newCount > 0
-      ? `${dueCount} review${dueCount === 1 ? "" : "s"} and ${newCount} new word${newCount === 1 ? "" : "s"} ready`
+      ? `${pluralize(dueCount, "review")} waiting, ${pluralize(newCount, "new word")} available today`
       : dueCount > 0
-        ? `${dueCount} review${dueCount === 1 ? "" : "s"} ready`
+        ? `${pluralize(dueCount, "review")} waiting`
         : newCount > 0
-          ? `${newCount} new word${newCount === 1 ? "" : "s"} ready`
+          ? `${pluralize(newCount, "new word")} available today`
+          : `${wordCount} words in library`;
+  const summaryText =
+    nextReviewCount > 0 && nextNewCount > 0
+      ? `Next ${difficulty} quest: ${pluralize(nextReviewCount, "review")} + ${pluralize(nextNewCount, "new word")}`
+      : nextReviewCount > 0
+        ? `Next ${difficulty} quest: ${pluralize(nextReviewCount, "review")}`
+        : nextNewCount > 0
+          ? `Next ${difficulty} quest: ${pluralize(nextNewCount, "new word")}`
           : `${wordCount} words in library`;
 
   return (
@@ -63,6 +86,9 @@ export function QuestCard({ dueCount, newCount, wordCount }: QuestCardProps) {
               </p>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <BookOpen className="size-3" />
+                {backlogText}
+              </p>
+              <p className="text-xs font-medium text-foreground/80">
                 {summaryText}
               </p>
             </div>

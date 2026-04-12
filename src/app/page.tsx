@@ -9,6 +9,7 @@ import { StatDiamond } from "@/components/dashboard/stat-diamond";
 import { JourneyPanel } from "@/components/dashboard/journey-panel";
 import { DifficultySelector } from "@/components/dashboard/difficulty-selector";
 import { Button } from "@/components/ui/button";
+import { DIFFICULTY_CONFIG } from "@/lib/types";
 
 export default function Dashboard() {
   const { seedStatus, seedError, retrySeed } = useBootstrap();
@@ -47,7 +48,13 @@ export default function Dashboard() {
   return (
     <main className="max-w-5xl mx-auto px-4 py-4 space-y-4">
       <CharacterBanner profile={profile} />
-      <QuestCard dueCount={dueCount} newCount={newCount} wordCount={wordCount} />
+      <QuestCard
+        dueCount={dueCount}
+        newCount={newCount}
+        wordCount={wordCount}
+        sessionSize={DIFFICULTY_CONFIG[profile.difficulty].sessionSize}
+        difficulty={profile.difficulty}
+      />
       <DifficultySelector current={profile.difficulty} onChange={setDifficulty} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatDiamond stats={profile.stats} />
