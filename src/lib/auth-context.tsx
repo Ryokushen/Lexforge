@@ -202,19 +202,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [runCloudSync]);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      setLoading(false);
-      if (currentUser) {
-        void runCloudSync(currentUser);
-      } else {
+    async function initializeAuth() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          void runCloudSync(currentUser);
+        } else {
+          clearScheduledRetry();
+          clearCurrentSyncError();
+          setSyncState(navigator.onLine ? "idle" : "offline");
+        }
+      } catch (error) {
+        console.error("Failed to restore auth session:", error);
+        setUser(null);
         clearScheduledRetry();
         clearCurrentSyncError();
         setSyncState(navigator.onLine ? "idle" : "offline");
+      } finally {
+        setLoading(false);
       }
-    });
+    }
+
+    void initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

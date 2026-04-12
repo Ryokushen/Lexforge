@@ -120,4 +120,19 @@ describe("AuthProvider", () => {
 
     expect(syncOnLoginMock).toHaveBeenCalledTimes(3);
   });
+
+  it("recovers when restoring the auth session fails", async () => {
+    getSessionMock.mockRejectedValueOnce(new Error("Session bootstrap failed"));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await flushMicrotasks();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.user).toBeNull();
+    expect(result.current.syncState).toBe("idle");
+    expect(syncOnLoginMock).not.toHaveBeenCalled();
+  });
 });
