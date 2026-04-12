@@ -284,6 +284,21 @@ describe("session engine", () => {
     expect(schedulerMock.getNewCards).toHaveBeenCalledWith(2, [1, "custom"]);
   });
 
+  it("does not backfill new words when the daily new-word budget is exhausted", async () => {
+    schedulerMock.getDueCards.mockResolvedValue([makeReviewCard(1), makeReviewCard(2)]);
+    schedulerMock.getNewCards.mockResolvedValue([]);
+    dbMock.reviewLogs.toArray.mockResolvedValue(
+      Array.from({ length: 10 }, (_, index) => makeTodayFirstReviewLog(index + 10)),
+    );
+    dbMock.words.get.mockImplementation(async (wordId: number) => makeWord(wordId));
+
+    const sessionWords = await loadSessionWords("normal", 1);
+
+    expect(sessionWords).toHaveLength(2);
+    expect(sessionWords.map((entry) => entry.word.id)).toEqual([1, 2]);
+    expect(schedulerMock.getNewCards).not.toHaveBeenCalled();
+  });
+
   it("delegates session finalization to the gamification layer", async () => {
     const summary = {
       results: [makeResult()],

@@ -5,6 +5,10 @@ import { db, getOrCreateProfile } from "@/lib/db";
 import { useBootstrap } from "@/lib/bootstrap-context";
 import { getDueCount, getWordCount } from "@/lib/scheduler";
 import { getAvailableNewCount } from "@/lib/session-engine";
+import {
+  CLOUD_SYNC_EVENT,
+  type CloudSyncEventDetail,
+} from "@/lib/sync";
 import type { Difficulty, UserProfile } from "@/lib/types";
 
 async function loadStatsSnapshot() {
@@ -34,8 +38,10 @@ export function useStats() {
     setLoading(seedStatus === "seeding" && snapshot.wordCount === 0);
   }, [seedStatus]);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     const snapshot = await loadStatsSnapshot();
     applySnapshot(snapshot);
   }, [applySnapshot]);
@@ -55,6 +61,42 @@ export function useStats() {
       cancelled = true;
     };
   }, [applySnapshot]);
+
+  useEffect(() => {
+    function refreshSilently() {
+      void refresh({ silent: true });
+    }
+
+    function handleSyncEvent(event: Event) {
+      const detail = (event as CustomEvent<CloudSyncEventDetail>).detail;
+      if (detail.state === "synced") {
+        refreshSilently();
+      }
+    }
+
+    function handleFocus() {
+      refreshSilently();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    window.addEventListener(CLOUD_SYNC_EVENT, handleSyncEvent as EventListener);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener(
+        CLOUD_SYNC_EVENT,
+        handleSyncEvent as EventListener,
+      );
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refresh]);
 
   const setDifficulty = useCallback(async (difficulty: Difficulty) => {
     await db.userProfile.update(1, {
