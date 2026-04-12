@@ -57,7 +57,19 @@ export function AuthButton() {
   } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled
+        className="gap-1.5 text-xs text-muted-foreground"
+      >
+        <LoaderCircle className="size-3.5 animate-spin" />
+        <span className="hidden sm:inline">Checking...</span>
+      </Button>
+    );
+  }
 
   if (!user) {
     return (

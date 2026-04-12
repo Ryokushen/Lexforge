@@ -53,6 +53,18 @@ async function flushMicrotasks() {
   await Promise.resolve();
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
 describe("AuthProvider", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -127,6 +139,25 @@ describe("AuthProvider", () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
+      await flushMicrotasks();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.user).toBeNull();
+    expect(result.current.syncState).toBe("idle");
+    expect(syncOnLoginMock).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a usable signed-out state when session restore hangs", async () => {
+    const deferred = createDeferred<{ data: { session: { user: User } | null } }>();
+    getSessionMock.mockReturnValueOnce(deferred.promise);
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      vi.advanceTimersByTime(2500);
       await flushMicrotasks();
     });
 

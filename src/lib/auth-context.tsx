@@ -25,6 +25,7 @@ const LAST_SYNC_ERROR_AT_STORAGE_KEY = "lexforge-last-sync-error-at";
 const CLOUD_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const CLOUD_SYNC_RETRY_BASE_MS = 15 * 1000;
 const CLOUD_SYNC_RETRY_MAX_MS = 5 * 60 * 1000;
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 2500;
 
 function readStorageValue(key: string): string | null {
   if (typeof window === "undefined") return null;
@@ -202,9 +203,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [runCloudSync]);
 
   useEffect(() => {
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return;
+
+      console.warn("Auth session restore timed out; falling back to signed-out UI.");
+      setUser(null);
+      clearScheduledRetry();
+      clearCurrentSyncError();
+      setSyncState(navigator.onLine ? "idle" : "offline");
+      setLoading(false);
+    }, AUTH_BOOTSTRAP_TIMEOUT_MS);
+
     async function initializeAuth() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         if (currentUser) {
@@ -215,12 +229,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSyncState(navigator.onLine ? "idle" : "offline");
         }
       } catch (error) {
+        if (cancelled) return;
         console.error("Failed to restore auth session:", error);
         setUser(null);
         clearScheduledRetry();
         clearCurrentSyncError();
         setSyncState(navigator.onLine ? "idle" : "offline");
       } finally {
+        window.clearTimeout(timeoutId);
+        if (cancelled) return;
         setLoading(false);
       }
     }
@@ -243,6 +260,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
       clearScheduledRetry();
       subscription.unsubscribe();
     };
