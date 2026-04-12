@@ -3,9 +3,8 @@
 import { renderHook, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PropsWithChildren } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
-const getSessionMock = vi.hoisted(() => vi.fn());
 const onAuthStateChangeMock = vi.hoisted(() => vi.fn());
 const signInWithOAuthMock = vi.hoisted(() => vi.fn());
 const signOutMock = vi.hoisted(() => vi.fn());
@@ -16,7 +15,6 @@ const pushToCloudMock = vi.hoisted(() => vi.fn());
 vi.mock("./supabase", () => ({
   supabase: {
     auth: {
-      getSession: getSessionMock,
       onAuthStateChange: onAuthStateChangeMock,
       signInWithOAuth: signInWithOAuthMock,
       signOut: signOutMock,
@@ -48,21 +46,11 @@ function wrapper({ children }: PropsWithChildren) {
   return <AuthProvider>{children}</AuthProvider>;
 }
 
+let authStateChangeCallback: ((event: AuthChangeEvent, session: Session | null) => void) | null = null;
+
 async function flushMicrotasks() {
   await Promise.resolve();
   await Promise.resolve();
-}
-
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
 }
 
 describe("AuthProvider", () => {
@@ -88,9 +76,12 @@ describe("AuthProvider", () => {
       value: true,
     });
 
-    getSessionMock.mockResolvedValue({ data: { session: { user: makeUser() } } });
-    onAuthStateChangeMock.mockReturnValue({
-      data: { subscription: { unsubscribe: unsubscribeMock } },
+    authStateChangeCallback = null;
+    onAuthStateChangeMock.mockImplementation((callback) => {
+      authStateChangeCallback = callback;
+      return {
+        data: { subscription: { unsubscribe: unsubscribeMock } },
+      };
     });
   });
 
@@ -111,9 +102,13 @@ describe("AuthProvider", () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
+      authStateChangeCallback?.("INITIAL_SESSION", { user: makeUser() } as Session);
+      vi.advanceTimersByTime(0);
       await flushMicrotasks();
     });
     expect(syncOnLoginMock).toHaveBeenCalledTimes(1);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.user?.id).toBe("user-1");
     expect(result.current.syncState).toBe("error");
 
     await act(async () => {
@@ -133,12 +128,11 @@ describe("AuthProvider", () => {
     expect(syncOnLoginMock).toHaveBeenCalledTimes(3);
   });
 
-  it("recovers when restoring the auth session fails", async () => {
-    getSessionMock.mockRejectedValueOnce(new Error("Session bootstrap failed"));
-
+  it("recovers to a usable signed-out state when the initial session is empty", async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
+      authStateChangeCallback?.("INITIAL_SESSION", null);
       await flushMicrotasks();
     });
 
@@ -148,16 +142,13 @@ describe("AuthProvider", () => {
     expect(syncOnLoginMock).not.toHaveBeenCalled();
   });
 
-  it("falls back to a usable signed-out state when session restore hangs", async () => {
-    const deferred = createDeferred<{ data: { session: { user: User } | null } }>();
-    getSessionMock.mockReturnValueOnce(deferred.promise);
-
+  it("falls back to a usable signed-out state when the auth client never emits an initial session", async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current.loading).toBe(true);
 
     await act(async () => {
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(8000);
       await flushMicrotasks();
     });
 
@@ -165,5 +156,24 @@ describe("AuthProvider", () => {
     expect(result.current.user).toBeNull();
     expect(result.current.syncState).toBe("idle");
     expect(syncOnLoginMock).not.toHaveBeenCalled();
+  });
+
+  it("defers cloud sync until after the auth callback returns", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    act(() => {
+      authStateChangeCallback?.("SIGNED_IN", { user: makeUser() } as Session);
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.user?.id).toBe("user-1");
+    expect(syncOnLoginMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await flushMicrotasks();
+    });
+
+    expect(syncOnLoginMock).toHaveBeenCalledTimes(1);
   });
 });

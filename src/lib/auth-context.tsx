@@ -9,7 +9,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import {
   CLOUD_SYNC_EVENT,
@@ -25,7 +25,7 @@ const LAST_SYNC_ERROR_AT_STORAGE_KEY = "lexforge-last-sync-error-at";
 const CLOUD_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const CLOUD_SYNC_RETRY_BASE_MS = 15 * 1000;
 const CLOUD_SYNC_RETRY_MAX_MS = 5 * 60 * 1000;
-const AUTH_BOOTSTRAP_TIMEOUT_MS = 2500;
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 8000;
 
 function readStorageValue(key: string): string | null {
   if (typeof window === "undefined") return null;
@@ -96,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     currentUser: User,
     mode?: "login" | "push",
   ) => Promise<void> | void>(async () => {});
+  const authBootstrapResolvedRef = useRef(false);
   const retryTimeoutRef = useRef<number | null>(null);
   const syncFailureCountRef = useRef(0);
 
@@ -204,57 +205,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    const timeoutId = window.setTimeout(() => {
-      if (cancelled) return;
+    authBootstrapResolvedRef.current = false;
 
-      console.warn("Auth session restore timed out; falling back to signed-out UI.");
+    function clearAuthState() {
       setUser(null);
       clearScheduledRetry();
       clearCurrentSyncError();
       setSyncState(navigator.onLine ? "idle" : "offline");
-      setLoading(false);
-    }, AUTH_BOOTSTRAP_TIMEOUT_MS);
-
-    async function initializeAuth() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (cancelled) return;
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        if (currentUser) {
-          void runCloudSync(currentUser);
-        } else {
-          clearScheduledRetry();
-          clearCurrentSyncError();
-          setSyncState(navigator.onLine ? "idle" : "offline");
-        }
-      } catch (error) {
-        if (cancelled) return;
-        console.error("Failed to restore auth session:", error);
-        setUser(null);
-        clearScheduledRetry();
-        clearCurrentSyncError();
-        setSyncState(navigator.onLine ? "idle" : "offline");
-      } finally {
-        window.clearTimeout(timeoutId);
-        if (cancelled) return;
-        setLoading(false);
-      }
     }
 
-    void initializeAuth();
+    function finalizeBootstrap() {
+      authBootstrapResolvedRef.current = true;
+      setLoading(false);
+    }
+
+    function schedulePostAuthSync(
+      currentUser: User,
+      mode: "login" | "push" = "login",
+    ) {
+      window.setTimeout(() => {
+        if (cancelled) return;
+        void runCloudSyncRef.current(currentUser, mode);
+      }, 0);
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled || authBootstrapResolvedRef.current) return;
+
+      console.warn("Auth session restore timed out; falling back to signed-out UI.");
+      clearAuthState();
+      finalizeBootstrap();
+    }, AUTH_BOOTSTRAP_TIMEOUT_MS);
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (event: AuthChangeEvent, session) => {
+        if (cancelled) return;
+
         const currentUser = session?.user ?? null;
         setUser(currentUser);
-        if (currentUser) {
-          await runCloudSync(currentUser);
+
+        if (event === "INITIAL_SESSION") {
+          window.clearTimeout(timeoutId);
+          finalizeBootstrap();
+        } else if (!authBootstrapResolvedRef.current) {
+          window.clearTimeout(timeoutId);
+          finalizeBootstrap();
+        }
+
+        if (!currentUser) {
+          clearAuthState();
+          return;
+        }
+
+        if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+          schedulePostAuthSync(currentUser, "login");
         } else {
-          clearScheduledRetry();
           clearCurrentSyncError();
-          setSyncState(navigator.onLine ? "idle" : "offline");
+          setSyncState(navigator.onLine ? "synced" : "offline");
         }
       },
     );
@@ -265,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearScheduledRetry();
       subscription.unsubscribe();
     };
-  }, [clearCurrentSyncError, clearScheduledRetry, runCloudSync]);
+  }, [clearCurrentSyncError, clearScheduledRetry]);
 
   useEffect(() => {
     function handleSyncEvent(event: Event) {
