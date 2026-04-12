@@ -1,7 +1,8 @@
 import type { User } from "@supabase/supabase-js";
+import { toLocalDateKey } from "./date";
 import { supabase } from "./supabase";
 import { db, getOrCreateProfile } from "./db";
-import type { ReviewCard, UserProfile, Word } from "./types";
+import type { ReviewCard, ReviewLog, UserProfile, Word } from "./types";
 
 const SYNC_BATCH_SIZE = 100;
 export const CLOUD_SYNC_EVENT = "lexforge-cloud-sync";
@@ -59,6 +60,12 @@ type CloudSnapshot = {
   reviewCards: CloudReviewCardRow[];
   reviewLogs: CloudReviewLogRow[];
   associations: CloudAssociationRow[];
+};
+
+type MergedReviewStats = {
+  totalReviewed: number;
+  totalCorrect: number;
+  estimatedSessions: number;
 };
 
 function getErrorMessage(error: unknown): string {
@@ -210,7 +217,48 @@ function pickMoreProgressedProfile(local: UserProfile, remote: UserProfile): Use
   return toMillis(local.updatedAt) >= toMillis(remote.updatedAt) ? local : remote;
 }
 
-function mergeProfiles(localProfile: UserProfile, cloudProfile: CloudProfileRow | null): UserProfile {
+function estimateSessionCount(logs: ReviewLog[]): number {
+  if (logs.length === 0) return 0;
+
+  const sortedLogs = [...logs].sort(
+    (left, right) => left.reviewedAt.getTime() - right.reviewedAt.getTime(),
+  );
+  let sessions = 0;
+  let previousLog: ReviewLog | null = null;
+
+  for (const log of sortedLogs) {
+    if (!previousLog) {
+      sessions += 1;
+      previousLog = log;
+      continue;
+    }
+
+    const changedDay = toLocalDateKey(log.reviewedAt) !== toLocalDateKey(previousLog.reviewedAt);
+    const gapMs = log.reviewedAt.getTime() - previousLog.reviewedAt.getTime();
+
+    if (changedDay || gapMs > 45 * 60 * 1000) {
+      sessions += 1;
+    }
+
+    previousLog = log;
+  }
+
+  return sessions;
+}
+
+function summarizeMergedReviewLogs(logs: ReviewLog[]): MergedReviewStats {
+  return {
+    totalReviewed: logs.length,
+    totalCorrect: logs.filter((log) => log.correct).length,
+    estimatedSessions: estimateSessionCount(logs),
+  };
+}
+
+function mergeProfiles(
+  localProfile: UserProfile,
+  cloudProfile: CloudProfileRow | null,
+  mergedReviewStats?: MergedReviewStats,
+): UserProfile {
   const local = normalizeProfile(localProfile);
 
   if (!cloudProfile) return local;
@@ -232,6 +280,27 @@ function mergeProfiles(localProfile: UserProfile, cloudProfile: CloudProfileRow 
     currentStreak = remote.currentStreak;
   }
 
+  const sameLatestSessionDay = Boolean(
+    latestSessionDate
+    && local.lastSessionDate === latestSessionDate
+    && remote.lastSessionDate === latestSessionDate,
+  );
+  const reviewedFloor = mergedReviewStats?.totalReviewed ?? 0;
+  const correctFloor = mergedReviewStats?.totalCorrect ?? 0;
+  const sessionFloor = mergedReviewStats?.estimatedSessions ?? 0;
+  const independentSameDayWork = sameLatestSessionDay
+    && (
+      reviewedFloor > Math.max(local.totalReviewed, remote.totalReviewed)
+      || correctFloor > Math.max(local.totalCorrect, remote.totalCorrect)
+    );
+  let totalSessions = Math.max(local.totalSessions, remote.totalSessions, sessionFloor);
+  if (independentSameDayWork) {
+    totalSessions = Math.max(
+      totalSessions,
+      Math.max(local.totalSessions, remote.totalSessions) + 1,
+    );
+  }
+
   return {
     id: 1,
     level: progressed.level,
@@ -242,9 +311,9 @@ function mergeProfiles(localProfile: UserProfile, cloudProfile: CloudProfileRow 
     currentStreak,
     longestStreak: Math.max(local.longestStreak, remote.longestStreak, currentStreak),
     lastSessionDate: latestSessionDate,
-    totalSessions: Math.max(local.totalSessions, remote.totalSessions),
-    totalCorrect: Math.max(local.totalCorrect, remote.totalCorrect),
-    totalReviewed: Math.max(local.totalReviewed, remote.totalReviewed),
+    totalSessions,
+    totalCorrect: Math.max(local.totalCorrect, remote.totalCorrect, correctFloor),
+    totalReviewed: Math.max(local.totalReviewed, remote.totalReviewed, reviewedFloor),
     stats: mergeStats(local.stats, remote.stats),
     difficulty: newer.difficulty,
     updatedAt: maxIso(local.updatedAt, remote.updatedAt),
@@ -277,9 +346,12 @@ async function fetchCloudSnapshot(user: User): Promise<CloudSnapshot> {
   };
 }
 
-async function reconcileProfile(cloudProfile: CloudProfileRow | null) {
+async function reconcileProfile(
+  cloudProfile: CloudProfileRow | null,
+  mergedReviewStats?: MergedReviewStats,
+) {
   const localProfile = await getOrCreateProfile();
-  const mergedProfile = mergeProfiles(localProfile, cloudProfile);
+  const mergedProfile = mergeProfiles(localProfile, cloudProfile, mergedReviewStats);
 
   await db.userProfile.put(mergedProfile);
   return mergedProfile;
@@ -316,7 +388,10 @@ async function reconcileReviewCards(cloudCards: CloudReviewCardRow[], words: Wor
   }
 }
 
-async function reconcileReviewLogs(cloudLogs: CloudReviewLogRow[], words: Word[]) {
+async function reconcileReviewLogs(
+  cloudLogs: CloudReviewLogRow[],
+  words: Word[],
+): Promise<MergedReviewStats> {
   const wordIdMap = new Map(words.map((word) => [word.word, word.id]));
   const existingLogs = await db.reviewLogs.toArray();
   const existingKeys = new Set(
@@ -342,6 +417,9 @@ async function reconcileReviewLogs(cloudLogs: CloudReviewLogRow[], words: Word[]
     });
     existingKeys.add(logKey);
   }
+
+  const mergedLogs = await db.reviewLogs.toArray();
+  return summarizeMergedReviewLogs(mergedLogs);
 }
 
 async function reconcileAssociations(cloudAssociations: CloudAssociationRow[], words: Word[]) {
@@ -400,10 +478,10 @@ async function reconcileCloudState(user: User) {
   const snapshot = await fetchCloudSnapshot(user);
   const words = await db.words.toArray();
 
-  await reconcileReviewLogs(snapshot.reviewLogs, words);
+  const mergedReviewStats = await reconcileReviewLogs(snapshot.reviewLogs, words);
   await reconcileReviewCards(snapshot.reviewCards, words);
   await reconcileAssociations(snapshot.associations, words);
-  const profile = await reconcileProfile(snapshot.profile);
+  const profile = await reconcileProfile(snapshot.profile, mergedReviewStats);
 
   return { profile };
 }

@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import {
@@ -14,6 +22,9 @@ const LAST_SYNC_STORAGE_KEY = "lexforge-last-sync-at";
 const LAST_SYNC_ATTEMPT_STORAGE_KEY = "lexforge-last-sync-attempt-at";
 const LAST_SYNC_ERROR_STORAGE_KEY = "lexforge-last-sync-error";
 const LAST_SYNC_ERROR_AT_STORAGE_KEY = "lexforge-last-sync-error-at";
+const CLOUD_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+const CLOUD_SYNC_RETRY_BASE_MS = 15 * 1000;
+const CLOUD_SYNC_RETRY_MAX_MS = 5 * 60 * 1000;
 
 function readStorageValue(key: string): string | null {
   if (typeof window === "undefined") return null;
@@ -79,6 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
+  const syncInFlightRef = useRef<Promise<void> | null>(null);
+  const runCloudSyncRef = useRef<(
+    currentUser: User,
+    mode?: "login" | "push",
+  ) => Promise<void> | void>(async () => {});
+  const retryTimeoutRef = useRef<number | null>(null);
+  const syncFailureCountRef = useRef(0);
 
   const persistValue = useCallback((key: string, value: string | null) => {
     if (typeof window === "undefined") return;
@@ -112,31 +130,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistValue(LAST_SYNC_ERROR_AT_STORAGE_KEY, timestamp);
   }, [persistValue]);
 
+  const clearScheduledRetry = useCallback(() => {
+    if (retryTimeoutRef.current !== null) {
+      window.clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleRetry = useCallback((currentUser: User) => {
+    clearScheduledRetry();
+
+    if (typeof navigator === "undefined" || !navigator.onLine) {
+      return;
+    }
+
+    const retryDelay = Math.min(
+      CLOUD_SYNC_RETRY_BASE_MS * 2 ** Math.max(0, syncFailureCountRef.current - 1),
+      CLOUD_SYNC_RETRY_MAX_MS,
+    );
+
+    retryTimeoutRef.current = window.setTimeout(() => {
+      void runCloudSyncRef.current(currentUser);
+    }, retryDelay);
+  }, [clearScheduledRetry]);
+
   const runCloudSync = useCallback(async (currentUser: User, mode: "login" | "push" = "login") => {
+    if (syncInFlightRef.current) {
+      return syncInFlightRef.current;
+    }
+
     const attemptAt = new Date().toISOString();
     persistSyncAttempt(attemptAt);
 
     if (!navigator.onLine) {
+      clearScheduledRetry();
       setSyncState("offline");
       clearCurrentSyncError();
       return;
     }
 
-    try {
-      clearCurrentSyncError();
-      if (mode === "push") {
-        await pushToCloud(currentUser);
-      } else {
-        await syncOnLogin(currentUser);
+    const syncPromise = (async () => {
+      try {
+        clearCurrentSyncError();
+        if (mode === "push") {
+          await pushToCloud(currentUser);
+        } else {
+          await syncOnLogin(currentUser);
+        }
+        syncFailureCountRef.current = 0;
+        clearScheduledRetry();
+      } catch (error) {
+        syncFailureCountRef.current += 1;
+        setSyncState(navigator.onLine ? "error" : "offline");
+        persistSyncError(
+          error instanceof Error ? error.message : "Cloud sync failed",
+          new Date().toISOString(),
+        );
+        scheduleRetry(currentUser);
       }
-    } catch (error) {
-      setSyncState(navigator.onLine ? "error" : "offline");
-      persistSyncError(
-        error instanceof Error ? error.message : "Cloud sync failed",
-        new Date().toISOString(),
-      );
-    }
-  }, [clearCurrentSyncError, persistSyncAttempt, persistSyncError]);
+    })();
+
+    syncInFlightRef.current = syncPromise.finally(() => {
+      syncInFlightRef.current = null;
+    });
+
+    return syncInFlightRef.current;
+  }, [clearCurrentSyncError, clearScheduledRetry, persistSyncAttempt, persistSyncError, scheduleRetry]);
+
+  useEffect(() => {
+    runCloudSyncRef.current = runCloudSync;
+  }, [runCloudSync]);
 
   useEffect(() => {
     // Get initial session
@@ -147,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         void runCloudSync(currentUser);
       } else {
+        clearScheduledRetry();
         clearCurrentSyncError();
         setSyncState(navigator.onLine ? "idle" : "offline");
       }
@@ -160,14 +224,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (currentUser) {
           await runCloudSync(currentUser);
         } else {
+          clearScheduledRetry();
           clearCurrentSyncError();
           setSyncState(navigator.onLine ? "idle" : "offline");
         }
       },
     );
 
-    return () => subscription.unsubscribe();
-  }, [clearCurrentSyncError, runCloudSync]);
+    return () => {
+      clearScheduledRetry();
+      subscription.unsubscribe();
+    };
+  }, [clearCurrentSyncError, clearScheduledRetry, runCloudSync]);
 
   useEffect(() => {
     function handleSyncEvent(event: Event) {
@@ -196,7 +264,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     function handleOnline() {
       setIsOnline(true);
+      syncFailureCountRef.current = 0;
       clearCurrentSyncError();
+      clearScheduledRetry();
 
       if (user) {
         void runCloudSync(user);
@@ -207,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     function handleOffline() {
       setIsOnline(false);
+      clearScheduledRetry();
       setSyncState("offline");
     }
 
@@ -222,7 +293,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [clearCurrentSyncError, persistLastSync, persistSyncError, runCloudSync, user]);
+  }, [clearCurrentSyncError, clearScheduledRetry, persistLastSync, persistSyncError, runCloudSync, user]);
+
+  useEffect(() => {
+    if (!user || !isOnline) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void runCloudSync(user);
+    }, CLOUD_SYNC_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isOnline, runCloudSync, user]);
 
   const signIn = useCallback(async () => {
     await supabase.auth.signInWithOAuth({
@@ -236,9 +321,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
+    clearScheduledRetry();
+    syncFailureCountRef.current = 0;
     clearCurrentSyncError();
     setSyncState(navigator.onLine ? "idle" : "offline");
-  }, [clearCurrentSyncError]);
+  }, [clearCurrentSyncError, clearScheduledRetry]);
 
   const syncNow = useCallback(async () => {
     if (!user) return;

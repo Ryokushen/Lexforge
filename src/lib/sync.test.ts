@@ -128,6 +128,24 @@ function makeUser(): User {
   return { id: "user-1" } as User;
 }
 
+function makeReviewLog(wordId: number, reviewedAt: string, correct: boolean): {
+  id: number;
+  wordId: number;
+  rating: 1 | 2 | 3 | 4;
+  responseTimeMs: number;
+  correct: boolean;
+  reviewedAt: Date;
+} {
+  return {
+    id: wordId,
+    wordId,
+    rating: correct ? 3 : 1,
+    responseTimeMs: correct ? 1500 : 7000,
+    correct,
+    reviewedAt: new Date(reviewedAt),
+  };
+}
+
 describe("sync review logs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -388,6 +406,104 @@ describe("sync review logs", () => {
         total_reviewed: 105,
         difficulty: "hard",
         updated_at: "2026-04-11T09:00:00.000Z",
+      }),
+      options: undefined,
+    });
+  });
+
+  it("keeps same-day work from both devices by using merged review logs as profile floors", async () => {
+    tableState.profiles.exists = true;
+    tableState.profiles.row = {
+      id: "user-1",
+      level: 3,
+      xp: 118,
+      xp_to_next_level: 300,
+      hp: 82,
+      max_hp: 100,
+      current_streak: 5,
+      longest_streak: 6,
+      last_session_date: "2026-04-11",
+      total_sessions: 3,
+      total_correct: 7,
+      total_reviewed: 8,
+      stats: { recall: 3, retention: 2, perception: 1, creativity: 0 },
+      difficulty: "hard",
+      updated_at: "2026-04-11T18:00:00.000Z",
+    };
+    tableState.review_logs.rows = [
+      {
+        user_id: "user-1",
+        word_key: "word-11",
+        rating: 3,
+        response_time_ms: 1200,
+        correct: true,
+        reviewed_at: "2026-04-11T18:10:00.000Z",
+      },
+    ];
+
+    dbMock.words.toArray.mockResolvedValue(
+      Array.from({ length: 11 }, (_, index) => makeWord(index + 1, `word-${index + 1}`)),
+    );
+    dbMock.reviewCards.toArray.mockResolvedValue([]);
+
+    const localLogs = [
+      makeReviewLog(1, "2026-04-11T08:00:00.000Z", true),
+      makeReviewLog(2, "2026-04-11T08:01:00.000Z", true),
+      makeReviewLog(3, "2026-04-11T08:02:00.000Z", true),
+      makeReviewLog(4, "2026-04-11T08:03:00.000Z", true),
+      makeReviewLog(5, "2026-04-11T08:04:00.000Z", true),
+      makeReviewLog(6, "2026-04-11T08:05:00.000Z", true),
+      makeReviewLog(7, "2026-04-11T08:06:00.000Z", true),
+      makeReviewLog(8, "2026-04-11T08:07:00.000Z", true),
+      makeReviewLog(9, "2026-04-11T08:08:00.000Z", false),
+      makeReviewLog(10, "2026-04-11T08:09:00.000Z", false),
+    ];
+    dbMock.reviewLogs.toArray.mockImplementation(async () => localLogs);
+    dbMock.reviewLogs.add.mockImplementation(async (log) => {
+      localLogs.push({
+        id: localLogs.length + 1,
+        wordId: log.wordId,
+        rating: log.rating,
+        responseTimeMs: log.responseTimeMs,
+        correct: log.correct,
+        reviewedAt: log.reviewedAt,
+      });
+      return localLogs.length;
+    });
+    getOrCreateProfileMock.mockResolvedValue(
+      makeUserProfile({
+        xp: 120,
+        xpToNextLevel: 300,
+        hp: 90,
+        currentStreak: 5,
+        longestStreak: 5,
+        lastSessionDate: "2026-04-11",
+        totalSessions: 4,
+        totalCorrect: 8,
+        totalReviewed: 10,
+        updatedAt: "2026-04-11T16:00:00.000Z",
+      }),
+    );
+
+    await syncOnLogin(makeUser());
+
+    expect(dbMock.userProfile.put).toHaveBeenCalledWith(
+      expect.objectContaining({
+        totalSessions: 5,
+        totalCorrect: 9,
+        totalReviewed: 11,
+        currentStreak: 5,
+        longestStreak: 6,
+        difficulty: "hard",
+      }),
+    );
+    expect(tableState.profiles.upserts[0]).toEqual({
+      rows: expect.objectContaining({
+        id: "user-1",
+        total_sessions: 5,
+        total_correct: 9,
+        total_reviewed: 11,
+        difficulty: "hard",
       }),
       options: undefined,
     });
