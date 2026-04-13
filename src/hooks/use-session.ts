@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import type {
+  AnswerMetadata,
   ContextSentence,
   GameMode,
   SessionState,
@@ -16,7 +17,6 @@ import {
   finalizeSession,
   pickMode,
   getContextSentence,
-  getSpeedChoices,
 } from "@/lib/session-engine";
 import {
   playCorrect,
@@ -36,8 +36,6 @@ export function useSession() {
   const [currentMode, setCurrentMode] = useState<GameMode>("recall");
   const [currentContextSentence, setCurrentContextSentence] =
     useState<ContextSentence | null>(null);
-  const [currentSpeedChoices, setCurrentSpeedChoices] =
-    useState<{ definitions: string[]; correctDefinition: string } | null>(null);
   const submittingRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
   const stateRef = useRef<SessionState>("idle");
@@ -67,21 +65,17 @@ export function useSession() {
     summaryRef.current = summary;
   }, [summary]);
 
-  const configurePrompt = useCallback((word: SessionWord, allWords: SessionWord[]) => {
+  const configurePrompt = useCallback((word: SessionWord) => {
     const mode = pickMode(word.word);
     if (mode === "context") {
       setCurrentMode("context");
       setCurrentContextSentence(getContextSentence(word.word));
-      setCurrentSpeedChoices(null);
-    } else if (mode === "speed" && allWords.length >= 4) {
+    } else if (mode === "speed") {
       setCurrentMode("speed");
-      setCurrentSpeedChoices(getSpeedChoices(word.word, allWords));
       setCurrentContextSentence(null);
     } else {
-      // Fallback to recall if not enough words for speed
-      setCurrentMode(mode === "speed" ? "recall" : mode);
+      setCurrentMode(mode);
       setCurrentContextSentence(null);
-      setCurrentSpeedChoices(null);
     }
   }, []);
 
@@ -101,7 +95,7 @@ export function useSession() {
     setResults([]);
     setSummary(null);
     setPromptStartTime(Date.now());
-    configurePrompt(sessionWords[0], sessionWords);
+    configurePrompt(sessionWords[0]);
 
     setState("active");
   }, [configurePrompt]);
@@ -139,7 +133,7 @@ export function useSession() {
     return partialCommitPromiseRef.current;
   }, []);
 
-  async function submitAnswer(answer: string, manualRating?: 1 | 2 | 3 | 4) {
+  async function submitAnswer(answer: string, answerMetadata?: AnswerMetadata) {
     if (!currentWord || state !== "active" || submittingRef.current) return;
     submittingRef.current = true;
 
@@ -148,7 +142,7 @@ export function useSession() {
       const expectedAnswer = currentMode === "association" && associationPhase === "create"
         ? "__create__"
         : currentMode === "speed"
-          ? currentSpeedChoices?.correctDefinition
+          ? currentWord.word.word
           : currentContextSentence?.answer;
 
       const { result } = await processAnswer(
@@ -158,7 +152,7 @@ export function useSession() {
         sessionIdRef.current ?? undefined,
         currentMode,
         expectedAnswer,
-        manualRating,
+        answerMetadata,
       );
 
       // Play sound based on result
@@ -202,7 +196,7 @@ export function useSession() {
       setCurrentIndex(nextIndex);
       setPromptStartTime(Date.now());
       submittingRef.current = false;
-      configurePrompt(words[nextIndex], words);
+      configurePrompt(words[nextIndex]);
       setState("active");
     }
   }, [configurePrompt, currentIndex, words, results]);
@@ -220,7 +214,6 @@ export function useSession() {
     setSummary(null);
     setCurrentMode("recall");
     setCurrentContextSentence(null);
-    setCurrentSpeedChoices(null);
   }, []);
 
   useEffect(() => {
@@ -240,7 +233,6 @@ export function useSession() {
     summary,
     currentMode,
     currentContextSentence,
-    currentSpeedChoices,
     associationPhase,
     startSession,
     submitAnswer,

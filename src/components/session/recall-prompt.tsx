@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, Lightbulb, Send } from "lucide-react";
-import type { SessionWord } from "@/lib/types";
+import type { AnswerMetadata, SessionWord } from "@/lib/types";
 
 interface RecallPromptProps {
   sessionWord: SessionWord;
-  onSubmit: (answer: string) => void;
+  onSubmit: (answer: string, metadata?: AnswerMetadata) => void;
 }
 
 export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
@@ -27,7 +27,7 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (answer.trim()) {
-      onSubmit(answer.trim());
+      onSubmit(answer.trim(), { cueLevel: showHint ? 1 : 0 });
     }
   };
 

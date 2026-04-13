@@ -40,8 +40,8 @@ import {
   createSessionId,
   finalizeSession,
   getAvailableNewCount,
-  getSpeedChoices,
   getUnlockedTiers,
+  gradeContextAnswer,
   gradeSpeedAnswer,
   loadSessionWords,
   pickMode,
@@ -113,35 +113,90 @@ describe("session engine", () => {
   });
 
   it("auto-grades exact, fuzzy, and wrong answers", () => {
-    expect(autoGrade("lucid", "lucid")).toEqual({ rating: 3, correct: true });
-    expect(autoGrade("lucif", "lucid")).toEqual({ rating: 2, correct: true });
-    expect(autoGrade("opaque", "lucid")).toEqual({ rating: 1, correct: false });
+    expect(autoGrade("lucid", "lucid")).toEqual({
+      rating: 3,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+    expect(autoGrade("lucid", "lucid", 1)).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 1,
+      retrievalKind: "assisted",
+    });
+    expect(autoGrade("lucif", "lucid")).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "approximate",
+    });
+    expect(autoGrade("opaque", "lucid")).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
   });
 
   it("grades speed answers by correctness and response time", () => {
     expect(gradeSpeedAnswer("lucid", "lucid", 2500)).toEqual({
       rating: 4,
       correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
     });
     expect(gradeSpeedAnswer("lucid", "lucid", 5000)).toEqual({
       rating: 3,
       correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+    expect(gradeSpeedAnswer("lucid", "lucid", 3500, 1)).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 1,
+      retrievalKind: "assisted",
+    });
+    expect(gradeSpeedAnswer("lucif", "lucid", 2000)).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "approximate",
     });
     expect(gradeSpeedAnswer("__timeout__", "lucid", 8000)).toEqual({
       rating: 1,
       correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
     });
   });
 
-  it("returns four speed choices including the correct definition", () => {
-    const words = [1, 2, 3, 4, 5].map((id) => makeSessionWord(id));
-
-    const choices = getSpeedChoices(words[0].word, words);
-
-    expect(choices.correctDefinition).toBe("definition-1");
-    expect(choices.definitions).toHaveLength(4);
-    expect(new Set(choices.definitions).size).toBe(4);
-    expect(choices.definitions).toContain("definition-1");
+  it("grades context answers by retrieval quality and fallback help", () => {
+    expect(gradeContextAnswer("lucid", "lucid")).toEqual({
+      rating: 3,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+    expect(gradeContextAnswer("lucid", "lucid", 1)).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 1,
+      retrievalKind: "assisted",
+    });
+    expect(gradeContextAnswer("lucif", "lucid")).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "approximate",
+    });
+    expect(gradeContextAnswer("opaque", "lucid")).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
   });
 
   it("unlocks tiers at the configured level thresholds", () => {
@@ -198,6 +253,8 @@ describe("session engine", () => {
       responseTimeMs: 2000,
       rating: 3,
       mode: "association",
+      cueLevel: 0,
+      retrievalKind: "created",
     });
     expect(schedulerMock.gradeCard).toHaveBeenCalledWith(sessionWord.reviewCard, 3);
     expect(dbMock.reviewLogs.add).toHaveBeenCalledWith(
@@ -206,6 +263,41 @@ describe("session engine", () => {
         sessionId: "session-1",
         rating: 3,
         correct: true,
+        cueLevel: 0,
+        retrievalKind: "created",
+      }),
+    );
+  });
+
+  it("downgrades hinted recall to assisted retrieval in the review log", async () => {
+    const sessionWord = makeSessionWord(1);
+    const updatedCard = makeReviewCard(1);
+    schedulerMock.gradeCard.mockResolvedValue(updatedCard);
+
+    const { result } = await processAnswer(
+      sessionWord,
+      "word-1",
+      2500,
+      "session-1",
+      "recall",
+      undefined,
+      { cueLevel: 1 },
+    );
+
+    expect(result).toEqual({
+      wordId: 1,
+      word: "word-1",
+      correct: true,
+      responseTimeMs: 2500,
+      rating: 2,
+      mode: "recall",
+      cueLevel: 1,
+      retrievalKind: "assisted",
+    });
+    expect(dbMock.reviewLogs.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cueLevel: 1,
+        retrievalKind: "assisted",
       }),
     );
   });

@@ -32,6 +32,8 @@ export interface ReviewLog {
   rating: 1 | 2 | 3 | 4; // Again, Hard, Good, Easy
   responseTimeMs: number;
   correct: boolean;
+  cueLevel?: CueLevel;
+  retrievalKind?: RetrievalKind;
   reviewedAt: Date;
 }
 
@@ -93,9 +95,17 @@ export interface SessionResult {
   responseTimeMs: number;
   rating: 1 | 2 | 3 | 4;
   mode: GameMode;
+  cueLevel?: CueLevel;
+  retrievalKind?: RetrievalKind;
 }
 
 export type GameMode = "recall" | "context" | "speed" | "association";
+export type CueLevel = 0 | 1;
+export type RetrievalKind = "exact" | "assisted" | "approximate" | "failed" | "created";
+
+export interface AnswerMetadata {
+  cueLevel?: CueLevel;
+}
 
 export type SessionState =
   | "idle"

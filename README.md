@@ -1,84 +1,97 @@
 # Lexforge
 
-Forge your vocabulary. A gamified RPG vocabulary trainer that maps every game mechanic to clinically-evidenced cognitive training techniques. Built to fight vocabulary regression and lethologica (tip-of-the-tongue states).
+Forge your vocabulary. Lexforge is a local-first RPG vocabulary trainer built around spaced repetition, free recall, cue-based recovery, and mnemonic association. It is designed to help with vocabulary retention, faster word retrieval, and fewer tip-of-the-tongue stalls for trained words.
 
-## The Idea
+## Product Positioning
 
-Existing brain games are either fun but unscientific (Wordle, random trivia), or scientific but miserable to use (Anki). This app maps every game mechanic directly to the technique with the strongest clinical evidence, then wraps it in RPG progression so you actually open it every day.
+Lexforge is best understood as an evidence-informed vocabulary retrieval trainer, not a generic brain-training app.
 
-Your character's stats reflect your real cognitive training, not arbitrary points.
+What it aims to improve:
+- retention of practiced vocabulary
+- speed and reliability of retrieving trained words
+- recovery of words that are known semantically but hard to access quickly
+- replacement of vague default wording with more precise vocabulary
+
+What it does not currently claim:
+- visual speed-of-processing training
+- broad cognitive-transfer effects
+- dementia-risk reduction
 
 ## Current Status
 
-- 321 seeded words plus custom-word support
-- Four live training modes: Recall, Context, Speed, and Association
+- 531 seeded words across three tiers, plus custom words
+- Four live training modes: Recall, Context, Rapid Retrieval, and Association
 - Difficulty settings that control daily new-word intake
 - Tier gating that unlocks harder vocabulary as the player levels up
-- Supabase sync with GitHub OAuth for cross-device progress backup
+- Local-first storage with Dexie/IndexedDB
+- Optional Supabase sync with GitHub OAuth for cross-device backup
 - Review-log sync that keeps daily limits consistent across browsers
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
 
-| Mode | Trains | How It Works |
-|------|--------|-------------|
-| **Recall** | Phonological retrieval | See a definition, type the word. No multiple choice — pure production. |
-| **Context** | Real-life word selection | See a sentence with a weak word highlighted, pick a more precise replacement from 4 choices. |
-| **Speed** | Speed-of-processing | Match a word to the correct definition before the countdown expires. |
-| **Association** | Dual coding | Create a vivid mental image for a word, then later recall the word from that image. |
+| Mode | Trains | Shipped behavior |
+|------|--------|------------------|
+| **Recall** | Clean definition-to-word retrieval | See a definition and type the word. |
+| **Context** | Word choice in context | Type a stronger replacement first, then fall back to assisted options only if needed. |
+| **Rapid Retrieval** | Fast verbal access | See a definition, type the word under a 5 second timer, and recover with a rescue cue if needed. |
+| **Association** | Elaborative encoding | Create a vivid text association for a word, then later recall from that association. |
 
-## RPG System
+## RPG Layer
 
-| Stat | Cognitive Skill | Evidence |
-|------|----------------|----------|
-| Recall | Phonological retrieval | Directly exercises the pathway that fails during tip-of-tongue states |
-| Retention | Spaced repetition | 45% better recall vs. traditional schedules (Duolingo HLR study, 220M reviews) |
-| Perception | Speed-of-processing | 20-year longitudinal data; 25% dementia risk reduction |
-| Creativity | Visual association | 76% recall improvement via dual coding |
+| Stat | Represents | Current use |
+|------|------------|-------------|
+| **Recall** | Clean word retrieval | Grows from definition-to-word success. |
+| **Retention** | Long-term review stability | Grows from spaced-review performance over time. |
+| **Perception** | Rapid verbal retrieval under time pressure | Grows from Rapid Retrieval results. |
+| **Creativity** | Association building and contextual flexibility | Grows from association and contextual work. |
 
-- **XP** from correct answers, streak bonuses, speed bonuses
-- **HP** decays on missed days (mirrors real memory decay, floor at 20 — never zero)
-- **Leveling** scales at 1.5x per level, restores HP on level-up
-- **Difficulty** adjusts session size and daily introduction rate
-- **Tier gating** unlocks Tier 2 at level 5 and Tier 3 at level 10
+The RPG stats are currently player-facing summaries and rewards. A later step is to use them more directly to adapt hints, pacing, and mode weighting.
 
-## Tech Stack
+Other progression systems:
+- XP comes from session performance, streak bonuses, and fast clean retrieval.
+- HP decays on missed days and restores on level-up.
+- Difficulty changes session size and new-word intake.
+- Tier gating unlocks Tier 2 at level 5 and Tier 3 at level 10.
+
+## Technical Backbone
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Framework | Next.js 16 (App Router) | Static-first app shell with modern React compiler rules |
-| Local storage | Dexie.js (IndexedDB) | Typed queries, offline-ready, no backend needed |
-| Spaced repetition | ts-fsrs | State-of-the-art scheduler, what Anki switched to |
-| Animations | Framer Motion | Card transitions, XP counters, level-up effects |
-| Sound | Web Audio API | Synthesized feedback tones, zero audio files |
-| UI | shadcn/ui + Tailwind | Accessible primitives, game feel comes from Framer Motion |
+| Framework | Next.js 16 (App Router) | Static-first app shell with modern React patterns |
+| Local storage | Dexie.js (IndexedDB) | Typed queries, offline-ready, no mandatory backend |
+| Spaced repetition | ts-fsrs | FSRS scheduler for due reviews and long-term retention |
+| Animations | Framer Motion | Session transitions, stat growth, battle feedback |
+| Sound | Web Audio API | Synthesized feedback tones with no audio assets |
+| UI | shadcn/ui + Tailwind | Accessible primitives; game feel comes from motion and styling |
 | PWA | Serwist | Service worker generation and offline fallback |
-| Tooling | ESLint + TypeScript + Vitest | Lint, build, and unit tests are active |
+| Sync | Supabase | Optional GitHub-authenticated cloud backup and merge |
+| Tooling | ESLint + TypeScript + Vitest | Linting, builds, and automated test coverage |
 
 ## Architecture
 
-```
+```text
 src/
-├── app/                    Next.js App Router pages
-│   ├── page.tsx            Dashboard (character banner, quest card, difficulty)
-│   ├── session/page.tsx    Active training session
-│   ├── words/page.tsx      Word library with search + add custom words
-│   └── stats/page.tsx      Detailed progress and performance
-├── components/
-│   ├── dashboard/          Character, quest, difficulty, and stat UI
-│   └── session/            Recall, context, speed, association, combat, results
-├── hooks/
-│   ├── use-session.ts      Session state machine (idle → active → reviewing → complete)
-│   └── use-stats.ts        Live profile + due count from IndexedDB
-└── lib/
-    ├── db.ts               Dexie schema (words, reviewCards, reviewLogs, userProfile)
-    ├── scheduler.ts        ts-fsrs wrapper (create, grade, query due cards)
-    ├── session-engine.ts   Word selection, grading (edit distance + exact match), mode picking
-    ├── gamification.ts     XP formula, leveling, HP decay, stat growth
-    ├── context-sentences.ts Shared sentence bank for Context Mode
-    ├── seed-words.ts       321 seeded vocabulary words across three tiers
-    ├── sounds.ts           Web Audio API synthesized sound effects
-    └── types.ts            All TypeScript interfaces
+|-- app/                    Next.js App Router pages
+|   |-- page.tsx            Dashboard
+|   |-- session/page.tsx    Active training session
+|   |-- words/page.tsx      Word library and custom word creation
+|   `-- stats/page.tsx      Progress and performance views
+|-- components/
+|   |-- dashboard/          Character, quest, difficulty, and stat UI
+|   `-- session/            Recall, context, rapid retrieval, association, battle, and results
+|-- hooks/
+|   |-- use-session.ts      Session state machine
+|   `-- use-stats.ts        Live profile and derived stats
+`-- lib/
+    |-- db.ts               Dexie schema (words, reviewCards, reviewLogs, userProfile)
+    |-- scheduler.ts        ts-fsrs wrapper
+    |-- session-engine.ts   Word selection, grading, and mode picking
+    |-- gamification.ts     XP, leveling, HP decay, and stat growth
+    |-- sync.ts             Supabase merge and reconciliation logic
+    |-- seed-words.ts       531 seeded vocabulary words across three tiers
+    |-- sounds.ts           Web Audio API synthesized sound effects
+    `-- types.ts            Shared TypeScript types
 ```
 
 ## Getting Started
@@ -99,17 +112,26 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 
 Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added. If you sign in with GitHub, Lexforge also syncs profile state, review cards, review logs, and word associations to Supabase.
 
-## Research Foundation
+## Research Notes
 
-Built on research documented in the companion Obsidian vault:
+Research documentation lives in the companion Obsidian vault. The current app is aligned with:
 
-- **Memory Recall and Brain Training** — spaced repetition, dual coding, speed-of-processing evidence
-- **Spaced Repetition Algorithms** — FSRS vs. HLR vs. MEMORIZE comparison, ts-fsrs validation
-- **Gamification Psychology** — SDT framework, overjustification effect, deep vs. shallow mechanics
-- **Gamification Psychology (Web)** — Octalysis Framework, novelty effect data
+- spaced repetition for long-term review timing
+- retrieval practice through definition-to-word production
+- cue-based recovery for partial retrieval failures
+- mnemonic association as elaborative encoding
 
-## Roadmap
+The app intentionally avoids stronger claims until the mechanics and data support them.
 
-- [ ] Web Push notifications ("Your words are decaying")
-- [ ] Broaden automated coverage beyond the current core sync/gameplay tests
-- [ ] More curated context sentences and association content
+- **Memory Recall and Brain Training** - vocabulary retrieval, tip-of-the-tongue states, and transfer limits
+- **Spaced Repetition Algorithms** - FSRS vs. HLR comparison and scheduler selection
+- **Gamification Psychology** - reinforcement design, motivation, and overjustification risks
+- **Gamification Psychology (Web)** - novelty effects and practical product patterns
+
+## Near-Term Roadmap
+
+- cue-aware grading and review-log fields
+- production-first context mode with MCQ fallback
+- TOT capture flow for real-world misses
+- adaptive use of RPG stats in session generation
+- broader automated coverage and runtime verification

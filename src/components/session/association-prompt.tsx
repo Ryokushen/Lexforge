@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Palette, Send, Sparkles } from "lucide-react";
 import { db } from "@/lib/db";
-import type { SessionWord } from "@/lib/types";
+import type { AnswerMetadata, SessionWord } from "@/lib/types";
 
 interface AssociationPromptProps {
   sessionWord: SessionWord;
   phase: "create" | "recall";
-  onSubmit: (answer: string) => void;
+  onSubmit: (answer: string, metadata?: AnswerMetadata) => void;
 }
 
 export function AssociationPrompt({ sessionWord, phase, onSubmit }: AssociationPromptProps) {

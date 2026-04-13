@@ -2,25 +2,28 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { playTick } from "@/lib/sounds";
-import { Zap } from "lucide-react";
-import type { SessionWord } from "@/lib/types";
+import { TimerReset, Zap } from "lucide-react";
+import type { AnswerMetadata, SessionWord } from "@/lib/types";
 
-const TIMEOUT_MS = 8000;
+const TIMEOUT_MS = 5000;
 const WARNING_MS = 2000;
+const CUE_REVEAL_MS = 2500;
 
 interface SpeedPromptProps {
   sessionWord: SessionWord;
-  choices: { definitions: string[]; correctDefinition: string };
-  onSubmit: (answer: string) => void;
+  onSubmit: (answer: string, metadata?: AnswerMetadata) => void;
 }
 
-export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps) {
-  const [selected, setSelected] = useState<string | null>(null);
+export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
+  const [answer, setAnswer] = useState("");
   const [elapsed, setElapsed] = useState(0);
+  const [cueVisible, setCueVisible] = useState(false);
   const onSubmitRef = useRef(onSubmit);
+  const inputRef = useRef<HTMLInputElement>(null);
   const startTime = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const submittedRef = useRef(false);
@@ -29,29 +32,36 @@ export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps
     onSubmitRef.current = onSubmit;
   }, [onSubmit]);
 
-  const handleSelect = useCallback((definition: string) => {
-    if (selected || submittedRef.current) return;
+  const submitAttempt = useCallback((attempt: string) => {
+    if (!attempt.trim() || submittedRef.current) return;
+
     playTick();
-    setSelected(definition);
     submittedRef.current = true;
     clearInterval(timerRef.current);
-    setTimeout(() => onSubmitRef.current(definition), 200);
-  }, [selected]);
 
-  // Reset on new word
+    setTimeout(
+      () => onSubmitRef.current(attempt.trim(), { cueLevel: cueVisible ? 1 : 0 }),
+      200,
+    );
+  }, [cueVisible]);
+
   useEffect(() => {
     startTime.current = Date.now();
     submittedRef.current = false;
+    inputRef.current?.focus();
 
     timerRef.current = setInterval(() => {
-      const now = Date.now();
-      const ms = now - startTime.current;
+      const ms = Date.now() - startTime.current;
       setElapsed(ms);
+
+      if (ms >= CUE_REVEAL_MS) {
+        setCueVisible(true);
+      }
 
       if (ms >= TIMEOUT_MS && !submittedRef.current) {
         submittedRef.current = true;
         clearInterval(timerRef.current);
-        onSubmitRef.current("__timeout__");
+        onSubmitRef.current("__timeout__", { cueLevel: ms >= CUE_REVEAL_MS ? 1 : 0 });
       }
     }, 50);
 
@@ -60,19 +70,32 @@ export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (selected !== null || submittedRef.current) return;
-      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
-      const index = ["1", "2", "3", "4"].indexOf(event.key);
-      if (index !== -1 && index < choices.definitions.length) {
-        handleSelect(choices.definitions[index]);
+      if (submittedRef.current) return;
+      if (
+        document.activeElement?.tagName === "INPUT"
+        || document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      if (event.key === "Enter" && answer.trim()) {
+        event.preventDefault();
+        submitAttempt(answer);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selected, choices, handleSelect]);
+  }, [answer, submitAttempt]);
 
   const pct = Math.max(0, 1 - elapsed / TIMEOUT_MS) * 100;
   const isWarning = elapsed > TIMEOUT_MS - WARNING_MS;
+  const cueText = `${sessionWord.word.word[0].toUpperCase()} • ${sessionWord.word.word.length} letters`;
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    submitAttempt(answer);
+  };
 
   return (
     <motion.div
@@ -82,8 +105,10 @@ export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps
       exit={{ opacity: 0, x: -40 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card size="sm" className="w-full max-w-2xl mx-auto border-l-4 border-l-amber-500/40 ring-1 ring-amber-500/15">
-        {/* Countdown bar */}
+      <Card
+        size="sm"
+        className="w-full max-w-2xl mx-auto border-l-4 border-l-amber-500/40 ring-1 ring-amber-500/15"
+      >
         <div className="h-1.5 bg-muted/30 rounded-t-xl overflow-hidden mx-px mt-px">
           <motion.div
             className={`h-full rounded-t-xl transition-colors ${
@@ -94,55 +119,66 @@ export function SpeedPrompt({ sessionWord, choices, onSubmit }: SpeedPromptProps
         </div>
 
         <CardContent className="space-y-4 pt-3">
-          {/* Mode header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-amber-500">
               <Zap className="size-3.5" />
-              <span className="text-xs font-semibold uppercase tracking-widest">Speed</span>
+              <span className="text-xs font-semibold uppercase tracking-widest">
+                Rapid Retrieval
+              </span>
             </div>
             <span className="text-xs font-mono tabular-nums text-muted-foreground">
               {Math.max(0, Math.ceil((TIMEOUT_MS - elapsed) / 1000))}s
             </span>
           </div>
 
-          {/* Word to match */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.05 }}
-            className="text-center py-2"
+            className="space-y-2 py-2"
           >
-            <p className="text-2xl font-bold">{sessionWord.word.word}</p>
-            <p className="text-xs text-muted-foreground mt-1">Match the correct definition</p>
+            <p className="text-xs uppercase tracking-widest text-amber-500/80">
+              Retrieve the word before the rescue cue appears
+            </p>
+            <p className="text-lg leading-relaxed border-l-2 border-amber-500/25 pl-3">
+              {sessionWord.word.definition}
+            </p>
           </motion.div>
 
-          {/* Definition choices — vertical stack */}
-          <div className="space-y-2">
-            {choices.definitions.map((def, i) => (
-              <motion.div
-                key={def}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-              >
-                <Button
-                  variant={selected === def ? "default" : "outline"}
-                  className={`w-full h-auto py-2.5 px-3 text-left text-sm leading-snug whitespace-normal transition-all ${
-                    selected === def
-                      ? "scale-[0.97] shadow-md shadow-amber-500/20"
-                      : selected !== null
-                        ? "opacity-40"
-                        : "hover:border-amber-500/30"
-                  }`}
-                  onClick={() => handleSelect(def)}
-                  disabled={selected !== null}
-                >
-                  <span className="text-xs text-muted-foreground font-mono w-5 shrink-0">{i + 1}</span>
-                  <span className="flex-1">{def}</span>
-                </Button>
-              </motion.div>
-            ))}
-          </div>
+          {cueVisible && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm"
+            >
+              <span className="flex items-center gap-1.5 text-amber-500">
+                <TimerReset className="size-4" />
+                Rescue cue
+              </span>
+              <span className="font-mono text-amber-100/90">{cueText}</span>
+            </motion.div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-2">
+            <Input
+              ref={inputRef}
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+              placeholder="Type the word..."
+              className="h-10 text-base bg-muted/30 border-border/50 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <Button
+              type="submit"
+              className="w-full gap-2"
+              disabled={!answer.trim()}
+            >
+              <Zap className="size-4" />
+              Submit Retrieval
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </motion.div>

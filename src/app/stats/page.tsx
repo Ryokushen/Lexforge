@@ -151,6 +151,17 @@ export default function StatsPage() {
         recentLogs.length /
         1000
       : 0;
+  const recentCueUses = recentLogs.filter((l) => (l.cueLevel ?? 0) > 0).length;
+  const recentCueUseRate =
+    recentLogs.length > 0 ? Math.round((recentCueUses / recentLogs.length) * 100) : 0;
+  const recentCleanRetrievals = recentLogs.filter((l) => {
+    const retrievalKind = l.retrievalKind ?? (l.correct ? "exact" : "failed");
+    return retrievalKind === "exact" && (l.cueLevel ?? 0) === 0;
+  }).length;
+  const recentCleanRate =
+    recentLogs.length > 0
+      ? Math.round((recentCleanRetrievals / recentLogs.length) * 100)
+      : 0;
 
   const maxStat = Math.max(...Object.values(profile.stats), 10);
 
@@ -331,6 +342,18 @@ export default function StatsPage() {
                     label: "Avg Response",
                     value: `${avgResponseTime.toFixed(1)}s`,
                     color: "text-muted-foreground",
+                  },
+                  {
+                    icon: Target,
+                    label: "Clean Retrieval",
+                    value: `${recentCleanRate}%`,
+                    color: recentCleanRate >= 70 ? "text-emerald-400" : recentCleanRate >= 40 ? "text-amber-400" : "text-red-400",
+                  },
+                  {
+                    icon: Lightbulb,
+                    label: "Cue Use",
+                    value: `${recentCueUseRate}%`,
+                    color: recentCueUseRate <= 20 ? "text-emerald-400" : recentCueUseRate <= 40 ? "text-amber-400" : "text-red-400",
                   },
                   {
                     icon: Target,

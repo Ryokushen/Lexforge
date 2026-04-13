@@ -140,6 +140,8 @@ function makeReviewLog(
   rating: 1 | 2 | 3 | 4;
   responseTimeMs: number;
   correct: boolean;
+  cueLevel?: 0 | 1;
+  retrievalKind?: "exact" | "assisted" | "approximate" | "failed" | "created";
   reviewedAt: Date;
 } {
   return {
@@ -149,6 +151,8 @@ function makeReviewLog(
     rating: correct ? 3 : 1,
     responseTimeMs: correct ? 1500 : 7000,
     correct,
+    cueLevel: 0,
+    retrievalKind: correct ? "exact" : "failed",
     reviewedAt: new Date(reviewedAt),
   };
 }
@@ -202,6 +206,8 @@ describe("sync review logs", () => {
           rating: 3,
           response_time_ms: 1800,
           correct: true,
+          cue_level: 0,
+          retrieval_kind: "exact",
           reviewed_at: "2026-04-11T08:15:00.000Z",
         }),
       ],
@@ -235,6 +241,8 @@ describe("sync review logs", () => {
         rating: 3,
         response_time_ms: 1800,
         correct: true,
+        cue_level: 0,
+        retrieval_kind: "exact",
         reviewed_at: "2026-04-11T08:15:00.000Z",
       },
       {
@@ -243,6 +251,8 @@ describe("sync review logs", () => {
         rating: 1,
         response_time_ms: 9000,
         correct: false,
+        cue_level: 1,
+        retrieval_kind: "failed",
         reviewed_at: "2026-04-11T08:20:00.000Z",
       },
     ];
@@ -258,9 +268,11 @@ describe("sync review logs", () => {
         rating: 3,
         responseTimeMs: 1800,
         correct: true,
-      reviewedAt: new Date("2026-04-11T08:15:00.000Z"),
-    },
-  ]);
+        cueLevel: 0,
+        retrievalKind: "exact",
+        reviewedAt: new Date("2026-04-11T08:15:00.000Z"),
+      },
+    ]);
 
     await syncOnLogin(makeUser());
 
@@ -271,6 +283,8 @@ describe("sync review logs", () => {
       rating: 1,
       responseTimeMs: 9000,
       correct: false,
+      cueLevel: 1,
+      retrievalKind: "failed",
       reviewedAt: new Date("2026-04-11T08:20:00.000Z"),
     });
     expect(tableState.review_logs.upserts).toHaveLength(1);

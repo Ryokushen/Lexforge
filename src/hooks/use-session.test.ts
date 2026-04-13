@@ -9,7 +9,6 @@ const processAnswerMock = vi.hoisted(() => vi.fn());
 const finalizeSessionMock = vi.hoisted(() => vi.fn());
 const pickModeMock = vi.hoisted(() => vi.fn());
 const getContextSentenceMock = vi.hoisted(() => vi.fn());
-const getSpeedChoicesMock = vi.hoisted(() => vi.fn());
 const createSessionIdMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/session-engine", () => ({
@@ -19,7 +18,6 @@ vi.mock("@/lib/session-engine", () => ({
   finalizeSession: finalizeSessionMock,
   pickMode: pickModeMock,
   getContextSentence: getContextSentenceMock,
-  getSpeedChoices: getSpeedChoicesMock,
 }));
 
 vi.mock("@/lib/sounds", () => ({
@@ -92,7 +90,6 @@ describe("useSession", () => {
     vi.setSystemTime(new Date("2026-04-10T12:00:00.000Z"));
     pickModeMock.mockReturnValue("recall");
     getContextSentenceMock.mockReturnValue(null);
-    getSpeedChoicesMock.mockReturnValue(null);
     createSessionIdMock.mockReturnValue("session-abc");
     finalizeSessionMock.mockResolvedValue({
       results: [],
@@ -229,5 +226,72 @@ describe("useSession", () => {
 
     expect(finalizeSessionMock).toHaveBeenCalledTimes(1);
     expect(finalizeSessionMock).toHaveBeenCalledWith([makeResult(1)]);
+  });
+
+  it("passes the target word into rapid retrieval grading when speed mode is active", async () => {
+    const words = [makeSessionWord(1)];
+    loadSessionWordsMock.mockResolvedValue(words);
+    pickModeMock.mockReturnValue("speed");
+    processAnswerMock.mockResolvedValue({
+      result: {
+        ...makeResult(1),
+        mode: "speed",
+      },
+      updatedCard: words[0].reviewCard,
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await act(async () => {
+      await result.current.startSession("normal", 1);
+    });
+
+    await act(async () => {
+      await result.current.submitAnswer("word-1");
+    });
+
+    expect(processAnswerMock).toHaveBeenCalledWith(
+      words[0],
+      "word-1",
+      expect.any(Number),
+      "session-abc",
+      "speed",
+      "word-1",
+      undefined,
+    );
+  });
+
+  it("passes cue metadata through to grading when a prompt uses assistance", async () => {
+    const words = [makeSessionWord(1)];
+    loadSessionWordsMock.mockResolvedValue(words);
+    processAnswerMock.mockResolvedValue({
+      result: {
+        ...makeResult(1),
+        rating: 2,
+        cueLevel: 1,
+        retrievalKind: "assisted",
+      },
+      updatedCard: words[0].reviewCard,
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await act(async () => {
+      await result.current.startSession("normal", 1);
+    });
+
+    await act(async () => {
+      await result.current.submitAnswer("word-1", { cueLevel: 1 });
+    });
+
+    expect(processAnswerMock).toHaveBeenCalledWith(
+      words[0],
+      "word-1",
+      expect.any(Number),
+      "session-abc",
+      "recall",
+      undefined,
+      { cueLevel: 1 },
+    );
   });
 });

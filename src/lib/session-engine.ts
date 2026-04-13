@@ -4,9 +4,12 @@ import { getDueCards, getNewCards, gradeCard, Rating } from "./scheduler";
 import { completeSession } from "./gamification";
 import { CONTEXT_SENTENCES } from "./context-sentences";
 import type {
+  AnswerMetadata,
+  CueLevel,
   ContextSentence,
   Difficulty,
   GameMode,
+  RetrievalKind,
   ReviewCard,
   ReviewLog,
   SessionResult,
@@ -17,6 +20,16 @@ import type {
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "./types";
 
 const BATCH_SIZE = 4; // working memory capacity
+type GradeResult = {
+  rating: 1 | 2 | 3 | 4;
+  correct: boolean;
+  cueLevel: CueLevel;
+  retrievalKind: RetrievalKind;
+};
+
+function normalizeCueLevel(cueLevel?: CueLevel): CueLevel {
+  return cueLevel === 1 ? 1 : 0;
+}
 
 export function createSessionId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -50,59 +63,61 @@ function editDistance(a: string, b: string): number {
 export function autoGrade(
   answer: string,
   expected: string,
-): { rating: 1 | 2 | 3 | 4; correct: boolean } {
+  cueLevel: CueLevel = 0,
+): GradeResult {
   const a = answer.trim().toLowerCase();
   const e = expected.trim().toLowerCase();
+  const normalizedCueLevel = normalizeCueLevel(cueLevel);
 
-  if (a === e) return { rating: 3, correct: true }; // Good
-  if (editDistance(a, e) <= 1) return { rating: 2, correct: true }; // Hard (close)
-  return { rating: 1, correct: false }; // Again
+  if (a === e) {
+    if (normalizedCueLevel > 0) {
+      return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "assisted" };
+    }
+    return { rating: 3, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "exact" };
+  }
+
+  if (editDistance(a, e) <= 1) {
+    return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "approximate" };
+  }
+
+  return { rating: 1, correct: false, cueLevel: normalizedCueLevel, retrievalKind: "failed" };
 }
 
 /** Grade a context mode answer (multiple choice — exact match only). */
 export function gradeContextAnswer(
   answer: string,
   expected: string,
-): { rating: 1 | 2 | 3 | 4; correct: boolean } {
-  const a = answer.trim().toLowerCase();
-  const e = expected.trim().toLowerCase();
-  if (a === e) return { rating: 3, correct: true };
-  return { rating: 1, correct: false };
+  cueLevel: CueLevel = 0,
+): GradeResult {
+  return autoGrade(answer, expected, cueLevel);
 }
 
 const SPEED_FAST_MS = 3000;
 
-/** Grade a speed mode answer: time-based rating. */
+/** Grade a rapid retrieval answer: fast clean recall scores higher. */
 export function gradeSpeedAnswer(
   answer: string,
   expected: string,
   responseTimeMs: number,
-): { rating: 1 | 2 | 3 | 4; correct: boolean } {
+  cueLevel: CueLevel = 0,
+): GradeResult {
   const a = answer.trim().toLowerCase();
   const e = expected.trim().toLowerCase();
-  if (a !== e) return { rating: 1, correct: false };
-  if (responseTimeMs < SPEED_FAST_MS) return { rating: 4, correct: true }; // Easy
-  return { rating: 3, correct: true }; // Good
-}
+  const normalizedCueLevel = normalizeCueLevel(cueLevel);
 
-/** Get 4 definition choices for speed mode: correct + 3 distractors. */
-export function getSpeedChoices(
-  word: Word,
-  allWords: SessionWord[],
-): { definitions: string[]; correctDefinition: string } {
-  const correctDef = word.definition;
-  const otherDefs = allWords
-    .filter((sw) => sw.word.id !== word.id)
-    .map((sw) => sw.word.definition);
-
-  // Shuffle and pick 3 distractors
-  const shuffled = [...otherDefs].sort(() => Math.random() - 0.5);
-  const distractors = shuffled.slice(0, 3);
-
-  // Combine and shuffle
-  const definitions = [...distractors, correctDef].sort(() => Math.random() - 0.5);
-
-  return { definitions, correctDefinition: correctDef };
+  if (a === e) {
+    if (normalizedCueLevel > 0) {
+      return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "assisted" };
+    }
+    if (responseTimeMs < SPEED_FAST_MS) {
+      return { rating: 4, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "exact" };
+    }
+    return { rating: 3, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "exact" };
+  }
+  if (editDistance(a, e) <= 1) {
+    return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "approximate" };
+  }
+  return { rating: 1, correct: false, cueLevel: normalizedCueLevel, retrievalKind: "failed" };
 }
 
 /** Get a random context sentence for a word, if available. */
@@ -242,24 +257,33 @@ export async function processAnswer(
   sessionId?: string,
   mode: GameMode = "recall",
   contextExpected?: string,
-  manualRating?: 1 | 2 | 3 | 4,
+  answerMetadata?: AnswerMetadata,
 ): Promise<{ result: SessionResult; updatedCard: ReviewCard }> {
-  let gradeResult: { rating: 1 | 2 | 3 | 4; correct: boolean };
+  let gradeResult: GradeResult;
+  const cueLevel = normalizeCueLevel(answerMetadata?.cueLevel);
 
-  if (manualRating) {
-    gradeResult = { rating: manualRating, correct: manualRating >= 2 };
-  } else if (mode === "association" && contextExpected === "__create__") {
+  if (mode === "association" && contextExpected === "__create__") {
     // Creating an association is always Good
-    gradeResult = { rating: 3, correct: true };
+    gradeResult = {
+      rating: 3,
+      correct: true,
+      cueLevel,
+      retrievalKind: "created",
+    };
   } else if (mode === "speed" && contextExpected) {
-    gradeResult = gradeSpeedAnswer(answer, contextExpected, responseTimeMs);
+    gradeResult = gradeSpeedAnswer(answer, contextExpected, responseTimeMs, cueLevel);
   } else if (mode === "context" && contextExpected) {
-    gradeResult = gradeContextAnswer(answer, contextExpected);
+    gradeResult = gradeContextAnswer(answer, contextExpected, cueLevel);
   } else {
-    gradeResult = autoGrade(answer, sessionWord.word.word);
+    gradeResult = autoGrade(answer, sessionWord.word.word, cueLevel);
   }
 
-  const { rating, correct } = gradeResult;
+  const {
+    rating,
+    correct,
+    cueLevel: resolvedCueLevel,
+    retrievalKind,
+  } = gradeResult;
 
   // Map our rating to ts-fsrs Rating
   const fsrsRating =
@@ -281,6 +305,8 @@ export async function processAnswer(
     rating,
     responseTimeMs,
     correct,
+    cueLevel: resolvedCueLevel,
+    retrievalKind,
     reviewedAt: new Date(),
   };
   await db.reviewLogs.add(log);
@@ -292,6 +318,8 @@ export async function processAnswer(
     responseTimeMs,
     rating,
     mode,
+    cueLevel: resolvedCueLevel,
+    retrievalKind,
   };
 
   return { result, updatedCard };

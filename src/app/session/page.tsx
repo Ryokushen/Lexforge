@@ -31,7 +31,6 @@ export default function SessionPage() {
     summary,
     currentMode,
     currentContextSentence,
-    currentSpeedChoices,
     associationPhase,
     startSession,
     submitAnswer,
@@ -172,12 +171,10 @@ export default function SessionPage() {
         )}
 
       {state === "active" &&
-        currentMode === "speed" &&
-        currentSpeedChoices && (
+        currentMode === "speed" && (
           <SpeedPrompt
             key={currentWord.word.id}
             sessionWord={currentWord}
-            choices={currentSpeedChoices}
             onSubmit={submitAnswer}
           />
         )}

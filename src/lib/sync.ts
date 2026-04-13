@@ -2,7 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import { toLocalDateKey } from "./date";
 import { supabase } from "./supabase";
 import { db, getOrCreateProfile } from "./db";
-import type { ReviewCard, ReviewLog, UserProfile, Word } from "./types";
+import type { RetrievalKind, ReviewCard, ReviewLog, UserProfile, Word } from "./types";
 
 const SYNC_BATCH_SIZE = 100;
 export const CLOUD_SYNC_EVENT = "lexforge-cloud-sync";
@@ -45,6 +45,8 @@ type CloudReviewLogRow = {
   rating: number;
   response_time_ms: number;
   correct: boolean;
+  cue_level?: number | null;
+  retrieval_kind?: string | null;
   reviewed_at: string;
   updated_at?: string | null;
 };
@@ -113,6 +115,20 @@ function chunkRows<T>(rows: T[]): T[][] {
   }
 
   return chunks;
+}
+
+function normalizeRetrievalKind(value: string | null | undefined, correct: boolean): RetrievalKind {
+  if (
+    value === "exact"
+    || value === "assisted"
+    || value === "approximate"
+    || value === "failed"
+    || value === "created"
+  ) {
+    return value;
+  }
+
+  return correct ? "exact" : "failed";
 }
 
 function normalizeProfile(profile: UserProfile): UserProfile {
@@ -469,6 +485,8 @@ async function reconcileReviewLogs(
       rating: row.rating as 1 | 2 | 3 | 4,
       responseTimeMs: row.response_time_ms,
       correct: row.correct,
+      cueLevel: row.cue_level === 1 ? 1 : 0,
+      retrievalKind: normalizeRetrievalKind(row.retrieval_kind, row.correct),
       reviewedAt,
     });
     existingKeys.add(logKey);
@@ -605,6 +623,8 @@ async function pushReviewLogs(user: User) {
       rating: log.rating,
       response_time_ms: log.responseTimeMs,
       correct: log.correct,
+      cue_level: log.cueLevel ?? 0,
+      retrieval_kind: normalizeRetrievalKind(log.retrievalKind, log.correct),
       reviewed_at: log.reviewedAt.toISOString(),
       updated_at: log.reviewedAt.toISOString(),
     }));
