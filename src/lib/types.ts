@@ -105,6 +105,7 @@ export const TIER_UNLOCK_LEVELS: Record<string, number> = {
 export interface SessionWord {
   word: Word;
   reviewCard: ReviewCard;
+  drillProfile?: RetrievalDrillProfile;
 }
 
 export interface SessionResult {
@@ -121,6 +122,19 @@ export interface SessionResult {
 export type GameMode = "recall" | "context" | "speed" | "association";
 export type CueLevel = 0 | 1;
 export type RetrievalKind = "exact" | "assisted" | "approximate" | "failed" | "created";
+
+export type RetrievalDrillStage = "rescue" | "stabilize" | "fluent";
+
+export interface RetrievalDrillProfile {
+  stage: RetrievalDrillStage;
+  exactStreak: number;
+  recentCueRate: number;
+  recentFailureCount: number;
+  recentLatencyMs?: number;
+  recallHintEnabled: boolean;
+  rapidTimeoutMs: number;
+  rapidCueRevealMs: number | null;
+}
 
 export interface AnswerMetadata {
   cueLevel?: CueLevel;

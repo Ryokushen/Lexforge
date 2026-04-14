@@ -173,7 +173,7 @@ export default function SessionPage() {
       {state === "active" &&
         currentMode === "speed" && (
           <SpeedPrompt
-            key={currentWord.word.id}
+            key={`${currentWord.word.id}-${currentIndex}`}
             sessionWord={currentWord}
             onSubmit={submitAnswer}
           />

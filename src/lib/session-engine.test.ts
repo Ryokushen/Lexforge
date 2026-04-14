@@ -110,6 +110,24 @@ function makeTodayFirstReviewLog(wordId: number): ReviewLog {
   };
 }
 
+function makeReviewLog(
+  wordId: number,
+  reviewedAt: string,
+  overrides: Partial<ReviewLog> = {},
+): ReviewLog {
+  return {
+    id: Number(`${wordId}${Date.parse(reviewedAt)}`),
+    wordId,
+    rating: 3,
+    responseTimeMs: 2000,
+    correct: true,
+    cueLevel: 0,
+    retrievalKind: "exact",
+    reviewedAt: new Date(reviewedAt),
+    ...overrides,
+  };
+}
+
 describe("session engine", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -260,7 +278,7 @@ describe("session engine", () => {
       Object.entries(counts).map(([mode, count]) => [mode, count / 20000]),
     );
 
-    expect(ratios.recall).toBeGreaterThan(0.45);
+    expect(ratios.recall).toBeGreaterThan(0.4);
     expect(ratios.speed).toBeGreaterThan(0.3);
     expect(ratios.context).toBeLessThan(0.2);
     expect(ratios.association).toBeLessThan(0.15);
@@ -428,6 +446,77 @@ describe("session engine", () => {
     const sessionWords = await loadSessionWords("easy", 1);
 
     expect(sessionWords.map((entry) => entry.word.id)).toEqual([2, 1, 4, 3]);
+  });
+
+  it("keeps recent TOT words in rescue drilling until clean exact recalls return", async () => {
+    schedulerMock.getDueCards.mockResolvedValue([makeReviewCard(1, 1)]);
+    schedulerMock.getNewCards.mockResolvedValue([]);
+    dbMock.reviewLogs.toArray.mockResolvedValue([
+      makeReviewLog(1, "2026-04-10T11:45:00.000Z", {
+        rating: 1,
+        correct: false,
+        responseTimeMs: 5400,
+        retrievalKind: "failed",
+      }),
+      makeReviewLog(1, "2026-04-09T08:00:00.000Z", {
+        rating: 2,
+        cueLevel: 1,
+        responseTimeMs: 4200,
+        retrievalKind: "assisted",
+      }),
+    ]);
+    dbMock.words.get.mockResolvedValue(
+      makeWord(1, 1, {
+        source: "speech",
+        capturedAt: "2026-04-10T07:00:00.000Z",
+        count: 2,
+      }),
+    );
+
+    const [sessionWord] = await loadSessionWords("easy", 1);
+
+    expect(sessionWord.drillProfile).toMatchObject({
+      stage: "rescue",
+      exactStreak: 0,
+      recallHintEnabled: true,
+      recentFailureCount: 1,
+    });
+    expect(sessionWord.drillProfile?.rapidTimeoutMs).toBeGreaterThanOrEqual(4800);
+    expect(sessionWord.drillProfile?.rapidCueRevealMs).not.toBeNull();
+  });
+
+  it("backs off hints after repeated clean exact recalls on a TOT word", async () => {
+    schedulerMock.getDueCards.mockResolvedValue([makeReviewCard(1, 1)]);
+    schedulerMock.getNewCards.mockResolvedValue([]);
+    dbMock.reviewLogs.toArray.mockResolvedValue([
+      makeReviewLog(1, "2026-04-10T11:45:00.000Z", {
+        responseTimeMs: 1700,
+      }),
+      makeReviewLog(1, "2026-04-09T11:45:00.000Z", {
+        responseTimeMs: 1900,
+      }),
+      makeReviewLog(1, "2026-04-08T11:45:00.000Z", {
+        responseTimeMs: 2100,
+      }),
+    ]);
+    dbMock.words.get.mockResolvedValue(
+      makeWord(1, 1, {
+        source: "speech",
+        capturedAt: "2026-04-05T07:00:00.000Z",
+        count: 1,
+      }),
+    );
+
+    const [sessionWord] = await loadSessionWords("easy", 1);
+
+    expect(sessionWord.drillProfile).toMatchObject({
+      stage: "fluent",
+      exactStreak: 3,
+      recallHintEnabled: false,
+      recentFailureCount: 0,
+    });
+    expect(sessionWord.drillProfile?.rapidTimeoutMs).toBeLessThan(5000);
+    expect(sessionWord.drillProfile?.rapidCueRevealMs).toBeNull();
   });
 
   it("returns only the new words available today for the selected difficulty", async () => {

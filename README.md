@@ -46,6 +46,15 @@ Lexforge now supports a dedicated TOT capture flow in the word library.
 - Record what you said instead, the surrounding context, and where it happened.
 - Save it onto an existing library word or create a new custom word on the spot.
 - Surface those captured words earlier in sessions, with extra bias toward Recall and Rapid Retrieval.
+- Keep those words in a higher-support drill state until they earn repeated clean exact recalls.
+
+## Adaptive Drilling
+
+Recent retrieval quality now changes how a word is trained.
+
+- `Rescue`: recent TOTs, misses, or cue-heavy recalls keep hints available and use a more generous Rapid Retrieval timer.
+- `Stabilize`: once a word starts landing cleanly, the app still favors Recall and Rapid Retrieval but begins tightening time pressure.
+- `Fluent`: after repeated clean exact recalls, hint access drops away and Rapid Retrieval can run without a rescue cue.
 
 ## RPG Layer
 

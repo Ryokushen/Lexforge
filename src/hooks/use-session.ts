@@ -66,7 +66,7 @@ export function useSession() {
   }, [summary]);
 
   const configurePrompt = useCallback((word: SessionWord) => {
-    const mode = pickMode(word.word);
+    const mode = pickMode(word.word, undefined, word.drillProfile);
     if (mode === "context") {
       setCurrentMode("context");
       setCurrentContextSentence(getContextSentence(word.word));

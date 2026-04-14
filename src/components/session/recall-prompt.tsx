@@ -19,6 +19,7 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { word } = sessionWord;
+  const allowHint = sessionWord.drillProfile?.recallHintEnabled ?? true;
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -116,7 +117,7 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
                 <Send className="size-4" />
                 Submit
               </Button>
-              {!showHint && (
+              {!showHint && allowHint && (
                 <Button
                   type="button"
                   variant="ghost"

@@ -10,6 +10,7 @@ import type {
   Difficulty,
   GameMode,
   RetrievalKind,
+  RetrievalDrillProfile,
   ReviewCard,
   ReviewLog,
   SessionResult,
@@ -20,6 +21,7 @@ import type {
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "./types";
 
 const BATCH_SIZE = 4; // working memory capacity
+const DEFAULT_RAPID_TIMEOUT_MS = 5000;
 type GradeResult = {
   rating: 1 | 2 | 3 | 4;
   correct: boolean;
@@ -136,6 +138,103 @@ export function getContextSentence(word: Word): ContextSentence | null {
   return null;
 }
 
+function isCleanExactLog(log: ReviewLog): boolean {
+  return (
+    log.correct
+    && log.retrievalKind === "exact"
+    && normalizeCueLevel(log.cueLevel) === 0
+  );
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function median(values: number[]): number | undefined {
+  if (values.length === 0) {
+    return undefined;
+  }
+
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+
+  if (sorted.length % 2 === 0) {
+    return Math.round((sorted[middle - 1] + sorted[middle]) / 2);
+  }
+
+  return sorted[middle];
+}
+
+function buildRetrievalDrillProfile(
+  word: Word,
+  logs: ReviewLog[],
+): RetrievalDrillProfile {
+  const recentLogs = [...logs]
+    .sort((left, right) => right.reviewedAt.getTime() - left.reviewedAt.getTime())
+    .slice(0, 4);
+
+  let exactStreak = 0;
+  for (const log of recentLogs) {
+    if (!isCleanExactLog(log)) {
+      break;
+    }
+    exactStreak += 1;
+  }
+
+  const cueLogs = recentLogs.filter(
+    (log) => normalizeCueLevel(log.cueLevel) === 1 || log.retrievalKind === "assisted",
+  );
+  const failureCount = recentLogs.filter(
+    (log) => !log.correct || log.retrievalKind === "failed",
+  ).length;
+  const exactLatencies = recentLogs
+    .filter(isCleanExactLog)
+    .map((log) => log.responseTimeMs);
+  const recentLatencyMs = median(exactLatencies);
+
+  const hasTOTCapture = Boolean(word.totCapture);
+  const cueRate = recentLogs.length === 0 ? 0 : cueLogs.length / recentLogs.length;
+
+  let stage: RetrievalDrillProfile["stage"] = "rescue";
+  if (exactStreak >= 2 && cueLogs.length === 0 && failureCount === 0) {
+    stage = "fluent";
+  } else if (exactStreak >= 1 && failureCount === 0) {
+    stage = "stabilize";
+  } else if (!hasTOTCapture && recentLogs.length === 0) {
+    stage = "stabilize";
+  }
+
+  if (hasTOTCapture && exactStreak < 2) {
+    stage = exactStreak >= 1 && failureCount === 0 ? "stabilize" : "rescue";
+  }
+
+  const baselineLatency = recentLatencyMs ?? DEFAULT_RAPID_TIMEOUT_MS;
+  const rapidTimeoutMs = stage === "rescue"
+    ? clamp(baselineLatency + 1600, 4800, 7000)
+    : stage === "stabilize"
+      ? clamp(baselineLatency + 1000, 4000, 5600)
+      : clamp(baselineLatency + 500, 2800, 4200);
+
+  const rapidCueRevealMs = stage === "fluent"
+    ? exactStreak >= 3
+      ? null
+      : clamp(rapidTimeoutMs - 900, 1800, rapidTimeoutMs - 400)
+    : stage === "stabilize"
+      ? clamp(rapidTimeoutMs - 1400, 2200, rapidTimeoutMs - 500)
+      : clamp(rapidTimeoutMs - 2200, 2200, rapidTimeoutMs - 700);
+
+  return {
+    stage,
+    exactStreak,
+    recentCueRate: cueRate,
+    recentFailureCount: failureCount,
+    recentLatencyMs,
+    recallHintEnabled: stage !== "fluent",
+    rapidTimeoutMs,
+    rapidCueRevealMs,
+  };
+}
+
 function getTOTCaptureTimestamp(word: Word): number {
   if (!word.totCapture?.capturedAt) {
     return 0;
@@ -159,6 +258,17 @@ function prioritizeSessionWords(sessionWords: SessionWord[]): SessionWord[] {
       return leftHasTOT - rightHasTOT;
     }
 
+    const stagePriority: Record<NonNullable<SessionWord["drillProfile"]>["stage"], number> = {
+      rescue: 0,
+      stabilize: 1,
+      fluent: 2,
+    };
+    const leftStage = stagePriority[left.drillProfile?.stage ?? "stabilize"];
+    const rightStage = stagePriority[right.drillProfile?.stage ?? "stabilize"];
+    if (leftStage !== rightStage) {
+      return leftStage - rightStage;
+    }
+
     const countDelta =
       (right.word.totCapture?.count ?? 0) - (left.word.totCapture?.count ?? 0);
     if (countDelta !== 0) {
@@ -176,15 +286,30 @@ function prioritizeSessionWords(sessionWords: SessionWord[]): SessionWord[] {
 }
 
 /** Decide game mode for a session word. Mix of all four modes. */
-export function pickMode(word: Word, forceMode?: GameMode): GameMode {
+export function pickMode(
+  word: Word,
+  forceMode?: GameMode,
+  drillProfile?: RetrievalDrillProfile,
+): GameMode {
   if (forceMode) return forceMode;
   const roll = Math.random();
   const hasTOTCapture = Boolean(word.totCapture);
   const hasContext = getContextSentence(word) !== null;
+  const stage = drillProfile?.stage ?? "stabilize";
+  const needsAdaptiveDrill = hasTOTCapture
+    || stage === "rescue"
+    || (stage === "stabilize" && (drillProfile?.recentCueRate ?? 0) > 0);
 
-  if (hasTOTCapture) {
-    if (roll < 0.5) return "recall";
-    if (roll < 0.85) return "speed";
+  if (needsAdaptiveDrill) {
+    if (stage === "rescue") {
+      if (roll < 0.6) return "recall";
+      if (roll < 0.9) return "speed";
+      if (hasContext && roll < 0.97) return "context";
+      return "association";
+    }
+
+    if (roll < 0.45) return "recall";
+    if (roll < 0.8) return "speed";
     if (hasContext && roll < 0.95) return "context";
     return "association";
   }
@@ -208,9 +333,9 @@ export function getUnlockedTiers(level: number): (1 | 2 | 3 | "custom")[] {
 }
 
 /** Count how many new words were introduced today. */
-async function getNewWordsIntroducedToday(): Promise<number> {
+async function getNewWordsIntroducedToday(existingLogs?: ReviewLog[]): Promise<number> {
   const today = toLocalDateKey(new Date());
-  const logs = await db.reviewLogs.toArray();
+  const logs = existingLogs ?? await db.reviewLogs.toArray();
   // Count unique wordIds reviewed today that were first-time reviews
   const todayLogs = logs.filter(
     (l) => toLocalDateKey(l.reviewedAt) === today,
@@ -239,6 +364,7 @@ export async function loadSessionWords(
   const config = DIFFICULTY_CONFIG[difficulty];
   const sessionSize = config.sessionSize;
   const unlockedTiers = getUnlockedTiers(level);
+  const reviewLogs = await db.reviewLogs.toArray();
 
   // Load due cards first (always allowed, no limit)
   const dueCards = await getDueCards(sessionSize);
@@ -246,7 +372,7 @@ export async function loadSessionWords(
 
   // Backfill with new cards, respecting daily limit and tier gating
   if (cards.length < sessionSize) {
-    const newWordsToday = await getNewWordsIntroducedToday();
+    const newWordsToday = await getNewWordsIntroducedToday(reviewLogs);
     const remainingNewAllowed = Math.max(0, config.newWordsPerDay - newWordsToday);
     const slotsForNew = Math.min(sessionSize - cards.length, remainingNewAllowed);
 
@@ -261,7 +387,12 @@ export async function loadSessionWords(
   for (const rc of cards) {
     const word = await db.words.get(rc.wordId);
     if (word) {
-      sessionWords.push({ word, reviewCard: rc });
+      const wordLogs = reviewLogs.filter((log) => log.wordId === rc.wordId);
+      sessionWords.push({
+        word,
+        reviewCard: rc,
+        drillProfile: buildRetrievalDrillProfile(word, wordLogs),
+      });
     }
   }
 
@@ -274,7 +405,8 @@ export async function getAvailableNewCount(
   level: number = 1,
 ): Promise<number> {
   const config = DIFFICULTY_CONFIG[difficulty];
-  const newWordsToday = await getNewWordsIntroducedToday();
+  const reviewLogs = await db.reviewLogs.toArray();
+  const newWordsToday = await getNewWordsIntroducedToday(reviewLogs);
   const remainingNewAllowed = Math.max(
     0,
     config.newWordsPerDay - newWordsToday,

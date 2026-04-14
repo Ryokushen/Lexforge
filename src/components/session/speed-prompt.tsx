@@ -9,9 +9,9 @@ import { playTick } from "@/lib/sounds";
 import { TimerReset, Zap } from "lucide-react";
 import type { AnswerMetadata, SessionWord } from "@/lib/types";
 
-const TIMEOUT_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 5000;
 const WARNING_MS = 2000;
-const CUE_REVEAL_MS = 2500;
+const DEFAULT_CUE_REVEAL_MS = 2500;
 
 interface SpeedPromptProps {
   sessionWord: SessionWord;
@@ -27,6 +27,8 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
   const startTime = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const submittedRef = useRef(false);
+  const timeoutMs = sessionWord.drillProfile?.rapidTimeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const cueRevealMs = sessionWord.drillProfile?.rapidCueRevealMs ?? DEFAULT_CUE_REVEAL_MS;
 
   useEffect(() => {
     onSubmitRef.current = onSubmit;
@@ -54,19 +56,21 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
       const ms = Date.now() - startTime.current;
       setElapsed(ms);
 
-      if (ms >= CUE_REVEAL_MS) {
+      if (cueRevealMs !== null && ms >= cueRevealMs) {
         setCueVisible(true);
       }
 
-      if (ms >= TIMEOUT_MS && !submittedRef.current) {
+      if (ms >= timeoutMs && !submittedRef.current) {
         submittedRef.current = true;
         clearInterval(timerRef.current);
-        onSubmitRef.current("__timeout__", { cueLevel: ms >= CUE_REVEAL_MS ? 1 : 0 });
+        onSubmitRef.current("__timeout__", {
+          cueLevel: cueRevealMs !== null && ms >= cueRevealMs ? 1 : 0,
+        });
       }
     }, 50);
 
     return () => clearInterval(timerRef.current);
-  }, [sessionWord]);
+  }, [cueRevealMs, sessionWord, timeoutMs]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -88,8 +92,8 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [answer, submitAttempt]);
 
-  const pct = Math.max(0, 1 - elapsed / TIMEOUT_MS) * 100;
-  const isWarning = elapsed > TIMEOUT_MS - WARNING_MS;
+  const pct = Math.max(0, 1 - elapsed / timeoutMs) * 100;
+  const isWarning = elapsed > timeoutMs - WARNING_MS;
   const cueText = `${sessionWord.word.word[0].toUpperCase()} • ${sessionWord.word.word.length} letters`;
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -127,7 +131,7 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
               </span>
             </div>
             <span className="text-xs font-mono tabular-nums text-muted-foreground">
-              {Math.max(0, Math.ceil((TIMEOUT_MS - elapsed) / 1000))}s
+              {Math.max(0, Math.ceil((timeoutMs - elapsed) / 1000))}s
             </span>
           </div>
 
@@ -138,7 +142,9 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
             className="space-y-2 py-2"
           >
             <p className="text-xs uppercase tracking-widest text-amber-500/80">
-              Retrieve the word before the rescue cue appears
+              {cueRevealMs === null
+                ? "Retrieve the word without a rescue cue"
+                : "Retrieve the word before the rescue cue appears"}
             </p>
             <p className="text-lg leading-relaxed border-l-2 border-amber-500/25 pl-3">
               {sessionWord.word.definition}
