@@ -25,7 +25,7 @@ What it does not currently claim:
 - Difficulty settings that control daily new-word intake
 - Tier gating that unlocks harder vocabulary as the player levels up
 - Local-first storage with Dexie/IndexedDB
-- Optional Supabase sync with GitHub OAuth for cross-device backup, including custom words and TOT capture summaries
+- Optional Supabase sync with GitHub OAuth for cross-device backup of profile state, review data, custom words, associations, and TOT capture summaries
 - Review-log sync that keeps daily limits consistent across browsers
 - PWA support with offline fallback via Serwist
 
@@ -33,9 +33,9 @@ What it does not currently claim:
 
 | Mode | Trains | Shipped behavior |
 |------|--------|------------------|
-| **Recall** | Clean definition-to-word retrieval | See a definition and type the word. |
+| **Recall** | Clean definition-to-word retrieval | See a definition and type the word, with hints available only while the word is still in a support phase. |
 | **Context** | Word choice in context | Type a stronger replacement first, then fall back to assisted options only if needed. |
-| **Rapid Retrieval** | Fast verbal access | See a definition, type the word under a 5 second timer, and recover with a rescue cue if needed. |
+| **Rapid Retrieval** | Fast verbal access | See a definition, type the word under an adaptive timer, and recover with a rescue cue only when the drill profile still calls for it. |
 | **Association** | Elaborative encoding | Create a vivid text association for a word, then later recall from that association. |
 
 ## Real-World Capture Loop
@@ -47,6 +47,7 @@ Lexforge now supports a dedicated TOT capture flow in the word library.
 - Save it onto an existing library word or create a new custom word on the spot.
 - Surface those captured words earlier in sessions, with extra bias toward Recall and Rapid Retrieval.
 - Keep those words in a higher-support drill state until they earn repeated clean exact recalls.
+- Sync those captures across devices once the Supabase migrations are applied.
 
 ## Adaptive Drilling
 
@@ -84,7 +85,7 @@ Other progression systems:
 | Sound | Web Audio API | Synthesized feedback tones with no audio assets |
 | UI | shadcn/ui + Tailwind | Accessible primitives; game feel comes from motion and styling |
 | PWA | Serwist | Service worker generation and offline fallback |
-| Sync | Supabase | Optional GitHub-authenticated cloud backup and merge |
+| Sync | Supabase | Optional GitHub-authenticated cloud backup and merge for progress, custom words, associations, and TOT captures |
 | Tooling | ESLint + TypeScript + Vitest | Linting, builds, and automated test coverage |
 
 ## Architecture
@@ -129,9 +130,11 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added. Without Supabase env vars, Lexforge stays fully local. If you sign in with GitHub, it also syncs profile state, review cards, review logs, and word associations to Supabase.
+Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added. Without Supabase env vars, Lexforge stays fully local. If you sign in with GitHub, it also syncs profile state, review cards, review logs, word associations, custom words, and TOT capture summaries to Supabase.
 
-If you apply the latest Supabase migrations, cloud sync also carries custom words and TOT capture summaries across devices.
+If you apply the latest Supabase migrations, cloud sync also carries custom words and TOT capture summaries across devices. The current compatibility migration is:
+
+- [20260413222000_add_custom_words_and_tot_capture_sync.sql](/C:/Users/593528/Documents/Project%20AI/LexForge/memory-and-vocabulary/supabase/migrations/20260413222000_add_custom_words_and_tot_capture_sync.sql:1)
 
 ## Research Notes
 
@@ -151,7 +154,7 @@ The app intentionally avoids stronger claims until the mechanics and data suppor
 
 ## Near-Term Roadmap
 
-- cue-aware grading and review-log fields
-- production-first context mode with MCQ fallback
+- retrieval-focused stats for cue dependence, latency, and weekly TOT incidents
+- broader cross-device verification of custom word and TOT sync under real usage
+- deeper context-production drills and transfer tasks beyond single-word replacement
 - adaptive use of RPG stats in session generation
-- broader automated coverage and runtime verification
