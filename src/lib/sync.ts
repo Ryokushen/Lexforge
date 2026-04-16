@@ -308,7 +308,7 @@ function cloudCardToLocal(row: CloudReviewCardRow, wordId: number): ReviewCard {
   });
 }
 
-function getCardProgressScore(card: ReviewCard["card"]): [number, number, number] {
+function getCardProgressScore(card: ReviewCard["card"]): [number, number, number, number] {
   return [
     card.state === 0 ? 0 : 1,
     card.reps ?? 0,

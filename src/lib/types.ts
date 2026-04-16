@@ -138,6 +138,8 @@ export interface RetrievalDrillProfile {
 
 export interface AnswerMetadata {
   cueLevel?: CueLevel;
+  /** Retrieval-only time in ms (excludes read phase). Used by Rapid Retrieval. */
+  retrievalTimeMs?: number;
 }
 
 export type SessionState =

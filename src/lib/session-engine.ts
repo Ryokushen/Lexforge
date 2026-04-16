@@ -21,7 +21,8 @@ import type {
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "./types";
 
 const BATCH_SIZE = 4; // working memory capacity
-const DEFAULT_RAPID_TIMEOUT_MS = 5000;
+const DEFAULT_RAPID_TIMEOUT_MS = 3500; // retrieval-only baseline (reading excluded)
+const SPEED_FAST_RATIO = 0.6; // "fast" = under 60% of timeout
 type GradeResult = {
   rating: 1 | 2 | 3 | 4;
   correct: boolean;
@@ -94,7 +95,7 @@ export function gradeContextAnswer(
   return autoGrade(answer, expected, cueLevel);
 }
 
-const SPEED_FAST_MS = 3000;
+const SPEED_FAST_MS = 3000; // static fallback when no timeout is known
 
 /** Grade a rapid retrieval answer: fast clean recall scores higher. */
 export function gradeSpeedAnswer(
@@ -102,16 +103,20 @@ export function gradeSpeedAnswer(
   expected: string,
   responseTimeMs: number,
   cueLevel: CueLevel = 0,
+  rapidTimeoutMs?: number,
 ): GradeResult {
   const a = answer.trim().toLowerCase();
   const e = expected.trim().toLowerCase();
   const normalizedCueLevel = normalizeCueLevel(cueLevel);
+  const fastMs = rapidTimeoutMs
+    ? Math.round(rapidTimeoutMs * SPEED_FAST_RATIO)
+    : SPEED_FAST_MS;
 
   if (a === e) {
     if (normalizedCueLevel > 0) {
       return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "assisted" };
     }
-    if (responseTimeMs < SPEED_FAST_MS) {
+    if (responseTimeMs < fastMs) {
       return { rating: 4, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "exact" };
     }
     return { rating: 3, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "exact" };
@@ -208,20 +213,21 @@ function buildRetrievalDrillProfile(
     stage = exactStreak >= 1 && failureCount === 0 ? "stabilize" : "rescue";
   }
 
+  // Ranges measure retrieval-only time (read phase is separate)
   const baselineLatency = recentLatencyMs ?? DEFAULT_RAPID_TIMEOUT_MS;
   const rapidTimeoutMs = stage === "rescue"
-    ? clamp(baselineLatency + 1600, 4800, 7000)
+    ? clamp(baselineLatency + 1400, 4500, 6500)
     : stage === "stabilize"
-      ? clamp(baselineLatency + 1000, 4000, 5600)
-      : clamp(baselineLatency + 500, 2800, 4200);
+      ? clamp(baselineLatency + 900, 3500, 5200)
+      : clamp(baselineLatency + 400, 2500, 3800);
 
   const rapidCueRevealMs = stage === "fluent"
     ? exactStreak >= 3
       ? null
-      : clamp(rapidTimeoutMs - 900, 1800, rapidTimeoutMs - 400)
+      : clamp(rapidTimeoutMs - 800, 1500, rapidTimeoutMs - 300)
     : stage === "stabilize"
-      ? clamp(rapidTimeoutMs - 1400, 2200, rapidTimeoutMs - 500)
-      : clamp(rapidTimeoutMs - 2200, 2200, rapidTimeoutMs - 700);
+      ? clamp(rapidTimeoutMs - 1200, 1800, rapidTimeoutMs - 400)
+      : clamp(rapidTimeoutMs - 1800, 1800, rapidTimeoutMs - 500);
 
   return {
     stage,
@@ -451,7 +457,10 @@ export async function processAnswer(
       retrievalKind: "created",
     };
   } else if (mode === "speed" && contextExpected) {
-    gradeResult = gradeSpeedAnswer(answer, contextExpected, responseTimeMs, cueLevel);
+    gradeResult = gradeSpeedAnswer(
+      answer, contextExpected, responseTimeMs, cueLevel,
+      sessionWord.drillProfile?.rapidTimeoutMs,
+    );
   } else if (mode === "context" && contextExpected) {
     gradeResult = gradeContextAnswer(answer, contextExpected, cueLevel);
   } else {

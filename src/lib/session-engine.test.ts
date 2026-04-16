@@ -195,6 +195,35 @@ describe("session engine", () => {
     });
   });
 
+  it("uses proportional fast threshold when rapidTimeoutMs is provided", () => {
+    // 5000ms timeout → fast threshold = 5000 * 0.6 = 3000ms
+    expect(gradeSpeedAnswer("lucid", "lucid", 2500, 0, 5000)).toEqual({
+      rating: 4,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+    expect(gradeSpeedAnswer("lucid", "lucid", 3500, 0, 5000)).toEqual({
+      rating: 3,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+    // 3000ms timeout → fast threshold = 3000 * 0.6 = 1800ms
+    expect(gradeSpeedAnswer("lucid", "lucid", 1500, 0, 3000)).toEqual({
+      rating: 4,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+    expect(gradeSpeedAnswer("lucid", "lucid", 2000, 0, 3000)).toEqual({
+      rating: 3,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "exact",
+    });
+  });
+
   it("grades context answers by retrieval quality and fallback help", () => {
     expect(gradeContextAnswer("lucid", "lucid")).toEqual({
       rating: 3,

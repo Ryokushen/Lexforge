@@ -138,7 +138,7 @@ export function useSession() {
     submittingRef.current = true;
 
     try {
-      const responseTimeMs = Date.now() - promptStartTime;
+      const responseTimeMs = answerMetadata?.retrievalTimeMs ?? (Date.now() - promptStartTime);
       const expectedAnswer = currentMode === "association" && associationPhase === "create"
         ? "__create__"
         : currentMode === "speed"
