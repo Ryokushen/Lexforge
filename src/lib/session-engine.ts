@@ -6,6 +6,7 @@ import { CONTEXT_SENTENCES } from "./context-sentences";
 import type {
   AnswerMetadata,
   CueLevel,
+  ContextPrompt,
   ContextSentence,
   Difficulty,
   GameMode,
@@ -13,6 +14,7 @@ import type {
   RetrievalDrillProfile,
   ReviewCard,
   ReviewLog,
+  RPGStats,
   SessionResult,
   SessionSummary,
   SessionWord,
@@ -62,6 +64,252 @@ function editDistance(a: string, b: string): number {
   return dp[m][n];
 }
 
+function normalizeProductionText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .replace(/[’ʼ`]/gu, "'")
+    .replace(/[‐‑‒–—―]/gu, "-")
+    .replace(/[^\p{L}\p{N}'-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeProductionText(value: string): string[] {
+  const normalized = normalizeProductionText(value);
+  return normalized.match(/[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gu) ?? [];
+}
+
+function findPhraseMatch(
+  answerTokens: string[],
+  expectedTokens: string[],
+): { kind: "exact" | "approximate"; start: number; length: number } | null {
+  if (expectedTokens.length === 0 || answerTokens.length < expectedTokens.length) {
+    return null;
+  }
+
+  const expectedPhrase = expectedTokens.join(" ");
+  let approximateMatch: { start: number; length: number } | null = null;
+
+  for (let index = 0; index <= answerTokens.length - expectedTokens.length; index += 1) {
+    const windowPhrase = answerTokens
+      .slice(index, index + expectedTokens.length)
+      .join(" ");
+
+    if (windowPhrase === expectedPhrase) {
+      return { kind: "exact", start: index, length: expectedTokens.length };
+    }
+
+    if (!approximateMatch && editDistance(windowPhrase, expectedPhrase) <= 1) {
+      approximateMatch = { start: index, length: expectedTokens.length };
+    }
+  }
+
+  if (!approximateMatch) {
+    return null;
+  }
+
+  return { kind: "approximate", ...approximateMatch };
+}
+
+const LIKELY_VERB_TOKENS = new Set([
+  "am",
+  "appear",
+  "appeared",
+  "appears",
+  "are",
+  "be",
+  "became",
+  "become",
+  "becomes",
+  "been",
+  "being",
+  "can",
+  "could",
+  "did",
+  "do",
+  "does",
+  "feel",
+  "feels",
+  "felt",
+  "find",
+  "finds",
+  "found",
+  "had",
+  "has",
+  "have",
+  "is",
+  "keep",
+  "keeps",
+  "kept",
+  "look",
+  "looked",
+  "looks",
+  "made",
+  "make",
+  "makes",
+  "matter",
+  "matters",
+  "may",
+  "mean",
+  "means",
+  "meant",
+  "might",
+  "must",
+  "remain",
+  "remained",
+  "remains",
+  "said",
+  "say",
+  "says",
+  "seem",
+  "seemed",
+  "seems",
+  "should",
+  "show",
+  "showed",
+  "shown",
+  "shows",
+  "sound",
+  "sounded",
+  "sounds",
+  "stay",
+  "stayed",
+  "stays",
+  "was",
+  "were",
+  "will",
+  "work",
+  "worked",
+  "works",
+  "would",
+]);
+
+const LIKELY_PERSONAL_SUBJECT_TOKENS = new Set([
+  "he",
+  "i",
+  "it",
+  "she",
+  "they",
+  "we",
+  "you",
+]);
+
+const LIKELY_OBJECT_CUE_TOKENS = new Set([
+  "a",
+  "an",
+  "her",
+  "him",
+  "his",
+  "it",
+  "me",
+  "my",
+  "our",
+  "the",
+  "their",
+  "them",
+  "these",
+  "this",
+  "those",
+  "us",
+  "your",
+]);
+
+const DISALLOWED_CLAUSE_CONTINUATION_TOKENS = new Set([
+  "about",
+  "after",
+  "and",
+  "at",
+  "because",
+  "before",
+  "but",
+  "by",
+  "during",
+  "for",
+  "from",
+  "if",
+  "in",
+  "into",
+  "of",
+  "on",
+  "onto",
+  "or",
+  "to",
+  "when",
+  "while",
+  "with",
+  "without",
+]);
+
+function isLikelyDerivedVerbToken(token: string): boolean {
+  return /(?:ed|ing|ize|ise|ify|ate|en)$/.test(token);
+}
+
+function hasLikelyDerivedPredicate(tokens: string[]): boolean {
+  return tokens.some((token, index) => {
+    if (!isLikelyDerivedVerbToken(token) || index === 0) {
+      return false;
+    }
+
+    const previousToken = tokens[index - 1];
+    return LIKELY_PERSONAL_SUBJECT_TOKENS.has(previousToken) || LIKELY_VERB_TOKENS.has(previousToken);
+  });
+}
+
+function hasClauseTail(tokens: string[]): boolean {
+  if (tokens.length < 2 || DISALLOWED_CLAUSE_CONTINUATION_TOKENS.has(tokens[0])) {
+    return false;
+  }
+
+  return tokens.some((token) => LIKELY_OBJECT_CUE_TOKENS.has(token) || token.endsWith("ly"));
+}
+
+function hasSingleSentenceShape(
+  answer: string,
+  tokens: string[],
+  phraseMatch: { kind: "exact" | "approximate"; start: number; length: number } | null,
+): boolean {
+  const trimmed = answer.trim();
+  if (trimmed.length === 0 || trimmed.includes("\n")) {
+    return false;
+  }
+
+  const sentenceBreaks = [...trimmed.matchAll(/[.!?]+/g)];
+  const hasInternalSentenceBreak = sentenceBreaks.some(
+    (match) => ((match.index ?? 0) + match[0].length) < trimmed.length,
+  );
+  if (hasInternalSentenceBreak) {
+    return false;
+  }
+
+  const tokensAfterPhrase = phraseMatch
+    ? tokens.slice(phraseMatch.start + phraseMatch.length)
+    : [];
+  const targetStartsWithBlockedContinuation = phraseMatch?.start === 0
+    && tokensAfterPhrase.length > 0
+    && DISALLOWED_CLAUSE_CONTINUATION_TOKENS.has(tokensAfterPhrase[0]);
+  const hasLikelyVerb = tokens.some((token) => LIKELY_VERB_TOKENS.has(token));
+  if ((hasLikelyVerb || hasLikelyDerivedPredicate(tokens)) && !targetStartsWithBlockedContinuation) {
+    return true;
+  }
+
+  if (!phraseMatch || phraseMatch.length !== 1) {
+    return false;
+  }
+
+  if (phraseMatch.start === 0) {
+    return hasClauseTail(tokensAfterPhrase);
+  }
+
+  if (phraseMatch.start === 1 && LIKELY_PERSONAL_SUBJECT_TOKENS.has(tokens[0])) {
+    return hasClauseTail(tokensAfterPhrase);
+  }
+
+  return false;
+}
+
 /** Auto-grade an answer based on edit distance. */
 export function autoGrade(
   answer: string,
@@ -86,13 +334,48 @@ export function autoGrade(
   return { rating: 1, correct: false, cueLevel: normalizedCueLevel, retrievalKind: "failed" };
 }
 
-/** Grade a context mode answer (multiple choice — exact match only). */
+/** Grade a context mode answer. Replacement prompts use exact-word grading; production prompts require target-word use inside a sentence. */
 export function gradeContextAnswer(
   answer: string,
   expected: string,
   cueLevel: CueLevel = 0,
+  promptKind: ContextPrompt["kind"] = "replace",
 ): GradeResult {
-  return autoGrade(answer, expected, cueLevel);
+  if (promptKind !== "produce") {
+    return autoGrade(answer, expected, cueLevel);
+  }
+
+  const normalizedCueLevel = normalizeCueLevel(cueLevel);
+  const expectedTokens = tokenizeProductionText(expected);
+  const answerTokens = tokenizeProductionText(answer);
+  const phraseMatch = findPhraseMatch(answerTokens, expectedTokens);
+  const expectedTokenSet = new Set(expectedTokens);
+  const nonTargetTokenCount = answerTokens.filter((token, index) => {
+    const insideMatchedPhrase = phraseMatch
+      ? index >= phraseMatch.start && index < phraseMatch.start + phraseMatch.length
+      : false;
+
+    return !insideMatchedPhrase && !expectedTokenSet.has(token);
+  }).length;
+  const sentenceLike = answerTokens.length >= 3
+    && nonTargetTokenCount >= 2
+    && new Set(answerTokens).size > expectedTokenSet.size
+    && hasSingleSentenceShape(answer, answerTokens, phraseMatch);
+
+  if (!sentenceLike || !phraseMatch) {
+    return { rating: 1, correct: false, cueLevel: normalizedCueLevel, retrievalKind: "failed" };
+  }
+
+  if (phraseMatch.kind === "exact") {
+    return {
+      rating: 2,
+      correct: true,
+      cueLevel: normalizedCueLevel,
+      retrievalKind: "assisted",
+    };
+  }
+
+  return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "approximate" };
 }
 
 const SPEED_FAST_MS = 3000; // static fallback when no timeout is known
@@ -143,12 +426,41 @@ export function getContextSentence(word: Word): ContextSentence | null {
   return null;
 }
 
+export function buildContextPrompt(
+  word: Word,
+  drillProfile?: RetrievalDrillProfile,
+): ContextPrompt | null {
+  const sentence = getContextSentence(word);
+  if (!sentence) {
+    return null;
+  }
+
+  const stage = drillProfile?.stage ?? "stabilize";
+  const exactStreak = drillProfile?.exactStreak ?? 0;
+  if (stage === "rescue" || exactStreak < 1) {
+    return { ...sentence, kind: "replace" };
+  }
+
+  return {
+    kind: "produce",
+    answer: word.word,
+    definition: word.definition,
+    example: word.examples[0],
+  };
+}
+
 function isCleanExactLog(log: ReviewLog): boolean {
   return (
-    log.correct
+    log.contextPromptKind !== "produce"
+    && log.correct
     && log.retrievalKind === "exact"
     && normalizeCueLevel(log.cueLevel) === 0
   );
+}
+
+function isSupportDependentLog(log: ReviewLog): boolean {
+  return normalizeCueLevel(log.cueLevel) === 1
+    || (log.contextPromptKind !== "produce" && log.retrievalKind === "assisted");
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -170,29 +482,113 @@ function median(values: number[]): number | undefined {
   return sorted[middle];
 }
 
+const DRILL_STAGE_INFLUENCE: Record<RetrievalDrillProfile["stage"], number> = {
+  rescue: 0.35,
+  stabilize: 0.55,
+  fluent: 0.75,
+};
+
+function getDrillStatBalance(stats?: Partial<RPGStats>): {
+  recallDelta: number;
+  perceptionDelta: number;
+} {
+  const recallStat = Math.max(0, stats?.recall ?? 0);
+  const perceptionStat = Math.max(0, stats?.perception ?? 0);
+  const total = recallStat + perceptionStat;
+
+  if (total <= 0) {
+    return { recallDelta: 0, perceptionDelta: 0 };
+  }
+
+  const neutralShare = 0.5;
+  const recallShare = recallStat / total;
+  const perceptionShare = perceptionStat / total;
+
+  return {
+    recallDelta: clamp((recallShare - neutralShare) / neutralShare, -1, 1),
+    perceptionDelta: clamp((perceptionShare - neutralShare) / neutralShare, -1, 1),
+  };
+}
+
+function tuneRapidTimeoutMs(
+  rawTimeoutMs: number,
+  stage: RetrievalDrillProfile["stage"],
+  stats?: Partial<RPGStats>,
+): number {
+  const { perceptionDelta } = getDrillStatBalance(stats);
+  const stageInfluence = DRILL_STAGE_INFLUENCE[stage];
+  const timeoutMultiplier = clamp(
+    1 - perceptionDelta * 0.3 * stageInfluence,
+    0.8,
+    1.2,
+  );
+  const adjustedTimeout = Math.round(rawTimeoutMs * timeoutMultiplier);
+
+  if (stage === "rescue") {
+    return clamp(adjustedTimeout, 4500, 6500);
+  }
+
+  if (stage === "stabilize") {
+    return clamp(adjustedTimeout, 3500, 5200);
+  }
+
+  return clamp(adjustedTimeout, 2500, 3800);
+}
+
+function tuneRapidCueRevealMs(
+  stage: RetrievalDrillProfile["stage"],
+  exactStreak: number,
+  rapidTimeoutMs: number,
+  stats?: Partial<RPGStats>,
+): number | null {
+  if (stage === "fluent" && exactStreak >= 3) {
+    return null;
+  }
+
+  const { recallDelta } = getDrillStatBalance(stats);
+  const stageInfluence = DRILL_STAGE_INFLUENCE[stage];
+  const baseOffsetMs = stage === "rescue"
+    ? 1800
+    : stage === "stabilize"
+      ? 1200
+      : 800;
+  const minRevealMs = stage === "fluent" ? 1500 : 1800;
+  const minGapMs = stage === "fluent" ? 300 : stage === "stabilize" ? 400 : 500;
+  const offsetMultiplier = clamp(
+    1 - recallDelta * 0.35 * stageInfluence,
+    0.7,
+    1.35,
+  );
+  const cueOffsetMs = Math.round(baseOffsetMs * offsetMultiplier);
+
+  return clamp(rapidTimeoutMs - cueOffsetMs, minRevealMs, rapidTimeoutMs - minGapMs);
+}
+
 export function buildRetrievalDrillProfile(
   word: Word,
   logs: ReviewLog[],
+  stats?: Partial<RPGStats>,
 ): RetrievalDrillProfile {
-  const recentLogs = [...logs]
-    .sort((left, right) => right.reviewedAt.getTime() - left.reviewedAt.getTime())
+  const sortedLogs = [...logs]
+    .sort((left, right) => right.reviewedAt.getTime() - left.reviewedAt.getTime());
+  const recentLogs = sortedLogs.slice(0, 4);
+  const recentRetrievalLogs = sortedLogs
+    .filter((log) => log.contextPromptKind !== "produce")
     .slice(0, 4);
 
   let exactStreak = 0;
-  for (const log of recentLogs) {
+  for (const log of recentRetrievalLogs) {
     if (!isCleanExactLog(log)) {
       break;
     }
     exactStreak += 1;
   }
 
-  const cueLogs = recentLogs.filter(
-    (log) => normalizeCueLevel(log.cueLevel) === 1 || log.retrievalKind === "assisted",
-  );
+  const cueLogs = recentLogs.filter(isSupportDependentLog);
   const failureCount = recentLogs.filter(
     (log) => !log.correct || log.retrievalKind === "failed",
   ).length;
-  const exactLatencies = recentLogs
+  const exactLatencies = recentRetrievalLogs
     .filter(isCleanExactLog)
     .map((log) => log.responseTimeMs);
   const recentLatencyMs = median(exactLatencies);
@@ -215,19 +611,18 @@ export function buildRetrievalDrillProfile(
 
   // Ranges measure retrieval-only time (read phase is separate)
   const baselineLatency = recentLatencyMs ?? DEFAULT_RAPID_TIMEOUT_MS;
-  const rapidTimeoutMs = stage === "rescue"
-    ? clamp(baselineLatency + 1400, 4500, 6500)
+  const rawRapidTimeoutMs = stage === "rescue"
+    ? baselineLatency + 1400
     : stage === "stabilize"
-      ? clamp(baselineLatency + 900, 3500, 5200)
-      : clamp(baselineLatency + 400, 2500, 3800);
-
-  const rapidCueRevealMs = stage === "fluent"
-    ? exactStreak >= 3
-      ? null
-      : clamp(rapidTimeoutMs - 800, 1500, rapidTimeoutMs - 300)
-    : stage === "stabilize"
-      ? clamp(rapidTimeoutMs - 1200, 1800, rapidTimeoutMs - 400)
-      : clamp(rapidTimeoutMs - 1800, 1800, rapidTimeoutMs - 500);
+      ? baselineLatency + 900
+      : baselineLatency + 400;
+  const rapidTimeoutMs = tuneRapidTimeoutMs(rawRapidTimeoutMs, stage, stats);
+  const rapidCueRevealMs = tuneRapidCueRevealMs(
+    stage,
+    exactStreak,
+    rapidTimeoutMs,
+    stats,
+  );
 
   return {
     stage,
@@ -292,13 +687,125 @@ function prioritizeSessionWords(sessionWords: SessionWord[]): SessionWord[] {
 }
 
 /** Decide game mode for a session word. Mix of all four modes. */
+type ModeWeights = Record<GameMode, number>;
+type StatDrivenMode = "recall" | "speed" | "association";
+
+const STAT_STAGE_INFLUENCE: Record<RetrievalDrillProfile["stage"], number> = {
+  rescue: 0.45,
+  stabilize: 0.7,
+  fluent: 0.9,
+};
+
+function normalizeModeWeights(weights: ModeWeights): ModeWeights {
+  const safeWeights: ModeWeights = {
+    recall: Math.max(0, weights.recall),
+    context: Math.max(0, weights.context),
+    speed: Math.max(0, weights.speed),
+    association: Math.max(0, weights.association),
+  };
+
+  const total = Object.values(safeWeights).reduce((sum, value) => sum + value, 0);
+  if (total <= 0) {
+    return {
+      recall: 1,
+      context: 0,
+      speed: 0,
+      association: 0,
+    };
+  }
+
+  return {
+    recall: safeWeights.recall / total,
+    context: safeWeights.context / total,
+    speed: safeWeights.speed / total,
+    association: safeWeights.association / total,
+  };
+}
+
+function applyStatBias(
+  weights: ModeWeights,
+  stage: RetrievalDrillProfile["stage"],
+  stats?: Partial<RPGStats>,
+): ModeWeights {
+  if (!stats) {
+    return normalizeModeWeights(weights);
+  }
+
+  const relevantStats = {
+    recall: Math.max(0, stats.recall ?? 0),
+    speed: Math.max(0, stats.perception ?? 0),
+    association: Math.max(0, stats.creativity ?? 0),
+  };
+
+  const totalStat = Object.values(relevantStats).reduce((sum, value) => sum + value, 0);
+  if (totalStat <= 0) {
+    return normalizeModeWeights(weights);
+  }
+
+  const stageInfluence = STAT_STAGE_INFLUENCE[stage];
+  const neutralShare = 1 / 3;
+  const baseScale = 0.9;
+  const adjusted: ModeWeights = { ...weights };
+
+  (Object.keys(relevantStats) as StatDrivenMode[]).forEach((mode) => {
+    const statShare = relevantStats[mode] / totalStat;
+    const biasMultiplier = 1 + (statShare - neutralShare) * baseScale * stageInfluence;
+    adjusted[mode] = Math.max(0.01, adjusted[mode] * biasMultiplier);
+  });
+
+  return normalizeModeWeights(adjusted);
+}
+
+function getBaseModeWeights(
+  stage: RetrievalDrillProfile["stage"],
+  hasContext: boolean,
+  needsAdaptiveDrill: boolean,
+): ModeWeights {
+  if (needsAdaptiveDrill) {
+    if (stage === "rescue") {
+      return hasContext
+        ? { recall: 0.6, speed: 0.3, context: 0.07, association: 0.03 }
+        : { recall: 0.6, speed: 0.3, context: 0, association: 0.1 };
+    }
+
+    if (stage === "fluent") {
+      return hasContext
+        ? { recall: 0.4, speed: 0.25, context: 0.25, association: 0.1 }
+        : { recall: 0.6, speed: 0.25, context: 0, association: 0.15 };
+    }
+
+    return hasContext
+      ? { recall: 0.45, speed: 0.35, context: 0.15, association: 0.05 }
+      : { recall: 0.45, speed: 0.35, context: 0, association: 0.2 };
+  }
+
+  return hasContext
+    ? { recall: 0.4, speed: 0.15, context: 0.3, association: 0.15 }
+    : { recall: 0.7, speed: 0.15, context: 0, association: 0.15 };
+}
+
+function pickModeFromWeights(weights: ModeWeights, roll: number): GameMode {
+  const normalized = normalizeModeWeights(weights);
+  let cutoff = normalized.recall;
+  if (roll < cutoff) return "recall";
+
+  cutoff += normalized.speed;
+  if (roll < cutoff) return "speed";
+
+  cutoff += normalized.context;
+  if (roll < cutoff) return "context";
+
+  return "association";
+}
+
 export function pickMode(
   word: Word,
   forceMode?: GameMode,
   drillProfile?: RetrievalDrillProfile,
+  stats?: Partial<RPGStats>,
 ): GameMode {
   if (forceMode) return forceMode;
-  const roll = Math.random();
+
   const hasTOTCapture = Boolean(word.totCapture);
   const hasContext = getContextSentence(word) !== null;
   const stage = drillProfile?.stage ?? "stabilize";
@@ -306,25 +813,10 @@ export function pickMode(
     || stage === "rescue"
     || (stage === "stabilize" && (drillProfile?.recentCueRate ?? 0) > 0);
 
-  if (needsAdaptiveDrill) {
-    if (stage === "rescue") {
-      if (roll < 0.6) return "recall";
-      if (roll < 0.9) return "speed";
-      if (hasContext && roll < 0.97) return "context";
-      return "association";
-    }
+  const baseWeights = getBaseModeWeights(stage, hasContext, needsAdaptiveDrill);
+  const weightedModeMix = applyStatBias(baseWeights, stage, stats);
 
-    if (roll < 0.45) return "recall";
-    if (roll < 0.8) return "speed";
-    if (hasContext && roll < 0.95) return "context";
-    return "association";
-  }
-
-  // ~15% association, ~15% speed, ~30% context (if available), ~40% recall
-  if (roll < 0.15) return "association";
-  if (roll < 0.30) return "speed";
-  if (hasContext && roll < 0.60) return "context";
-  return "recall";
+  return pickModeFromWeights(weightedModeMix, Math.random());
 }
 
 /** Get unlocked tiers for a given level. */
@@ -366,6 +858,7 @@ async function getNewWordsIntroducedToday(existingLogs?: ReviewLog[]): Promise<n
 export async function loadSessionWords(
   difficulty: Difficulty = "normal",
   level: number = 1,
+  stats?: Partial<RPGStats>,
 ): Promise<SessionWord[]> {
   const config = DIFFICULTY_CONFIG[difficulty];
   const sessionSize = config.sessionSize;
@@ -397,7 +890,7 @@ export async function loadSessionWords(
       sessionWords.push({
         word,
         reviewCard: rc,
-        drillProfile: buildRetrievalDrillProfile(word, wordLogs),
+        drillProfile: buildRetrievalDrillProfile(word, wordLogs, stats),
       });
     }
   }
@@ -462,7 +955,12 @@ export async function processAnswer(
       sessionWord.drillProfile?.rapidTimeoutMs,
     );
   } else if (mode === "context" && contextExpected) {
-    gradeResult = gradeContextAnswer(answer, contextExpected, cueLevel);
+    gradeResult = gradeContextAnswer(
+      answer,
+      contextExpected,
+      cueLevel,
+      answerMetadata?.contextPromptKind,
+    );
   } else {
     gradeResult = autoGrade(answer, sessionWord.word.word, cueLevel);
   }
@@ -496,6 +994,7 @@ export async function processAnswer(
     correct,
     cueLevel: resolvedCueLevel,
     retrievalKind,
+    contextPromptKind: answerMetadata?.contextPromptKind,
     reviewedAt: new Date(),
   };
   await db.reviewLogs.add(log);
@@ -509,6 +1008,7 @@ export async function processAnswer(
     mode,
     cueLevel: resolvedCueLevel,
     retrievalKind,
+    contextPromptKind: answerMetadata?.contextPromptKind,
   };
 
   return { result, updatedCard };

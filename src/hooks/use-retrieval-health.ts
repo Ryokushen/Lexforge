@@ -6,8 +6,8 @@ import { buildRetrievalDrillProfile } from "@/lib/session-engine";
 import type { ReviewLog, Word } from "@/lib/types";
 
 export interface RetrievalHealth {
-  /** Unassisted exact recall rate for the current 7-day window (0–100). */
-  unassistedRate: number;
+  /** Unassisted exact recall rate for the current 7-day window (0–100), or null when no retrieval-drill reviews exist. */
+  unassistedRate: number | null;
   /** Percentage-point change vs the previous 7-day window. */
   unassistedRateDelta: number | null;
   /** Median retrieval latency (ms) for correct unassisted reviews, current 7 days. */
@@ -34,9 +34,14 @@ function median(values: number[]): number | undefined {
     : sorted[mid];
 }
 
+function isRetrievalDrillLog(log: ReviewLog): boolean {
+  return log.contextPromptKind !== "produce";
+}
+
 function isCleanExact(log: ReviewLog): boolean {
   return (
-    log.correct
+    isRetrievalDrillLog(log)
+    && log.correct
     && (log.retrievalKind ?? (log.correct ? "exact" : "failed")) === "exact"
     && (log.cueLevel ?? 0) === 0
   );
@@ -50,20 +55,31 @@ function startOfWeek(date: Date): Date {
 }
 
 function computeWindowMetrics(logs: ReviewLog[]) {
-  if (logs.length === 0) return { unassistedRate: 0, medianLatencyMs: null as number | null };
+  const retrievalLogs = logs.filter(isRetrievalDrillLog);
+  if (retrievalLogs.length === 0) {
+    return {
+      retrievalLogCount: 0,
+      unassistedRate: null as number | null,
+      medianLatencyMs: null as number | null,
+    };
+  }
 
-  const cleanCount = logs.filter(isCleanExact).length;
-  const unassistedRate = Math.round((cleanCount / logs.length) * 100);
+  const cleanCount = retrievalLogs.filter(isCleanExact).length;
+  const unassistedRate = Math.round((cleanCount / retrievalLogs.length) * 100);
 
-  const cleanLatencies = logs.filter(isCleanExact).map((l) => l.responseTimeMs);
+  const cleanLatencies = retrievalLogs.filter(isCleanExact).map((l) => l.responseTimeMs);
   const medianLatencyMs = median(cleanLatencies) ?? null;
 
-  return { unassistedRate, medianLatencyMs };
+  return {
+    retrievalLogCount: retrievalLogs.length,
+    unassistedRate,
+    medianLatencyMs,
+  };
 }
 
 export function useRetrievalHealth(): RetrievalHealth {
   const [health, setHealth] = useState<RetrievalHealth>({
-    unassistedRate: 0,
+    unassistedRate: null,
     unassistedRateDelta: null,
     medianLatencyMs: null,
     latencyDeltaMs: null,
@@ -100,9 +116,10 @@ export function useRetrievalHealth(): RetrievalHealth {
       const current = computeWindowMetrics(currentWeekLogs);
       const prev = computeWindowMetrics(prevWeekLogs);
 
-      const unassistedRateDelta = prevWeekLogs.length > 0
-        ? current.unassistedRate - prev.unassistedRate
-        : null;
+      const unassistedRateDelta =
+        current.unassistedRate !== null && prev.retrievalLogCount > 0 && prev.unassistedRate !== null
+          ? current.unassistedRate - prev.unassistedRate
+          : null;
 
       const latencyDeltaMs =
         current.medianLatencyMs !== null && prev.medianLatencyMs !== null
@@ -121,6 +138,7 @@ export function useRetrievalHealth(): RetrievalHealth {
       let cueDependentWordCount = 0;
       for (const [, logs] of logsByWord) {
         const recent = [...logs]
+          .filter(isRetrievalDrillLog)
           .sort((a, b) => b.reviewedAt.getTime() - a.reviewedAt.getTime())
           .slice(0, 3);
         if (recent.length < 2) continue;

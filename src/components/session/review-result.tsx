@@ -49,26 +49,39 @@ export function ReviewResult({
           ? "ASC"
           : "RCL";
   const retrievalKind = result.retrievalKind ?? (result.correct ? "exact" : "failed");
+  const isProductionContext = result.mode === "context" && result.contextPromptKind === "produce";
   const retrievalLabel =
-    retrievalKind === "assisted"
-      ? "Cue"
-      : retrievalKind === "approximate"
+    isProductionContext
+      ? retrievalKind === "approximate"
         ? "Close"
-        : retrievalKind === "created"
-          ? "Created"
-          : retrievalKind === "failed"
-            ? "Miss"
-            : "Clean";
+        : retrievalKind === "failed"
+          ? "Miss"
+          : "Used"
+      : retrievalKind === "assisted"
+        ? "Cue"
+        : retrievalKind === "approximate"
+          ? "Close"
+          : retrievalKind === "created"
+            ? "Created"
+            : retrievalKind === "failed"
+              ? "Miss"
+              : "Clean";
   const retrievalTone =
-    retrievalKind === "assisted"
-      ? "bg-amber-500/10 text-amber-500"
-      : retrievalKind === "approximate"
+    isProductionContext
+      ? retrievalKind === "approximate"
         ? "bg-orange-500/10 text-orange-500"
-        : retrievalKind === "created"
-          ? "bg-rose-500/10 text-rose-500"
-          : retrievalKind === "failed"
-            ? "bg-red-500/10 text-red-500"
-            : "bg-sky-500/10 text-sky-500";
+        : retrievalKind === "failed"
+          ? "bg-red-500/10 text-red-500"
+          : "bg-violet-500/10 text-violet-400"
+      : retrievalKind === "assisted"
+        ? "bg-amber-500/10 text-amber-500"
+        : retrievalKind === "approximate"
+          ? "bg-orange-500/10 text-orange-500"
+          : retrievalKind === "created"
+            ? "bg-rose-500/10 text-rose-500"
+            : retrievalKind === "failed"
+              ? "bg-red-500/10 text-red-500"
+              : "bg-sky-500/10 text-sky-500";
 
   return (
     <motion.div
