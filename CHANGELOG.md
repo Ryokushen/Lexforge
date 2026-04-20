@@ -2,7 +2,7 @@
 
 All notable changes to this project should be documented in this file.
 
-## [Unreleased] - 2026-04-13
+## [Unreleased] - 2026-04-20
 
 ### Added
 
@@ -19,7 +19,7 @@ All notable changes to this project should be documented in this file.
 - TOT capture flow in the word library now records real-world blanking moments with source, weak substitute, and context, and can create a new custom word if needed
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
-- Automated coverage now spans 53 tests across scheduler, session, sync, and hook logic
+- Automated coverage now spans 59 tests across scheduler, session, sync, and hook logic
 
 ### Changed
 
@@ -57,6 +57,9 @@ All notable changes to this project should be documented in this file.
 - Refactored session and stats hooks for current React Compiler rules
 - Made session UI behavior deterministic by replacing render-time randomness with stable session-derived selection
 - Simplified prompt reset behavior by relying on keyed remounts for session prompts
+- Sync merge hardening now normalizes local reconciliation keys and preserves additive TOT capture counts/events across devices
+- Leave-session flow now type-checks cleanly in production builds (`commitPartialSession()` is treated as `void`, and saved-count messaging uses answered-word count)
+- Removed a spurious `## Research Foundation` heading from README
 - Cleaned minor lint issues across the app
 
 ### Verified

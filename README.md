@@ -28,8 +28,10 @@ What it does not currently claim:
 - Optional Supabase sync with GitHub OAuth for cross-device backup of profile state, review data, custom words, associations, and TOT capture summaries
 - Review-log sync that keeps daily limits consistent across browsers
 - Review-card reconciliation that preserves progressed due cards when a freshly seeded device syncs against an already-trained device
+- Sync hardening for normalized word keys, additive TOT capture merges, explicit session IDs in review logs, and background sync recovery
 - Partial session progress now saves when you leave training early
 - Dashboard quest card now shows backlog separately from the next quest mix
+- 59 automated tests across scheduler, session, sync, and hooks
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
@@ -135,9 +137,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 
 Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added. Without Supabase env vars, Lexforge stays fully local. If you sign in with GitHub, it also syncs profile state, review cards, review logs, word associations, custom words, and TOT capture summaries to Supabase.
 
-If you apply the latest Supabase migrations, cloud sync also carries custom words and TOT capture summaries across devices. The current compatibility migration is:
+If you apply the latest Supabase migrations, cloud sync also carries custom words and TOT capture summaries across devices and uses normalized word keys for safer cross-device merges. Current compatibility migrations:
 
-- [20260413222000_add_custom_words_and_tot_capture_sync.sql](/C:/Users/593528/Documents/Project%20AI/LexForge/memory-and-vocabulary/supabase/migrations/20260413222000_add_custom_words_and_tot_capture_sync.sql:1)
+- [20260413222000_add_custom_words_and_tot_capture_sync.sql](supabase/migrations/20260413222000_add_custom_words_and_tot_capture_sync.sql)
+- [20260419000000_add_normalized_word_keys.sql](supabase/migrations/20260419000000_add_normalized_word_keys.sql)
 
 If two devices ever disagree about due-review counts after one of them starts from a fresh seed, update to the latest build and sync from the device with the more progressed review state first. Review-card reconciliation now prefers real scheduler progress over a newer seed timestamp.
 
@@ -167,8 +170,20 @@ The stats page includes a Retrieval Health section that tracks whether training 
 - **TOT This Week** — words with a real-world tip-of-the-tongue capture this calendar week
 - **In Rescue Stage** — words currently classified as struggling by the adaptive drill system
 
+## Already Shipped (Do Not Re-Implement)
+
+These foundations are already in `master` and should be treated as existing behavior, not backlog:
+
+- Cross-device sync with GitHub OAuth, review-log sync, and review-card reconciliation
+- Sync hardening for normalized word keys and additive TOT capture merge behavior
+- Explicit `session_id` handling in review logs to preserve same-day multi-device sessions
+- Background sync recovery + retry behavior
+- Partial session save-on-exit flow and dashboard resume message
+
 ## Near-Term Roadmap
 
-- broader cross-device verification of custom word and TOT sync under real usage
+For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](PROJECT_STATUS.md).
+
+- adaptive use of RPG stats in session generation (mode weighting, hint pressure, and timer tuning)
 - deeper context-production drills and transfer tasks beyond single-word replacement
-- adaptive use of RPG stats in session generation
+- targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
