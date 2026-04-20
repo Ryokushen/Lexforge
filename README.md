@@ -31,8 +31,8 @@ What it does not currently claim:
 - Sync hardening for normalized word keys, additive TOT capture merges, explicit session IDs in review logs, and background sync recovery
 - Partial session progress now saves when you leave training early
 - Dashboard quest card now shows backlog separately from the next quest mix
-- Session mode selection is now stat-aware: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association while preserving rescue/stabilize/fluent drill-stage constraints
-- 61 automated tests across scheduler, session, sync, and hooks
+- Session generation is now stat-aware across both mode selection and retrieval drill timing: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association, and live profile stats now tune rapid-retrieval timeout pressure and rescue-cue timing while preserving rescue/stabilize/fluent drill-stage constraints
+- 65 automated tests across scheduler, session, sync, and hooks
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
@@ -72,7 +72,7 @@ Recent retrieval quality now changes how a word is trained.
 | **Perception** | Rapid verbal retrieval under time pressure | Grows from Rapid Retrieval results and now increases the chance of Rapid Retrieval prompts. |
 | **Creativity** | Association building and contextual flexibility | Grows from association and contextual work and now increases the chance of Association prompts. |
 
-Mode selection is now stat-aware: Recall / Perception / Creativity shape the Recall / Rapid Retrieval / Association mix while still honoring rescue/stabilize/fluent drill-stage guardrails. The next tuning step is to extend this into stat-aware hint pressure and timer behavior.
+Mode selection is now stat-aware: Recall / Perception / Creativity shape the Recall / Rapid Retrieval / Association mix while still honoring rescue/stabilize/fluent drill-stage guardrails. Retrieval drills are now stat-aware too: Perception tightens Rapid Retrieval timeout pressure, Recall delays rescue cue reveal when a word is stabilizing, and fluent words keep their no-cue safeguards.
 
 Other progression systems:
 - XP comes from session performance, streak bonuses, and fast clean retrieval.
@@ -185,6 +185,6 @@ These foundations are already in `master` and should be treated as existing beha
 
 For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-- extend stat-aware adaptation beyond mode weighting into hint pressure and timer tuning
+- broaden stat-aware personalization beyond current retrieval-drill timing into deeper context-production and transfer work
 - deeper context-production drills and transfer tasks beyond single-word replacement
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)

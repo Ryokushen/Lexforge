@@ -19,17 +19,17 @@ These capabilities are already in `master` and should be treated as baseline beh
 
 ## Current Product Gap
 
-- RPG stats now drive session mode weighting, but hint pressure and timer tuning are still mostly stage-driven (rescue/stabilize/fluent) rather than stat-personalized.
+- RPG stats now drive both session mode weighting and retrieval-drill timing. The remaining gap is broadening that personalization into deeper context-production / transfer work and other training surfaces.
 
 ## Active Next Priorities
 
-1. Extend RPG-stat adaptation beyond mode weighting into hint pressure and timer tuning.
-2. Expand context mode into deeper production/transfer drills beyond single-word replacement.
+1. Expand context mode into deeper production/transfer drills beyond single-word replacement.
+2. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
 3. Add targeted regression tests around newly introduced sync changes (without reworking shipped sync architecture).
 
 ## Verification Baseline
 
-- `npm run test` (61 passing tests)
+- `npm run test` (65 passing tests)
 - `npm run build` (Next.js production build + TypeScript checks)
 
 ## Scope Guardrail
