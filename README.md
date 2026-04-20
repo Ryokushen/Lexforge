@@ -28,6 +28,8 @@ What it does not currently claim:
 - Optional Supabase sync with GitHub OAuth for cross-device backup of profile state, review data, custom words, associations, and TOT capture summaries
 - Review-log sync that keeps daily limits consistent across browsers
 - Review-card reconciliation that preserves progressed due cards when a freshly seeded device syncs against an already-trained device
+- Partial session progress now saves when you leave training early
+- Dashboard quest card now shows backlog separately from the next quest mix
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
@@ -134,6 +136,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on first launch and upgrades the local Dexie profile schema as new fields are added. Without Supabase env vars, Lexforge stays fully local. If you sign in with GitHub, it also syncs profile state, review cards, review logs, word associations, custom words, and TOT capture summaries to Supabase.
 
 If you apply the latest Supabase migrations, cloud sync also carries custom words and TOT capture summaries across devices. The current compatibility migration is:
+
+## Research Foundation
 
 - [20260413222000_add_custom_words_and_tot_capture_sync.sql](/C:/Users/593528/Documents/Project%20AI/LexForge/memory-and-vocabulary/supabase/migrations/20260413222000_add_custom_words_and_tot_capture_sync.sql:1)
 

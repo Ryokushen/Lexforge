@@ -27,8 +27,10 @@ All notable changes to this project should be documented in this file.
 - Nav bar logo: Uncial Antiqua font wordmark replacing PNG logo
 - PWA icons updated with Lexforge branding
 - Quest card now shows "to review" and "new" separately instead of one overwhelming total
+- Quest card now also separates total backlog from the exact next-quest mix, so players can see when review overflow is blocking new words
 - Dashboard work counts now respect the selected difficulty and current tier unlocks instead of showing all unseen words as available new work
 - Fixed dashboard stats initialization so changing difficulty no longer leaves the new-word count stale on first load
+- Dashboard stats now refresh automatically after cloud sync completes and when the tab regains focus, so cross-device progress appears without a manual reload
 - App startup now renders the nav and auth controls immediately while first-run seeding continues in the background
 - Auth menu now exposes real cloud-sync status, last successful sync time, and retry controls
 - Added a manual "Sync now" action plus attempt/success/error timestamps in the auth menu
@@ -37,6 +39,8 @@ All notable changes to this project should be documented in this file.
 - Cloud sync now reconciles profile progress, review-card state, and word associations before pushing so newer cross-device changes win instead of being overwritten
 - Cloud sync now retries transient failures in the background, resyncs periodically during long signed-in sessions, and preserves same-day work from multiple devices when merged review logs exceed a single profile snapshot
 - Review logs now carry explicit `session_id` values, and sync uses them to preserve distinct same-day sessions across devices instead of inferring everything from time gaps
+- Auth restore now relies on Supabase auth events instead of awaiting sync work inside `onAuthStateChange`, fixing the refresh/logout regression seen after OAuth sign-in
+- Leaving training early now commits partial session progress, and the session screen exposes an explicit "Leave Session" flow that tells the player how many answered words will be saved
 - Added a Supabase migration for the `review_logs` table, indexes, and RLS policies required by review-log sync, including compatibility upgrades for older table shapes
 - Daily new-word limits and streak/day tracking now use the player's local calendar day instead of UTC rollover
 - Review-card reconciliation now prefers actual scheduler progress over raw `updated_at`, preventing a freshly seeded device from overwriting more advanced due-card state from another device
