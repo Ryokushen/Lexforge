@@ -137,8 +137,6 @@ Open [http://localhost:3000](http://localhost:3000). The database auto-seeds on 
 
 If you apply the latest Supabase migrations, cloud sync also carries custom words and TOT capture summaries across devices. The current compatibility migration is:
 
-## Research Foundation
-
 - [20260413222000_add_custom_words_and_tot_capture_sync.sql](/C:/Users/593528/Documents/Project%20AI/LexForge/memory-and-vocabulary/supabase/migrations/20260413222000_add_custom_words_and_tot_capture_sync.sql:1)
 
 If two devices ever disagree about due-review counts after one of them starts from a fresh seed, update to the latest build and sync from the device with the more progressed review state first. Review-card reconciliation now prefers real scheduler progress over a newer seed timestamp.
