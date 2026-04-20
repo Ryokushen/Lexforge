@@ -50,7 +50,7 @@ export default function SessionPage() {
     results,
     summary,
     currentMode,
-    currentContextSentence,
+    currentContextPrompt,
     associationPhase,
     startSession,
     submitAnswer,
@@ -259,10 +259,10 @@ export default function SessionPage() {
 
       {state === "active" &&
         currentMode === "context" &&
-        currentContextSentence && (
+        currentContextPrompt && (
           <ContextPrompt
-            key={currentContextSentence.sentence}
-            sentence={currentContextSentence}
+            key={currentContextPrompt.kind === "produce" ? `${currentWord.word.id}-produce` : currentContextPrompt.sentence}
+            prompt={currentContextPrompt}
             onSubmit={submitAnswer}
           />
         )}

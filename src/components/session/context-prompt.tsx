@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { playTick } from "@/lib/sounds";
 import { Replace, Lightbulb, Send } from "lucide-react";
-import type { AnswerMetadata, ContextSentence } from "@/lib/types";
+import type { AnswerMetadata, ContextPrompt as ContextPromptData, ContextSentence } from "@/lib/types";
 
 interface ContextPromptProps {
-  sentence: ContextSentence;
+  prompt: ContextPromptData;
   onSubmit: (answer: string, metadata?: AnswerMetadata) => void;
 }
 
@@ -55,39 +55,57 @@ function getChoices(sentence: ContextSentence) {
   });
 }
 
-export function ContextPrompt({ sentence, onSubmit }: ContextPromptProps) {
+export function ContextPrompt({ prompt, onSubmit }: ContextPromptProps) {
   const [typedAnswer, setTypedAnswer] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [showChoices, setShowChoices] = useState(false);
+  const [showCue, setShowCue] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const choices = getChoices(sentence);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const parts = sentence.sentence.split(`**${sentence.weakWord}**`);
+  const productionPrompt = prompt.kind === "produce" ? prompt : null;
+  const replacementPrompt = prompt.kind === "produce" ? null : prompt;
+  const isProductionPrompt = productionPrompt !== null;
+  const choices = useMemo(
+    () => (replacementPrompt ? getChoices(replacementPrompt) : []),
+    [replacementPrompt],
+  );
+  const parts = useMemo(
+    () => replacementPrompt
+      ? replacementPrompt.sentence.split(`**${replacementPrompt.weakWord}**`)
+      : null,
+    [replacementPrompt],
+  );
 
   useEffect(() => {
+    if (isProductionPrompt) {
+      textareaRef.current?.focus();
+      return;
+    }
+
     if (!showChoices) {
       inputRef.current?.focus();
     }
-  }, [showChoices, sentence.sentence]);
+  }, [isProductionPrompt, prompt, showChoices]);
 
   const revealChoices = useCallback(() => {
-    if (showChoices || selected !== null) return;
+    if (isProductionPrompt || showChoices || selected !== null) return;
     setShowChoices(true);
-  }, [selected, showChoices]);
+  }, [isProductionPrompt, selected, showChoices]);
 
   const handleTypedSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!typedAnswer.trim()) return;
+    if (!typedAnswer.trim() || !replacementPrompt) return;
 
     const normalizedTyped = normalizeAnswer(typedAnswer);
-    const normalizedExpected = normalizeAnswer(sentence.answer);
+    const normalizedExpected = normalizeAnswer(replacementPrompt.answer);
 
     if (
       normalizedTyped === normalizedExpected
       || editDistance(normalizedTyped, normalizedExpected) <= 1
     ) {
       playTick();
-      onSubmit(typedAnswer.trim(), { cueLevel: 0 });
+      onSubmit(typedAnswer.trim(), { cueLevel: 0, contextPromptKind: "replace" });
       return;
     }
 
@@ -98,10 +116,24 @@ export function ContextPrompt({ sentence, onSubmit }: ContextPromptProps) {
     if (selected !== null) return;
     playTick();
     setSelected(choice);
-    setTimeout(() => onSubmit(choice, { cueLevel: 1 }), 300);
+    setTimeout(() => onSubmit(choice, { cueLevel: 1, contextPromptKind: "replace" }), 300);
   }, [onSubmit, selected]);
 
+  const handleProductionSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!typedAnswer.trim() || !isProductionPrompt) return;
+
+    onSubmit(typedAnswer.trim(), {
+      cueLevel: showCue ? 1 : 0,
+      contextPromptKind: "produce",
+    });
+  };
+
   useEffect(() => {
+    if (isProductionPrompt) {
+      return;
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!showChoices || selected !== null) return;
       if (
@@ -118,11 +150,115 @@ export function ContextPrompt({ sentence, onSubmit }: ContextPromptProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selected, choices, handleSelect, showChoices]);
+  }, [choices, handleSelect, isProductionPrompt, selected, showChoices]);
+
+  if (isProductionPrompt && productionPrompt) {
+    return (
+      <motion.div
+        key={`${productionPrompt.answer}-produce`}
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -40 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+      >
+        <Card size="sm" className="w-full max-w-2xl mx-auto border-l-4 border-l-emerald-500/40 ring-1 ring-emerald-500/15">
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-1.5 text-emerald-500">
+              <Replace className="size-3.5" />
+              <span className="text-xs font-semibold uppercase tracking-widest">Context</span>
+              <span className="text-xs text-muted-foreground ml-1">Use it naturally</span>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="space-y-2.5 pl-3 border-l-2 border-emerald-500/25"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-sm font-semibold text-emerald-400 dark:text-emerald-300">
+                  {productionPrompt.answer}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  Write one sentence using this word naturally.
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground/90">
+                {productionPrompt.definition}
+              </p>
+            </motion.div>
+
+            <motion.form
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              onSubmit={handleProductionSubmit}
+              className="space-y-2.5"
+            >
+              <textarea
+                ref={textareaRef}
+                value={typedAnswer}
+                onChange={(event) => setTypedAnswer(event.target.value)}
+                placeholder={`Write one sentence using "${productionPrompt.answer}"...`}
+                className="min-h-[112px] w-full rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-emerald-500/40 focus:ring-2 focus:ring-emerald-500/15"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  className="flex-1 gap-2"
+                  disabled={!typedAnswer.trim()}
+                >
+                  <Send className="size-4" />
+                  Submit Sentence
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowCue(true)}
+                  className="gap-1.5 text-muted-foreground"
+                >
+                  <Lightbulb className="size-4" />
+                  Need a cue
+                </Button>
+              </div>
+            </motion.form>
+
+            {showCue && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3"
+              >
+                <div className="flex items-center gap-1.5 text-emerald-500">
+                  <Lightbulb className="size-4" />
+                  <span className="text-sm font-medium">Cue</span>
+                </div>
+                <p className="text-sm leading-relaxed text-foreground/90">
+                  {productionPrompt.definition}
+                </p>
+                {productionPrompt.example && (
+                  <p className="text-xs text-muted-foreground">
+                    Example: {productionPrompt.example}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  if (!replacementPrompt || !parts) {
+    return null;
+  }
 
   return (
     <motion.div
-      key={sentence.sentence}
+      key={replacementPrompt.sentence}
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
@@ -142,11 +278,11 @@ export function ContextPrompt({ sentence, onSubmit }: ContextPromptProps) {
             transition={{ delay: 0.1 }}
             className="text-base leading-relaxed pl-3 border-l-2 border-emerald-500/25"
           >
-            {parts[0]}
+            {parts?.[0]}
             <span className="inline-block bg-amber-500/15 text-amber-400 dark:text-amber-300 px-1.5 py-0.5 rounded-md font-semibold border border-amber-500/20">
-              {sentence.weakWord}
+              {replacementPrompt.weakWord}
             </span>
-            {parts[1]}
+            {parts?.[1]}
           </motion.div>
 
           {!showChoices && (

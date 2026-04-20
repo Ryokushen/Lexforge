@@ -62,6 +62,7 @@ type CloudReviewLogRow = {
   correct: boolean;
   cue_level?: number | null;
   retrieval_kind?: string | null;
+  context_prompt_kind?: string | null;
   reviewed_at: string;
   updated_at?: string | null;
 };
@@ -293,6 +294,14 @@ function normalizeRetrievalKind(value: string | null | undefined, correct: boole
   }
 
   return correct ? "exact" : "failed";
+}
+
+function normalizeContextPromptKind(value: string | null | undefined): ReviewLog["contextPromptKind"] {
+  if (value === "replace" || value === "produce") {
+    return value;
+  }
+
+  return undefined;
 }
 
 function normalizeProfile(profile: UserProfile): UserProfile {
@@ -639,10 +648,8 @@ async function reconcileReviewLogs(
 ): Promise<MergedReviewStats> {
   const wordIdMap = new Map(words.map((word) => [getLocalWordLookupKey(word), word.id]));
   const existingLogs = await db.reviewLogs.toArray();
-  const existingKeys = new Set(
-    existingLogs.map(
-      (log) => `${log.wordId}:${log.reviewedAt.toISOString()}`,
-    ),
+  const existingLogsByKey = new Map(
+    existingLogs.map((log) => [`${log.wordId}:${log.reviewedAt.toISOString()}`, log]),
   );
 
   for (const row of cloudLogs) {
@@ -651,7 +658,16 @@ async function reconcileReviewLogs(
 
     const reviewedAt = new Date(row.reviewed_at);
     const logKey = `${wordId}:${reviewedAt.toISOString()}`;
-    if (existingKeys.has(logKey)) continue;
+    const contextPromptKind = normalizeContextPromptKind(row.context_prompt_kind);
+    const existingLog = existingLogsByKey.get(logKey);
+
+    if (existingLog) {
+      if (!existingLog.contextPromptKind && contextPromptKind && existingLog.id !== undefined) {
+        await db.reviewLogs.update(existingLog.id, { contextPromptKind });
+        existingLogsByKey.set(logKey, { ...existingLog, contextPromptKind });
+      }
+      continue;
+    }
 
     await db.reviewLogs.add({
       wordId,
@@ -661,9 +677,20 @@ async function reconcileReviewLogs(
       correct: row.correct,
       cueLevel: row.cue_level === 1 ? 1 : 0,
       retrievalKind: normalizeRetrievalKind(row.retrieval_kind, row.correct),
+      contextPromptKind,
       reviewedAt,
     });
-    existingKeys.add(logKey);
+    existingLogsByKey.set(logKey, {
+      wordId,
+      sessionId: row.session_id ?? undefined,
+      rating: row.rating as 1 | 2 | 3 | 4,
+      responseTimeMs: row.response_time_ms,
+      correct: row.correct,
+      cueLevel: row.cue_level === 1 ? 1 : 0,
+      retrievalKind: normalizeRetrievalKind(row.retrieval_kind, row.correct),
+      contextPromptKind,
+      reviewedAt,
+    });
   }
 
   const mergedLogs = await db.reviewLogs.toArray();
@@ -840,6 +867,7 @@ async function pushReviewLogs(user: User) {
       correct: log.correct,
       cue_level: log.cueLevel ?? 0,
       retrieval_kind: normalizeRetrievalKind(log.retrievalKind, log.correct),
+      context_prompt_kind: log.contextPromptKind ?? null,
       reviewed_at: log.reviewedAt.toISOString(),
       updated_at: log.reviewedAt.toISOString(),
     }));

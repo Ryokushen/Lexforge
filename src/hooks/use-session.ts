@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type {
   AnswerMetadata,
-  ContextSentence,
+  ContextPrompt,
   GameMode,
   RPGStats,
   SessionState,
@@ -17,7 +17,7 @@ import {
   processAnswer,
   finalizeSession,
   pickMode,
-  getContextSentence,
+  buildContextPrompt,
 } from "@/lib/session-engine";
 import {
   playCorrect,
@@ -35,8 +35,8 @@ export function useSession() {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [promptStartTime, setPromptStartTime] = useState<number>(0);
   const [currentMode, setCurrentMode] = useState<GameMode>("recall");
-  const [currentContextSentence, setCurrentContextSentence] =
-    useState<ContextSentence | null>(null);
+  const [currentContextPrompt, setCurrentContextPrompt] =
+    useState<ContextPrompt | null>(null);
   const submittingRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
   const stateRef = useRef<SessionState>("idle");
@@ -76,13 +76,13 @@ export function useSession() {
     );
     if (mode === "context") {
       setCurrentMode("context");
-      setCurrentContextSentence(getContextSentence(word.word));
+      setCurrentContextPrompt(buildContextPrompt(word.word, word.drillProfile));
     } else if (mode === "speed") {
       setCurrentMode("speed");
-      setCurrentContextSentence(null);
+      setCurrentContextPrompt(null);
     } else {
       setCurrentMode(mode);
-      setCurrentContextSentence(null);
+      setCurrentContextPrompt(null);
     }
   }, []);
 
@@ -154,12 +154,18 @@ export function useSession() {
     submittingRef.current = true;
 
     try {
-      const responseTimeMs = answerMetadata?.retrievalTimeMs ?? (Date.now() - promptStartTime);
+      const resolvedAnswerMetadata = currentMode === "context" && currentContextPrompt
+        ? {
+          ...answerMetadata,
+          contextPromptKind: answerMetadata?.contextPromptKind ?? currentContextPrompt.kind,
+        }
+        : answerMetadata;
+      const responseTimeMs = resolvedAnswerMetadata?.retrievalTimeMs ?? (Date.now() - promptStartTime);
       const expectedAnswer = currentMode === "association" && associationPhase === "create"
         ? "__create__"
         : currentMode === "speed"
           ? currentWord.word.word
-          : currentContextSentence?.answer;
+          : currentContextPrompt?.answer;
 
       const { result } = await processAnswer(
         currentWord,
@@ -168,7 +174,7 @@ export function useSession() {
         sessionIdRef.current ?? undefined,
         currentMode,
         expectedAnswer,
-        answerMetadata,
+        resolvedAnswerMetadata,
       );
 
       // Play sound based on result
@@ -230,7 +236,7 @@ export function useSession() {
     setResults([]);
     setSummary(null);
     setCurrentMode("recall");
-    setCurrentContextSentence(null);
+    setCurrentContextPrompt(null);
   }, []);
 
   useEffect(() => {
@@ -249,7 +255,7 @@ export function useSession() {
     results,
     summary,
     currentMode,
-    currentContextSentence,
+    currentContextPrompt,
     associationPhase,
     startSession,
     submitAnswer,

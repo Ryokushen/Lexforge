@@ -32,7 +32,8 @@ What it does not currently claim:
 - Partial session progress now saves when you leave training early
 - Dashboard quest card now shows backlog separately from the next quest mix
 - Session generation is now stat-aware across both mode selection and retrieval drill timing: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association, and live profile stats now tune rapid-retrieval timeout pressure and rescue-cue timing while preserving rescue/stabilize/fluent drill-stage constraints
-- 65 automated tests across scheduler, session, sync, and hooks
+- Context mode now has two typed-first variants: replacement prompts for rescue words and target-word sentence production for more stable words, both with deterministic grading and cue-aware fallback
+- 79 automated tests across scheduler, session, sync, stats helpers, and hooks
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
@@ -40,7 +41,7 @@ What it does not currently claim:
 | Mode | Trains | Shipped behavior |
 |------|--------|------------------|
 | **Recall** | Clean definition-to-word retrieval | See a definition and type the word, with hints available only while the word is still in a support phase. |
-| **Context** | Word choice in context | Type a stronger replacement first, then fall back to assisted options only if needed. |
+| **Context** | Word choice in context | Rescue words still use typed replacement with assisted fallback; more stable words can instead ask you to use the target word in your own sentence before cue help appears. |
 | **Rapid Retrieval** | Fast verbal access | Read a definition at your own pace, then start a timed retrieval phase where you type the word under an adaptive timer. A rescue cue appears only when the drill profile still calls for it. |
 | **Association** | Elaborative encoding | Create a vivid text association for a word, then later recall from that association. |
 
@@ -185,6 +186,6 @@ These foundations are already in `master` and should be treated as existing beha
 
 For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-- broaden stat-aware personalization beyond current retrieval-drill timing into deeper context-production and transfer work
-- deeper context-production drills and transfer tasks beyond single-word replacement
+- deepen context-production beyond the new target-word sentence variant into rewrite/scenario transfer work
+- broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)

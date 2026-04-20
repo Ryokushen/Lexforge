@@ -44,6 +44,7 @@ vi.mock("./gamification", () => ({
 
 import {
   autoGrade,
+  buildContextPrompt,
   buildRetrievalDrillProfile,
   createSessionId,
   finalizeSession,
@@ -279,6 +280,498 @@ describe("session engine", () => {
       correct: false,
       cueLevel: 0,
       retrievalKind: "failed",
+    });
+  });
+
+  it("grades production-style context answers by target-word usage and sentence shape", () => {
+    expect(
+      gradeContextAnswer(
+        "The inspector was meticulous during the final review.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "The inspector was meticulous during the final review.",
+        "meticulous",
+        1,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 1,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "The inspector was meticulus during the final review.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "approximate",
+    });
+    expect(
+      gradeContextAnswer(
+        "Reducing latency is the product's raison d'etre.",
+        "raison d'être",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "The change made the process meticulous.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "The design seems meticulous on paper.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "The meticulous process works.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "We discern patterns quickly.",
+        "discern",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "Discern patterns quickly.",
+        "discern",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "We outline risks clearly.",
+        "outline",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "Outline the risks clearly.",
+        "outline",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "Their candor matters here.",
+        "candor",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "Reducing latency is the product's raisin d'etre.",
+        "raison d'être",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 2,
+      correct: true,
+      cueLevel: 0,
+      retrievalKind: "approximate",
+    });
+    expect(
+      gradeContextAnswer(
+        "The meticulous process",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "meticulous if it works",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "meticulous because it works",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "meticulous and careful",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "meticulous and working",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "meticulous when tested",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "Meticulous. Another thing.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "The inspector was careful during the final review.",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+    expect(
+      gradeContextAnswer(
+        "meticulous meticulous meticulous",
+        "meticulous",
+        0,
+        "produce",
+      ),
+    ).toEqual({
+      rating: 1,
+      correct: false,
+      cueLevel: 0,
+      retrievalKind: "failed",
+    });
+  });
+
+  it("builds replacement prompts until a word has at least one clean retrieval, then upgrades to production prompts", () => {
+    const word = makeWord(1);
+
+    const rescuePrompt = buildContextPrompt(word, {
+      stage: "rescue",
+      exactStreak: 0,
+      recentCueRate: 0.5,
+      recentFailureCount: 2,
+      recallHintEnabled: true,
+      rapidTimeoutMs: 5600,
+      rapidCueRevealMs: 3400,
+    });
+    const tentativeStabilizePrompt = buildContextPrompt(word, {
+      stage: "stabilize",
+      exactStreak: 0,
+      recentCueRate: 0,
+      recentFailureCount: 0,
+      recallHintEnabled: true,
+      rapidTimeoutMs: 4200,
+      rapidCueRevealMs: 2400,
+    });
+    const stabilizePrompt = buildContextPrompt(word, {
+      stage: "stabilize",
+      exactStreak: 1,
+      recentCueRate: 0,
+      recentFailureCount: 0,
+      recallHintEnabled: true,
+      rapidTimeoutMs: 3800,
+      rapidCueRevealMs: 2200,
+    });
+    const fluentPrompt = buildContextPrompt(word, {
+      stage: "fluent",
+      exactStreak: 3,
+      recentCueRate: 0,
+      recentFailureCount: 0,
+      recallHintEnabled: false,
+      rapidTimeoutMs: 3200,
+      rapidCueRevealMs: null,
+    });
+
+    expect(rescuePrompt).toMatchObject({
+      kind: "replace",
+      answer: "word-1",
+      weakWord: "weak",
+    });
+    expect(tentativeStabilizePrompt).toMatchObject({
+      kind: "replace",
+      answer: "word-1",
+      weakWord: "weak",
+    });
+    expect(stabilizePrompt).toMatchObject({
+      kind: "produce",
+      answer: "word-1",
+      definition: "definition-1",
+      example: "example-1",
+    });
+    expect(fluentPrompt).toMatchObject({
+      kind: "produce",
+      answer: "word-1",
+      definition: "definition-1",
+      example: "example-1",
+    });
+  });
+
+  it("keeps fluent retrieval profiles stable after successful production-context reviews", () => {
+    const word = makeWord(1);
+    const logs: ReviewLog[] = [
+      {
+        ...makeReviewLog(1, "2026-04-10T11:45:00.000Z", {
+          rating: 2,
+          correct: true,
+          cueLevel: 0,
+          retrievalKind: "assisted",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      makeReviewLog(1, "2026-04-09T11:45:00.000Z", {
+        responseTimeMs: 1700,
+      }),
+      makeReviewLog(1, "2026-04-08T11:45:00.000Z", {
+        responseTimeMs: 1900,
+      }),
+    ];
+
+    const profile = buildRetrievalDrillProfile(word, logs);
+
+    expect(profile).toMatchObject({
+      stage: "fluent",
+      exactStreak: 2,
+      recentCueRate: 0,
+      recentFailureCount: 0,
+    });
+  });
+
+  it("keeps fluent retrieval profiles stable when successful production reviews crowd the recent window", () => {
+    const word = makeWord(1);
+    const profile = buildRetrievalDrillProfile(word, [
+      {
+        ...makeReviewLog(1, "2026-04-10T11:45:00.000Z", {
+          rating: 2,
+          correct: true,
+          cueLevel: 0,
+          retrievalKind: "assisted",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      {
+        ...makeReviewLog(1, "2026-04-09T11:45:00.000Z", {
+          rating: 2,
+          correct: true,
+          cueLevel: 0,
+          retrievalKind: "assisted",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      {
+        ...makeReviewLog(1, "2026-04-08T11:45:00.000Z", {
+          rating: 2,
+          correct: true,
+          cueLevel: 0,
+          retrievalKind: "assisted",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      {
+        ...makeReviewLog(1, "2026-04-07T11:45:00.000Z", {
+          rating: 2,
+          correct: true,
+          cueLevel: 0,
+          retrievalKind: "assisted",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      makeReviewLog(1, "2026-04-06T11:45:00.000Z", {
+        responseTimeMs: 1700,
+      }),
+      makeReviewLog(1, "2026-04-05T11:45:00.000Z", {
+        responseTimeMs: 1900,
+      }),
+    ]);
+
+    expect(profile).toMatchObject({
+      stage: "fluent",
+      exactStreak: 2,
+      recentCueRate: 0,
+      recentFailureCount: 0,
+    });
+  });
+
+  it("demotes fluent retrieval profiles when recent production-context reviews need help or fail", () => {
+    const word = makeWord(1);
+
+    const cueFallbackProfile = buildRetrievalDrillProfile(word, [
+      {
+        ...makeReviewLog(1, "2026-04-10T11:45:00.000Z", {
+          rating: 2,
+          correct: true,
+          cueLevel: 1,
+          retrievalKind: "assisted",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      makeReviewLog(1, "2026-04-09T11:45:00.000Z", {
+        responseTimeMs: 1700,
+      }),
+      makeReviewLog(1, "2026-04-08T11:45:00.000Z", {
+        responseTimeMs: 1900,
+      }),
+    ]);
+
+    expect(cueFallbackProfile).toMatchObject({
+      stage: "stabilize",
+      exactStreak: 2,
+      recentCueRate: 1 / 3,
+      recentFailureCount: 0,
+    });
+
+    const failedProductionProfile = buildRetrievalDrillProfile(word, [
+      {
+        ...makeReviewLog(1, "2026-04-10T11:45:00.000Z", {
+          rating: 1,
+          correct: false,
+          cueLevel: 0,
+          retrievalKind: "failed",
+        }),
+        contextPromptKind: "produce",
+      } as ReviewLog,
+      makeReviewLog(1, "2026-04-09T11:45:00.000Z", {
+        responseTimeMs: 1700,
+      }),
+      makeReviewLog(1, "2026-04-08T11:45:00.000Z", {
+        responseTimeMs: 1900,
+      }),
+    ]);
+
+    expect(failedProductionProfile).toMatchObject({
+      stage: "rescue",
+      exactStreak: 2,
+      recentCueRate: 0,
+      recentFailureCount: 1,
     });
   });
 
@@ -551,6 +1044,49 @@ describe("session engine", () => {
         correct: true,
         cueLevel: 0,
         retrievalKind: "created",
+      }),
+    );
+  });
+
+  it("treats production-context answers as assisted usage so they do not inflate clean recall", async () => {
+    const sessionWord: SessionWord = {
+      ...makeSessionWord(1),
+      word: {
+        ...makeWord(1),
+        word: "meticulous",
+      },
+    };
+    const updatedCard = makeReviewCard(1);
+    schedulerMock.gradeCard.mockResolvedValue(updatedCard);
+
+    const { result } = await processAnswer(
+      sessionWord,
+      "The inspector was meticulous during the final review.",
+      2200,
+      "session-1",
+      "context",
+      "meticulous",
+      { contextPromptKind: "produce" },
+    );
+
+    expect(result).toEqual({
+      wordId: 1,
+      word: "meticulous",
+      correct: true,
+      responseTimeMs: 2200,
+      rating: 2,
+      mode: "context",
+      cueLevel: 0,
+      retrievalKind: "assisted",
+      contextPromptKind: "produce",
+    });
+    expect(schedulerMock.gradeCard).toHaveBeenCalledWith(sessionWord.reviewCard, 2);
+    expect(dbMock.reviewLogs.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rating: 2,
+        cueLevel: 0,
+        retrievalKind: "assisted",
+        contextPromptKind: "produce",
       }),
     );
   });

@@ -8,7 +8,7 @@ const loadSessionWordsMock = vi.hoisted(() => vi.fn());
 const processAnswerMock = vi.hoisted(() => vi.fn());
 const finalizeSessionMock = vi.hoisted(() => vi.fn());
 const pickModeMock = vi.hoisted(() => vi.fn());
-const getContextSentenceMock = vi.hoisted(() => vi.fn());
+const buildContextPromptMock = vi.hoisted(() => vi.fn());
 const createSessionIdMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/session-engine", () => ({
@@ -17,7 +17,7 @@ vi.mock("@/lib/session-engine", () => ({
   processAnswer: processAnswerMock,
   finalizeSession: finalizeSessionMock,
   pickMode: pickModeMock,
-  getContextSentence: getContextSentenceMock,
+  buildContextPrompt: buildContextPromptMock,
 }));
 
 vi.mock("@/lib/sounds", () => ({
@@ -89,7 +89,7 @@ describe("useSession", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-10T12:00:00.000Z"));
     pickModeMock.mockReturnValue("recall");
-    getContextSentenceMock.mockReturnValue(null);
+    buildContextPromptMock.mockReturnValue(null);
     createSessionIdMock.mockReturnValue("session-abc");
     finalizeSessionMock.mockResolvedValue({
       results: [],
@@ -276,6 +276,87 @@ describe("useSession", () => {
       "speed",
       "word-1",
       undefined,
+    );
+  });
+
+  it("passes production-context prompt metadata into grading when context mode is active", async () => {
+    const words = [makeSessionWord(1)];
+    loadSessionWordsMock.mockResolvedValue(words);
+    pickModeMock.mockReturnValue("context");
+    buildContextPromptMock.mockReturnValue({
+      kind: "produce",
+      answer: "word-1",
+      definition: "definition-1",
+      example: "example-1",
+    });
+    processAnswerMock.mockResolvedValue({
+      result: {
+        ...makeResult(1),
+        mode: "context",
+      },
+      updatedCard: words[0].reviewCard,
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await act(async () => {
+      await result.current.startSession("normal", 1);
+    });
+
+    await act(async () => {
+      await result.current.submitAnswer("I used word-1 in a sentence.", {
+        cueLevel: 1,
+        contextPromptKind: "produce",
+      });
+    });
+
+    expect(processAnswerMock).toHaveBeenCalledWith(
+      words[0],
+      "I used word-1 in a sentence.",
+      expect.any(Number),
+      "session-abc",
+      "context",
+      "word-1",
+      { cueLevel: 1, contextPromptKind: "produce" },
+    );
+  });
+
+  it("defaults production-context metadata from the active prompt when the UI omits it", async () => {
+    const words = [makeSessionWord(1)];
+    loadSessionWordsMock.mockResolvedValue(words);
+    pickModeMock.mockReturnValue("context");
+    buildContextPromptMock.mockReturnValue({
+      kind: "produce",
+      answer: "word-1",
+      definition: "definition-1",
+      example: "example-1",
+    });
+    processAnswerMock.mockResolvedValue({
+      result: {
+        ...makeResult(1),
+        mode: "context",
+      },
+      updatedCard: words[0].reviewCard,
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await act(async () => {
+      await result.current.startSession("normal", 1);
+    });
+
+    await act(async () => {
+      await result.current.submitAnswer("I used word-1 in a sentence.");
+    });
+
+    expect(processAnswerMock).toHaveBeenCalledWith(
+      words[0],
+      "I used word-1 in a sentence.",
+      expect.any(Number),
+      "session-abc",
+      "context",
+      "word-1",
+      { contextPromptKind: "produce" },
     );
   });
 

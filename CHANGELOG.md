@@ -19,7 +19,7 @@ All notable changes to this project should be documented in this file.
 - TOT capture flow in the word library now records real-world blanking moments with source, weak substitute, and context, and can create a new custom word if needed
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
-- Automated coverage now spans 65 tests across scheduler, session, sync, and hook logic
+- Automated coverage now spans 79 tests across scheduler, session, sync, stats helpers, and hook logic
 
 ### Changed
 
@@ -53,6 +53,7 @@ All notable changes to this project should be documented in this file.
 - Session assembly now prioritizes TOT-captured words within due/new buckets and biases them toward Recall and Rapid Retrieval
 - Session mode selection now blends drill stage + RPG stats so Recall / Perception / Creativity influence Recall / Rapid Retrieval / Association weighting while preserving rescue/stabilize/fluent guardrails
 - Retrieval drill timing is now stat-aware too: live profile stats feed into session loading so Perception tightens Rapid Retrieval timeout pressure, Recall delays rescue cue reveal when stabilizing words recover, and fluent no-cue safeguards remain intact
+- Context mode now adds a production-oriented prompt for non-rescue words: instead of only replacing a weak word, players can be asked to use the target word in their own sentence with deterministic grading and cue-aware fallback
 - Build no longer fails when Supabase env vars are absent; cloud sync now remains optional at build time
 - Added a compatibility-safe Supabase migration for per-user `custom_words` and `word_tot_captures` sync, including support for older `custom_words` schemas that already use `word` plus an `id` primary key
 - Adjusted ESLint ignores so generated Serwist service worker artifacts in `public/` no longer pollute lint results

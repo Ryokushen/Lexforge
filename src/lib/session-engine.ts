@@ -6,6 +6,7 @@ import { CONTEXT_SENTENCES } from "./context-sentences";
 import type {
   AnswerMetadata,
   CueLevel,
+  ContextPrompt,
   ContextSentence,
   Difficulty,
   GameMode,
@@ -63,6 +64,252 @@ function editDistance(a: string, b: string): number {
   return dp[m][n];
 }
 
+function normalizeProductionText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .replace(/[’ʼ`]/gu, "'")
+    .replace(/[‐‑‒–—―]/gu, "-")
+    .replace(/[^\p{L}\p{N}'-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeProductionText(value: string): string[] {
+  const normalized = normalizeProductionText(value);
+  return normalized.match(/[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gu) ?? [];
+}
+
+function findPhraseMatch(
+  answerTokens: string[],
+  expectedTokens: string[],
+): { kind: "exact" | "approximate"; start: number; length: number } | null {
+  if (expectedTokens.length === 0 || answerTokens.length < expectedTokens.length) {
+    return null;
+  }
+
+  const expectedPhrase = expectedTokens.join(" ");
+  let approximateMatch: { start: number; length: number } | null = null;
+
+  for (let index = 0; index <= answerTokens.length - expectedTokens.length; index += 1) {
+    const windowPhrase = answerTokens
+      .slice(index, index + expectedTokens.length)
+      .join(" ");
+
+    if (windowPhrase === expectedPhrase) {
+      return { kind: "exact", start: index, length: expectedTokens.length };
+    }
+
+    if (!approximateMatch && editDistance(windowPhrase, expectedPhrase) <= 1) {
+      approximateMatch = { start: index, length: expectedTokens.length };
+    }
+  }
+
+  if (!approximateMatch) {
+    return null;
+  }
+
+  return { kind: "approximate", ...approximateMatch };
+}
+
+const LIKELY_VERB_TOKENS = new Set([
+  "am",
+  "appear",
+  "appeared",
+  "appears",
+  "are",
+  "be",
+  "became",
+  "become",
+  "becomes",
+  "been",
+  "being",
+  "can",
+  "could",
+  "did",
+  "do",
+  "does",
+  "feel",
+  "feels",
+  "felt",
+  "find",
+  "finds",
+  "found",
+  "had",
+  "has",
+  "have",
+  "is",
+  "keep",
+  "keeps",
+  "kept",
+  "look",
+  "looked",
+  "looks",
+  "made",
+  "make",
+  "makes",
+  "matter",
+  "matters",
+  "may",
+  "mean",
+  "means",
+  "meant",
+  "might",
+  "must",
+  "remain",
+  "remained",
+  "remains",
+  "said",
+  "say",
+  "says",
+  "seem",
+  "seemed",
+  "seems",
+  "should",
+  "show",
+  "showed",
+  "shown",
+  "shows",
+  "sound",
+  "sounded",
+  "sounds",
+  "stay",
+  "stayed",
+  "stays",
+  "was",
+  "were",
+  "will",
+  "work",
+  "worked",
+  "works",
+  "would",
+]);
+
+const LIKELY_PERSONAL_SUBJECT_TOKENS = new Set([
+  "he",
+  "i",
+  "it",
+  "she",
+  "they",
+  "we",
+  "you",
+]);
+
+const LIKELY_OBJECT_CUE_TOKENS = new Set([
+  "a",
+  "an",
+  "her",
+  "him",
+  "his",
+  "it",
+  "me",
+  "my",
+  "our",
+  "the",
+  "their",
+  "them",
+  "these",
+  "this",
+  "those",
+  "us",
+  "your",
+]);
+
+const DISALLOWED_CLAUSE_CONTINUATION_TOKENS = new Set([
+  "about",
+  "after",
+  "and",
+  "at",
+  "because",
+  "before",
+  "but",
+  "by",
+  "during",
+  "for",
+  "from",
+  "if",
+  "in",
+  "into",
+  "of",
+  "on",
+  "onto",
+  "or",
+  "to",
+  "when",
+  "while",
+  "with",
+  "without",
+]);
+
+function isLikelyDerivedVerbToken(token: string): boolean {
+  return /(?:ed|ing|ize|ise|ify|ate|en)$/.test(token);
+}
+
+function hasLikelyDerivedPredicate(tokens: string[]): boolean {
+  return tokens.some((token, index) => {
+    if (!isLikelyDerivedVerbToken(token) || index === 0) {
+      return false;
+    }
+
+    const previousToken = tokens[index - 1];
+    return LIKELY_PERSONAL_SUBJECT_TOKENS.has(previousToken) || LIKELY_VERB_TOKENS.has(previousToken);
+  });
+}
+
+function hasClauseTail(tokens: string[]): boolean {
+  if (tokens.length < 2 || DISALLOWED_CLAUSE_CONTINUATION_TOKENS.has(tokens[0])) {
+    return false;
+  }
+
+  return tokens.some((token) => LIKELY_OBJECT_CUE_TOKENS.has(token) || token.endsWith("ly"));
+}
+
+function hasSingleSentenceShape(
+  answer: string,
+  tokens: string[],
+  phraseMatch: { kind: "exact" | "approximate"; start: number; length: number } | null,
+): boolean {
+  const trimmed = answer.trim();
+  if (trimmed.length === 0 || trimmed.includes("\n")) {
+    return false;
+  }
+
+  const sentenceBreaks = [...trimmed.matchAll(/[.!?]+/g)];
+  const hasInternalSentenceBreak = sentenceBreaks.some(
+    (match) => ((match.index ?? 0) + match[0].length) < trimmed.length,
+  );
+  if (hasInternalSentenceBreak) {
+    return false;
+  }
+
+  const tokensAfterPhrase = phraseMatch
+    ? tokens.slice(phraseMatch.start + phraseMatch.length)
+    : [];
+  const targetStartsWithBlockedContinuation = phraseMatch?.start === 0
+    && tokensAfterPhrase.length > 0
+    && DISALLOWED_CLAUSE_CONTINUATION_TOKENS.has(tokensAfterPhrase[0]);
+  const hasLikelyVerb = tokens.some((token) => LIKELY_VERB_TOKENS.has(token));
+  if ((hasLikelyVerb || hasLikelyDerivedPredicate(tokens)) && !targetStartsWithBlockedContinuation) {
+    return true;
+  }
+
+  if (!phraseMatch || phraseMatch.length !== 1) {
+    return false;
+  }
+
+  if (phraseMatch.start === 0) {
+    return hasClauseTail(tokensAfterPhrase);
+  }
+
+  if (phraseMatch.start === 1 && LIKELY_PERSONAL_SUBJECT_TOKENS.has(tokens[0])) {
+    return hasClauseTail(tokensAfterPhrase);
+  }
+
+  return false;
+}
+
 /** Auto-grade an answer based on edit distance. */
 export function autoGrade(
   answer: string,
@@ -87,13 +334,48 @@ export function autoGrade(
   return { rating: 1, correct: false, cueLevel: normalizedCueLevel, retrievalKind: "failed" };
 }
 
-/** Grade a context mode answer (multiple choice — exact match only). */
+/** Grade a context mode answer. Replacement prompts use exact-word grading; production prompts require target-word use inside a sentence. */
 export function gradeContextAnswer(
   answer: string,
   expected: string,
   cueLevel: CueLevel = 0,
+  promptKind: ContextPrompt["kind"] = "replace",
 ): GradeResult {
-  return autoGrade(answer, expected, cueLevel);
+  if (promptKind !== "produce") {
+    return autoGrade(answer, expected, cueLevel);
+  }
+
+  const normalizedCueLevel = normalizeCueLevel(cueLevel);
+  const expectedTokens = tokenizeProductionText(expected);
+  const answerTokens = tokenizeProductionText(answer);
+  const phraseMatch = findPhraseMatch(answerTokens, expectedTokens);
+  const expectedTokenSet = new Set(expectedTokens);
+  const nonTargetTokenCount = answerTokens.filter((token, index) => {
+    const insideMatchedPhrase = phraseMatch
+      ? index >= phraseMatch.start && index < phraseMatch.start + phraseMatch.length
+      : false;
+
+    return !insideMatchedPhrase && !expectedTokenSet.has(token);
+  }).length;
+  const sentenceLike = answerTokens.length >= 3
+    && nonTargetTokenCount >= 2
+    && new Set(answerTokens).size > expectedTokenSet.size
+    && hasSingleSentenceShape(answer, answerTokens, phraseMatch);
+
+  if (!sentenceLike || !phraseMatch) {
+    return { rating: 1, correct: false, cueLevel: normalizedCueLevel, retrievalKind: "failed" };
+  }
+
+  if (phraseMatch.kind === "exact") {
+    return {
+      rating: 2,
+      correct: true,
+      cueLevel: normalizedCueLevel,
+      retrievalKind: "assisted",
+    };
+  }
+
+  return { rating: 2, correct: true, cueLevel: normalizedCueLevel, retrievalKind: "approximate" };
 }
 
 const SPEED_FAST_MS = 3000; // static fallback when no timeout is known
@@ -144,12 +426,41 @@ export function getContextSentence(word: Word): ContextSentence | null {
   return null;
 }
 
+export function buildContextPrompt(
+  word: Word,
+  drillProfile?: RetrievalDrillProfile,
+): ContextPrompt | null {
+  const sentence = getContextSentence(word);
+  if (!sentence) {
+    return null;
+  }
+
+  const stage = drillProfile?.stage ?? "stabilize";
+  const exactStreak = drillProfile?.exactStreak ?? 0;
+  if (stage === "rescue" || exactStreak < 1) {
+    return { ...sentence, kind: "replace" };
+  }
+
+  return {
+    kind: "produce",
+    answer: word.word,
+    definition: word.definition,
+    example: word.examples[0],
+  };
+}
+
 function isCleanExactLog(log: ReviewLog): boolean {
   return (
-    log.correct
+    log.contextPromptKind !== "produce"
+    && log.correct
     && log.retrievalKind === "exact"
     && normalizeCueLevel(log.cueLevel) === 0
   );
+}
+
+function isSupportDependentLog(log: ReviewLog): boolean {
+  return normalizeCueLevel(log.cueLevel) === 1
+    || (log.contextPromptKind !== "produce" && log.retrievalKind === "assisted");
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -258,25 +569,26 @@ export function buildRetrievalDrillProfile(
   logs: ReviewLog[],
   stats?: Partial<RPGStats>,
 ): RetrievalDrillProfile {
-  const recentLogs = [...logs]
-    .sort((left, right) => right.reviewedAt.getTime() - left.reviewedAt.getTime())
+  const sortedLogs = [...logs]
+    .sort((left, right) => right.reviewedAt.getTime() - left.reviewedAt.getTime());
+  const recentLogs = sortedLogs.slice(0, 4);
+  const recentRetrievalLogs = sortedLogs
+    .filter((log) => log.contextPromptKind !== "produce")
     .slice(0, 4);
 
   let exactStreak = 0;
-  for (const log of recentLogs) {
+  for (const log of recentRetrievalLogs) {
     if (!isCleanExactLog(log)) {
       break;
     }
     exactStreak += 1;
   }
 
-  const cueLogs = recentLogs.filter(
-    (log) => normalizeCueLevel(log.cueLevel) === 1 || log.retrievalKind === "assisted",
-  );
+  const cueLogs = recentLogs.filter(isSupportDependentLog);
   const failureCount = recentLogs.filter(
     (log) => !log.correct || log.retrievalKind === "failed",
   ).length;
-  const exactLatencies = recentLogs
+  const exactLatencies = recentRetrievalLogs
     .filter(isCleanExactLog)
     .map((log) => log.responseTimeMs);
   const recentLatencyMs = median(exactLatencies);
@@ -643,7 +955,12 @@ export async function processAnswer(
       sessionWord.drillProfile?.rapidTimeoutMs,
     );
   } else if (mode === "context" && contextExpected) {
-    gradeResult = gradeContextAnswer(answer, contextExpected, cueLevel);
+    gradeResult = gradeContextAnswer(
+      answer,
+      contextExpected,
+      cueLevel,
+      answerMetadata?.contextPromptKind,
+    );
   } else {
     gradeResult = autoGrade(answer, sessionWord.word.word, cueLevel);
   }
@@ -677,6 +994,7 @@ export async function processAnswer(
     correct,
     cueLevel: resolvedCueLevel,
     retrievalKind,
+    contextPromptKind: answerMetadata?.contextPromptKind,
     reviewedAt: new Date(),
   };
   await db.reviewLogs.add(log);
@@ -690,6 +1008,7 @@ export async function processAnswer(
     mode,
     cueLevel: resolvedCueLevel,
     retrievalKind,
+    contextPromptKind: answerMetadata?.contextPromptKind,
   };
 
   return { result, updatedCard };

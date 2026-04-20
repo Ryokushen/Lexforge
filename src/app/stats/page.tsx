@@ -32,6 +32,7 @@ import {
 import { useRetrievalHealth } from "@/hooks/use-retrieval-health";
 import type { ReviewLog } from "@/lib/types";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "@/lib/types";
+import { getRecentRetrievalMetrics } from "./page.helpers";
 
 // ── Animation helpers ────────────────────────────────────────────────────
 
@@ -160,17 +161,7 @@ export default function StatsPage() {
         recentLogs.length /
         1000
       : 0;
-  const recentCueUses = recentLogs.filter((l) => (l.cueLevel ?? 0) > 0).length;
-  const recentCueUseRate =
-    recentLogs.length > 0 ? Math.round((recentCueUses / recentLogs.length) * 100) : 0;
-  const recentCleanRetrievals = recentLogs.filter((l) => {
-    const retrievalKind = l.retrievalKind ?? (l.correct ? "exact" : "failed");
-    return retrievalKind === "exact" && (l.cueLevel ?? 0) === 0;
-  }).length;
-  const recentCleanRate =
-    recentLogs.length > 0
-      ? Math.round((recentCleanRetrievals / recentLogs.length) * 100)
-      : 0;
+  const recentRetrievalMetrics = getRecentRetrievalMetrics(recentLogs);
 
   const maxStat = Math.max(...Object.values(profile.stats), 10);
 
@@ -355,14 +346,26 @@ export default function StatsPage() {
                   {
                     icon: Target,
                     label: "Clean Retrieval",
-                    value: `${recentCleanRate}%`,
-                    color: recentCleanRate >= 70 ? "text-emerald-400" : recentCleanRate >= 40 ? "text-amber-400" : "text-red-400",
+                    value: recentRetrievalMetrics.cleanRate !== null ? `${recentRetrievalMetrics.cleanRate}%` : "—",
+                    color: recentRetrievalMetrics.cleanRate === null
+                      ? "text-muted-foreground"
+                      : recentRetrievalMetrics.cleanRate >= 70
+                        ? "text-emerald-400"
+                        : recentRetrievalMetrics.cleanRate >= 40
+                          ? "text-amber-400"
+                          : "text-red-400",
                   },
                   {
                     icon: Lightbulb,
                     label: "Cue Use",
-                    value: `${recentCueUseRate}%`,
-                    color: recentCueUseRate <= 20 ? "text-emerald-400" : recentCueUseRate <= 40 ? "text-amber-400" : "text-red-400",
+                    value: recentRetrievalMetrics.cueUseRate !== null ? `${recentRetrievalMetrics.cueUseRate}%` : "—",
+                    color: recentRetrievalMetrics.cueUseRate === null
+                      ? "text-muted-foreground"
+                      : recentRetrievalMetrics.cueUseRate <= 20
+                        ? "text-emerald-400"
+                        : recentRetrievalMetrics.cueUseRate <= 40
+                          ? "text-amber-400"
+                          : "text-red-400",
                   },
                   {
                     icon: Target,
@@ -422,8 +425,12 @@ export default function StatsPage() {
                 {/* Unassisted Recall */}
                 <div className="rounded-xl bg-muted/30 p-3 space-y-1">
                   <p className="text-[10px] font-medium text-muted-foreground">Unassisted Recall</p>
-                  <p className={`text-2xl font-bold tabular-nums ${accuracyColor(retrieval.unassistedRate)}`}>
-                    {retrieval.unassistedRate}%
+                  <p className={`text-2xl font-bold tabular-nums ${
+                    retrieval.unassistedRate !== null
+                      ? accuracyColor(retrieval.unassistedRate)
+                      : "text-muted-foreground"
+                  }`}>
+                    {retrieval.unassistedRate !== null ? `${retrieval.unassistedRate}%` : "\u2014"}
                   </p>
                   {retrieval.unassistedRateDelta !== null && (
                     <p className="flex items-center gap-0.5 text-[10px]">
