@@ -69,6 +69,7 @@ All notable changes to this project should be documented in this file.
 - Removed a spurious `## Research Foundation` heading from README
 - Cleaned minor lint issues across the app
 - Seed database now reconciles tier on existing non-custom words so rebalanced seed tiers propagate to users whose local DB was already populated (custom words untouched)
+- Nav bar collapses to icon-only items below the `sm` breakpoint (Compass/Sword/Tome/Scroll) with a smaller HeronWheel and logo, so the four nav items no longer wrap and overflow into the page body on narrow phones
 
 ### Verified
 
