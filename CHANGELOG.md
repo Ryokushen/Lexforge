@@ -2,7 +2,7 @@
 
 All notable changes to this project should be documented in this file.
 
-## [Unreleased] - 2026-04-20
+## [Unreleased] - 2026-04-21
 
 ### Added
 
@@ -19,7 +19,7 @@ All notable changes to this project should be documented in this file.
 - TOT capture flow in the word library now records real-world blanking moments with source, weak substitute, and context, and can create a new custom word if needed
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
-- Automated coverage now spans 87 tests across scheduler, session, sync, stats helpers, and hook logic
+- Automated coverage now spans 127 tests across scheduler, session, sync, stats helpers, and hook logic
 
 ### Changed
 

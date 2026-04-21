@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   getCloudWordLookupKey,
   getLocalWordLookupKey,
@@ -9,12 +9,9 @@ import {
   mergeUniqueStrings,
 } from "./sync";
 
-// normalizeWord is imported by sync.ts from word-library.ts
 vi.mock("./word-library", () => ({
   normalizeWord: vi.fn((value: string) => value.toLowerCase().trim()),
 }));
-
-import { normalizeWord } from "./word-library";
 
 const normalized = (v: string) => v.toLowerCase().trim();
 

@@ -1,6 +1,6 @@
 # Lexforge Project Status
 
-_Last updated: 2026-04-20_
+_Last updated: 2026-04-21_
 
 This file is the quick "do not redo work" reference for contributors.
 
@@ -29,7 +29,8 @@ These capabilities are already in `master` and should be treated as baseline beh
 
 ## Verification Baseline
 
-- `npm run test` (87 passing tests)
+- `npm run lint`
+- `npm run test` (127 passing tests)
 - `npm run build` (Next.js production build + TypeScript checks)
 
 ## Scope Guardrail

@@ -10,7 +10,7 @@ Local-first RPG vocabulary trainer. Next.js 16 App Router, Dexie/IndexedDB, ts-f
 npm run dev      # local dev server
 npm run lint     # ESLint
 npm run build    # production build (--webpack)
-npm run test     # Vitest (87 tests)
+npm run test     # Vitest suite
 ```
 
 ## Architecture

@@ -1,7 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import {
   createLegacyTOTEventIds,
-  createTOTEventId,
   getTOTEventIds,
   normalizeWord,
 } from "./word-library";

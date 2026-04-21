@@ -33,7 +33,7 @@ What it does not currently claim:
 - Dashboard quest card now shows backlog separately from the next quest mix
 - Session generation is now stat-aware across both mode selection and retrieval drill timing: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association, and live profile stats now tune rapid-retrieval timeout pressure and rescue-cue timing while preserving rescue/stabilize/fluent drill-stage constraints
 - Context mode now has three typed-first variants: replacement prompts for rescue words, target-word sentence production for stabilize words, and fluent rewrite prompts that preserve the original scenario with deterministic grading and cue-aware fallback
-- 87 automated tests across scheduler, session, sync, stats helpers, and hooks
+- Automated test coverage across scheduler, session, sync, stats helpers, and hooks
 - PWA support with offline fallback via Serwist
 
 ## Game Modes
