@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Flame, Target } from "lucide-react";
 import type { SessionResult, GameMode } from "@/lib/types";
+import { FlameSm } from "@/components/rpg/sigils";
 
 interface SessionProgressProps {
   current: number;
@@ -12,63 +12,81 @@ interface SessionProgressProps {
 }
 
 export function SessionProgress({ current, total, results, currentMode }: SessionProgressProps) {
-  const pct = total > 0 ? (current / total) * 100 : 0;
-  const correctCount = results.filter(r => r.correct).length;
-  const attemptedCount = results.length;
+  const correctCount = results.filter((r) => r.correct).length;
 
-  // Count consecutive correct from end of results
   let streak = 0;
   for (let i = results.length - 1; i >= 0; i--) {
     if (results[i].correct) streak++;
     else break;
   }
 
-  const barGradient = currentMode === "recall"
-    ? "from-primary to-primary/70"
-    : currentMode === "speed"
-      ? "from-amber-500 to-amber-400"
-      : currentMode === "association"
-        ? "from-rose-500 to-rose-400"
-        : "from-emerald-500 to-emerald-400";
+  const modeLabel =
+    currentMode === "recall"
+      ? "Recall"
+      : currentMode === "speed"
+        ? "Rapid"
+        : currentMode === "association"
+          ? "Associate"
+          : "Context";
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-1">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">
-          Word <span className="font-semibold text-foreground tabular-nums">{current + 1}</span> of{" "}
-          <span className="tabular-nums">{total}</span>
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+          {modeLabel} · Strike {current + 1} of {total}
         </span>
-
         <div className="flex items-center gap-2">
-          {/* Score pill */}
-          {attemptedCount > 0 && (
-            <div className="flex items-center gap-1 text-xs font-mono tabular-nums text-muted-foreground bg-muted/50 rounded-md px-1.5 py-0.5">
-              <Target className="size-3" />
-              {correctCount}/{attemptedCount}
-            </div>
-          )}
-
-          {/* Streak flame */}
+          <span className="font-mono-num text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+            {correctCount} true / {results.length} answered
+          </span>
           {streak >= 2 && (
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 400, damping: 15 }}
-              className="flex items-center gap-0.5 text-xs font-mono tabular-nums text-amber-500 bg-amber-500/10 rounded-md px-1.5 py-0.5"
+              className="flex items-center gap-1 text-[11px] font-mono-num rounded-sm px-1.5 py-0.5 tabular-nums"
+              style={{
+                background: "color-mix(in oklab, var(--ember), transparent 85%)",
+                color: "var(--ember)",
+                border: "1px solid color-mix(in oklab, var(--ember), transparent 60%)",
+              }}
             >
-              <Flame className="size-3" />
+              <FlameSm size={12} />
               {streak}
             </motion.div>
           )}
         </div>
       </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <motion.div
-          className={`h-full bg-gradient-to-r ${barGradient} rounded-full`}
-          initial={false}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        />
+
+      <div className="flex gap-[3px]">
+        {Array.from({ length: total }).map((_, i) => {
+          const r = results[i];
+          let bg = "color-mix(in oklab, var(--paper), black 8%)";
+          let border = "var(--line)";
+          if (r) {
+            if (r.correct) {
+              bg = "var(--sage)";
+              border = "color-mix(in oklab, var(--sage), black 20%)";
+            } else {
+              bg = "var(--crimson)";
+              border = "color-mix(in oklab, var(--crimson), black 20%)";
+            }
+          } else if (i === current) {
+            bg = "var(--gold)";
+            border = "var(--gold-deep)";
+          }
+          return (
+            <div
+              key={i}
+              className="flex-1 transition-colors"
+              style={{
+                height: 6,
+                background: bg,
+                border: `1px solid ${border}`,
+              }}
+            />
+          );
+        })}
       </div>
     </div>
   );

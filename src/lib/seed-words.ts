@@ -93,7 +93,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The most cogent objection came from the engineering team.",
     ],
     synonyms: ["convincing", "compelling", "persuasive"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "salient",
@@ -103,7 +103,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Let me highlight the salient features of the new design.",
     ],
     synonyms: ["prominent", "notable", "striking"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "tenuous",
@@ -113,7 +113,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His grip on the lead became increasingly tenuous.",
     ],
     synonyms: ["weak", "flimsy", "fragile"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "pervasive",
@@ -143,7 +143,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The punishment was not commensurate with the offense.",
     ],
     synonyms: ["proportionate", "corresponding", "equivalent"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "exacerbate",
@@ -153,7 +153,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His comments exacerbated the tension in the room.",
     ],
     synonyms: ["worsen", "aggravate", "intensify"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "mitigate",
@@ -183,7 +183,7 @@ export const SEED_WORDS: SeedWord[] = [
       "We need to delineate the scope before starting development.",
     ],
     synonyms: ["outline", "define", "specify"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "juxtapose",
@@ -193,7 +193,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Juxtaposing the two approaches reveals their strengths and weaknesses.",
     ],
     synonyms: ["contrast", "compare", "set side by side"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "substantiate",
@@ -203,7 +203,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The audit substantiated the concerns raised by the team.",
     ],
     synonyms: ["verify", "confirm", "corroborate"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "elucidate",
@@ -213,7 +213,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The diagram elucidates how the components interact.",
     ],
     synonyms: ["clarify", "explain", "illuminate"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "contingent",
@@ -283,7 +283,7 @@ export const SEED_WORDS: SeedWord[] = [
       "He gave the document only a cursory glance before signing.",
     ],
     synonyms: ["superficial", "hasty", "perfunctory"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "amenable",
@@ -303,7 +303,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His equivocal response left everyone unsure of his position.",
     ],
     synonyms: ["ambiguous", "vague", "unclear"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "prolific",
@@ -323,7 +323,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The safety check was perfunctory at best — they barely looked.",
     ],
     synonyms: ["cursory", "mechanical", "halfhearted"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "tantamount",
@@ -333,7 +333,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Silence on this issue is tantamount to approval.",
     ],
     synonyms: ["equivalent", "equal", "synonymous"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "lucid",
@@ -353,7 +353,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Multiple witnesses corroborated her account of the incident.",
     ],
     synonyms: ["confirm", "verify", "substantiate"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "ostensible",
@@ -363,7 +363,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His ostensible calm masked deep frustration.",
     ],
     synonyms: ["apparent", "seeming", "purported"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "impetus",
@@ -383,7 +383,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His vision for the company was inspiring but nebulous.",
     ],
     synonyms: ["vague", "hazy", "ambiguous"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "truncate",
@@ -413,7 +413,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Social media disseminates information faster than any other channel.",
     ],
     synonyms: ["spread", "distribute", "circulate"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "recalcitrant",
@@ -423,7 +423,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Dealing with recalcitrant stakeholders requires patience and leverage.",
     ],
     synonyms: ["uncooperative", "defiant", "obstinate"],
-    tier: 1,
+    tier: 3,
   },
   {
     word: "nascent",
@@ -453,7 +453,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The ubiquitous use of jargon makes the documentation hard to read.",
     ],
     synonyms: ["omnipresent", "pervasive", "universal"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "superfluous",
@@ -463,7 +463,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The third review cycle felt superfluous — nothing changed.",
     ],
     synonyms: ["unnecessary", "redundant", "excessive"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "tacit",
@@ -473,7 +473,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His silence was taken as tacit approval.",
     ],
     synonyms: ["implicit", "unspoken", "implied"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "untenable",
@@ -483,7 +483,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His position became untenable after the audit findings.",
     ],
     synonyms: ["indefensible", "unsustainable", "insupportable"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "galvanize",
@@ -493,7 +493,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Her speech galvanized support for the initiative.",
     ],
     synonyms: ["energize", "motivate", "spur"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "exemplary",
@@ -1058,7 +1058,7 @@ export const SEED_WORDS: SeedWord[] = [
       "He rejected the dichotomy of art versus commerce.",
     ],
     synonyms: ["division", "contrast", "split"],
-    tier: 1,
+    tier: 2,
   },
 
   // ─── Tier 1: More precision words ──────────────────────────────────
@@ -1191,7 +1191,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Her unequivocal stance on the issue left no room for misinterpretation.",
     ],
     synonyms: ["definitive", "absolute", "categorical"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "pivotal",
@@ -1361,7 +1361,7 @@ export const SEED_WORDS: SeedWord[] = [
       "A prudent investment now will save us significant cost later.",
     ],
     synonyms: ["wise", "sensible", "judicious"],
-    tier: 1,
+    tier: 2,
   },
 
   // ─── Tier 2: Precision Vocabulary — AWL / professional ─────────────
@@ -1374,7 +1374,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The proposal was elaborate, covering every possible scenario.",
     ],
     synonyms: ["expand", "detail", "develop"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "paradox",
@@ -1494,7 +1494,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Resilience is the attribute most correlated with long-term performance.",
     ],
     synonyms: ["ascribe", "assign", "credit"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "integrate",
@@ -1514,7 +1514,7 @@ export const SEED_WORDS: SeedWord[] = [
       "There's a fundamental flaw in the assumptions behind this model.",
     ],
     synonyms: ["essential", "basic", "core"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "propensity",
@@ -1920,7 +1920,7 @@ export const SEED_WORDS: SeedWord[] = [
       "He acquiesced to the policy change after voicing his concerns.",
     ],
     synonyms: ["comply", "yield", "consent"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "imply",
@@ -1980,7 +1980,7 @@ export const SEED_WORDS: SeedWord[] = [
       "She apprised the board of the security incident within the hour.",
     ],
     synonyms: ["inform", "notify", "brief"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "admonish",
@@ -1990,7 +1990,7 @@ export const SEED_WORDS: SeedWord[] = [
       "She admonished him gently, making clear it should not happen again.",
     ],
     synonyms: ["warn", "reprimand", "caution"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "bolster",
@@ -2060,7 +2060,7 @@ export const SEED_WORDS: SeedWord[] = [
       "I cannot fathom why this dependency was introduced without discussion.",
     ],
     synonyms: ["understand", "grasp", "comprehend"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "discern",
@@ -2133,7 +2133,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The risks are real, notwithstanding the optimistic projections.",
     ],
     synonyms: ["despite", "regardless of", "in spite of"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "conversely",
@@ -2243,7 +2243,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The team agreed that henceforth no feature would ship without a test plan.",
     ],
     synonyms: ["hereafter", "from now on", "going forward"],
-    tier: 1,
+    tier: 2,
   },
 
   // ─── Tier 1: Precision nouns and adjectives ─────────────────────────
@@ -2396,7 +2396,7 @@ export const SEED_WORDS: SeedWord[] = [
       "A single-server architecture is tenable at this stage but will not scale.",
     ],
     synonyms: ["defensible", "maintainable", "reasonable"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "indeterminate",
@@ -2632,7 +2632,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Personnel changes at the top disrupted six months of planning.",
     ],
     synonyms: ["staff", "workforce", "employees"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "procedure",
@@ -2642,7 +2642,7 @@ export const SEED_WORDS: SeedWord[] = [
       "There is no procedure for this scenario — we need to write one.",
     ],
     synonyms: ["process", "protocol", "method"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "portfolio",
@@ -2652,7 +2652,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Her portfolio of work showed a consistent eye for interaction design.",
     ],
     synonyms: ["collection", "range", "suite"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "enterprise",
@@ -2682,7 +2682,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The pilot program established that the approach was viable.",
     ],
     synonyms: ["found", "create", "institute"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "coordination",
@@ -2772,7 +2772,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The integrity of the data must be verified before any analysis begins.",
     ],
     synonyms: ["honesty", "uprightness", "soundness"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "empathy",
@@ -2782,7 +2782,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Leading with empathy during a crisis earns loyalty that outlasts the difficulty.",
     ],
     synonyms: ["understanding", "compassion", "sensitivity"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "core",
@@ -2792,7 +2792,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The core functionality must be solid before we add optional features.",
     ],
     synonyms: ["center", "essence", "foundation"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "consistent",
@@ -2802,7 +2802,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The results are consistent with our hypothesis, though not conclusive.",
     ],
     synonyms: ["steady", "reliable", "uniform"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "enhance",
@@ -2812,7 +2812,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Regular retrospectives enhance the team's ability to self-correct.",
     ],
     synonyms: ["improve", "augment", "elevate"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "elevate",
@@ -2822,7 +2822,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Her feedback elevated the proposal from good to genuinely excellent.",
     ],
     synonyms: ["raise", "lift", "advance"],
-    tier: 2,
+    tier: 1,
   },
   {
     word: "resonate",
@@ -3338,7 +3338,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Technical ascendancy alone does not guarantee business success.",
     ],
     synonyms: ["dominance", "supremacy", "authority"],
-    tier: 1,
+    tier: 2,
   },
 
   // ─── Tier 1: Critical thinking ──────────────────────────────────────
@@ -3351,7 +3351,7 @@ export const SEED_WORDS: SeedWord[] = [
       "They built the strategy on the axiom that users prefer simplicity over control.",
     ],
     synonyms: ["maxim", "principle", "truism"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "hypothesis",
@@ -3667,7 +3667,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Empirical testing revealed that users behave very differently from what we assumed.",
     ],
     synonyms: ["evidence-based", "observational", "experimental"],
-    tier: 1,
+    tier: 2,
   },
 
   // ─── Tier 1: Change & movement ──────────────────────────────────────
@@ -3700,7 +3700,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Competing standards tend to proliferate before the market settles on one.",
     ],
     synonyms: ["multiply", "spread", "expand"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "accelerate",
@@ -3750,7 +3750,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Concerns about the policy abated once the details were made public.",
     ],
     synonyms: ["subside", "lessen", "decrease"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "emerge",
@@ -3856,7 +3856,7 @@ export const SEED_WORDS: SeedWord[] = [
       "The policy was drafted last year but only ratified this quarter.",
     ],
     synonyms: ["approve", "endorse", "confirm"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "sanction",
@@ -3886,7 +3886,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Repealing an internal rule without replacing it often creates more confusion.",
     ],
     synonyms: ["revoke", "annul", "rescind"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "autonomy",
@@ -3949,7 +3949,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Reciprocity in feedback culture means everyone gives and receives openly.",
     ],
     synonyms: ["mutuality", "exchange", "give-and-take"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "alienation",
@@ -4407,7 +4407,7 @@ export const SEED_WORDS: SeedWord[] = [
       "After much debate, the manager acceded to the engineer's architectural recommendation.",
     ],
     synonyms: ["agree", "consent", "comply"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "placate",
@@ -4417,7 +4417,7 @@ export const SEED_WORDS: SeedWord[] = [
       "Offering an extra sprint to fix bugs helped placate the client's concerns.",
     ],
     synonyms: ["appease", "mollify", "pacify"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "rebuke",
@@ -4437,7 +4437,7 @@ export const SEED_WORDS: SeedWord[] = [
       "She was upbraided for submitting the report without legal review.",
     ],
     synonyms: ["scold", "rebuke", "reprimand"],
-    tier: 1,
+    tier: 3,
   },
   {
     word: "dispute",
@@ -4467,7 +4467,7 @@ export const SEED_WORDS: SeedWord[] = [
       "His only quibble with the proposal was the font choice on the slides.",
     ],
     synonyms: ["nitpick", "cavil", "object"],
-    tier: 1,
+    tier: 2,
   },
 
   // ─── Tier 1: Processes / systems ────────────────────────────────────
@@ -5077,7 +5077,7 @@ export const SEED_WORDS: SeedWord[] = [
       "We have 24 hours to rectify the nonconformance before the customer audit.",
     ],
     synonyms: ["correct", "fix", "resolve"],
-    tier: 1,
+    tier: 2,
   },
   {
     word: "refurbish",

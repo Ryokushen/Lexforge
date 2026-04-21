@@ -55,6 +55,7 @@ export interface ReviewLog {
   correct: boolean;
   cueLevel?: CueLevel;
   retrievalKind?: RetrievalKind;
+  contextPromptKind?: ContextPromptKind;
   reviewedAt: Date;
 }
 
@@ -119,6 +120,7 @@ export interface SessionResult {
   mode: GameMode;
   cueLevel?: CueLevel;
   retrievalKind?: RetrievalKind;
+  contextPromptKind?: ContextPromptKind;
 }
 
 export type GameMode = "recall" | "context" | "speed" | "association";
@@ -142,6 +144,9 @@ export interface AnswerMetadata {
   cueLevel?: CueLevel;
   /** Retrieval-only time in ms (excludes read phase). Used by Rapid Retrieval. */
   retrievalTimeMs?: number;
+  contextPromptKind?: ContextPromptKind;
+  /** Source sentence for deterministic rewrite-context grading. Ephemeral; not persisted to review logs. */
+  contextSourceSentence?: string;
 }
 
 export type SessionState =
@@ -153,12 +158,33 @@ export type SessionState =
 
 // ── Context Mode ────────────────────────────────────────────────────────
 
+export type ContextPromptKind = "replace" | "produce" | "rewrite";
+
 export interface ContextSentence {
+  kind?: "replace";
   sentence: string;     // Full sentence with the weak word
   weakWord: string;     // The vague/weak word to replace
   answer: string;       // The precise word (must be a word in the library)
   distractors: string[]; // Wrong choices shown alongside the answer
 }
+
+export interface ContextProductionPrompt {
+  kind: "produce";
+  answer: string;
+  definition: string;
+  example?: string;
+}
+
+export interface ContextRewritePrompt {
+  kind: "rewrite";
+  sentence: string;
+  weakWord: string;
+  answer: string;
+  definition: string;
+  example?: string;
+}
+
+export type ContextPrompt = ContextSentence | ContextProductionPrompt | ContextRewritePrompt;
 
 export interface SessionSummary {
   results: SessionResult[];

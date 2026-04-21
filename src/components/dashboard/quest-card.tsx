@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Swords, Sparkles, BookOpen, RotateCcw, GraduationCap } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { Difficulty } from "@/lib/types";
+import { Sword, ChevronRight } from "@/components/rpg/sigils";
 
 interface QuestCardProps {
   dueCount: number;
@@ -20,17 +17,13 @@ function pluralize(count: number, singular: string) {
   return `${count} ${singular}${count === 1 ? "" : "s"}`;
 }
 
-export function QuestCard({
-  dueCount,
-  newCount,
-  wordCount,
-  sessionSize,
-  difficulty,
-}: QuestCardProps) {
+export function QuestCard({ dueCount, newCount, wordCount, sessionSize, difficulty }: QuestCardProps) {
   const hasWork = dueCount > 0 || newCount > 0;
+
   const nextReviewCount = Math.min(dueCount, sessionSize);
   const nextNewCount = Math.min(newCount, Math.max(0, sessionSize - nextReviewCount));
-  const backlogText =
+
+  const backlog =
     dueCount > 0 && newCount > 0
       ? `${pluralize(dueCount, "review")} waiting, ${pluralize(newCount, "new word")} available today`
       : dueCount > 0
@@ -38,107 +31,139 @@ export function QuestCard({
         : newCount > 0
           ? `${pluralize(newCount, "new word")} available today`
           : `${wordCount} words in library`;
-  const summaryText =
+
+  const summary =
     nextReviewCount > 0 && nextNewCount > 0
-      ? `Next ${difficulty} quest: ${pluralize(nextReviewCount, "review")} + ${pluralize(nextNewCount, "new word")}`
+      ? `Next ${difficulty} trial: ${pluralize(nextReviewCount, "review")} + ${pluralize(nextNewCount, "new word")}`
       : nextReviewCount > 0
-        ? `Next ${difficulty} quest: ${pluralize(nextReviewCount, "review")}`
+        ? `Next ${difficulty} trial: ${pluralize(nextReviewCount, "review")}`
         : nextNewCount > 0
-          ? `Next ${difficulty} quest: ${pluralize(nextNewCount, "new word")}`
+          ? `Next ${difficulty} trial: ${pluralize(nextNewCount, "new word")}`
           : `${wordCount} words in library`;
+
+  const accent = hasWork ? "var(--crimson)" : "var(--sage)";
+  const heading = hasWork ? "The Foe at the Crossroads" : "The Road is Quiet";
+  const subtext = hasWork
+    ? "Your training awaits — strike true, and words fall to your ledger."
+    : "No foe presses you today. The Wheel turns; return when it wills.";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.35 }}
+      className="relative overflow-hidden rounded-[var(--radius)] px-6 py-5"
+      style={{
+        background: `linear-gradient(180deg,
+          color-mix(in oklab, var(--paper-2), ${accent} 4%),
+          color-mix(in oklab, var(--paper), var(--gold) 3%))`,
+        border: "1px solid var(--line)",
+        borderLeft: `4px solid ${accent}`,
+        boxShadow: "var(--shadow-md)",
+      }}
     >
-      <Card
-        size="sm"
-        className={`relative overflow-hidden border-l-4 ${
-          hasWork ? "border-l-amber-500" : "border-l-emerald-500"
-        }`}
+      {/* Diagonal stripes motif */}
+      <svg
+        aria-hidden
+        className="absolute pointer-events-none"
+        style={{ right: -40, top: -40, color: accent, opacity: 0.06 }}
+        width="260"
+        height="260"
+        viewBox="0 0 260 260"
       >
-        {hasWork && (
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
-        )}
+        <g stroke="currentColor" strokeWidth="1" fill="none">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <line key={i} x1={i * 18} y1="0" x2={i * 18 + 260} y2="260" />
+          ))}
+        </g>
+      </svg>
 
-        <CardContent className="relative space-y-3">
-          {/* Status row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Swords className="size-5 text-muted-foreground" />
-              <span className="font-semibold">Daily Quest</span>
-            </div>
-            <Badge variant={hasWork ? "default" : "secondary"} className="gap-1">
-              {hasWork && <Sparkles className="size-3 animate-pulse" />}
-              {hasWork ? "Quest Available" : "All Clear"}
-            </Badge>
+      <div className="relative grid gap-5 items-center grid-cols-1 md:grid-cols-[1fr_auto]">
+        <div>
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <span className="uppercase-tracked text-[11px]" style={{ color: accent }}>
+              Daily Trial
+            </span>
+            <span
+              className="lex-badge"
+              style={{
+                borderColor: accent,
+                color: accent,
+                background: `color-mix(in oklab, ${accent}, transparent 92%)`,
+              }}
+            >
+              {hasWork ? "Trial Awaits" : "All Clear"}
+            </span>
           </div>
+          <h2 className="font-display text-[26px] font-bold leading-[1.15] m-0">{heading}</h2>
+          <p className="mt-2 text-[15px] max-w-[520px]" style={{ color: "var(--muted-foreground)" }}>
+            {subtext}
+          </p>
 
-          {/* Content: two stat boxes */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">
-                {hasWork
-                  ? "Your training awaits. Keep your streak alive."
-                  : "No words due. Your memory is strong today."}
-              </p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <BookOpen className="size-3" />
-                {backlogText}
-              </p>
-              <p className="text-xs font-medium text-foreground/80">
-                {summaryText}
-              </p>
-            </div>
-
-            {hasWork && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="flex items-center gap-3"
-              >
-                {dueCount > 0 && (
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <RotateCcw className="size-3.5" />
-                      <span className="text-2xl font-bold tabular-nums">{dueCount}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">to review</p>
+          <div className="flex gap-5 mt-4 flex-wrap">
+            {hasWork ? (
+              <>
+                <div>
+                  <div className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    To Review
                   </div>
-                )}
-                {newCount > 0 && (
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-emerald-500">
-                      <GraduationCap className="size-3.5" />
-                      <span className="text-2xl font-bold tabular-nums">{newCount}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">new</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-display text-[30px] font-bold tabular-nums" style={{ color: "var(--crimson)" }}>
+                      {dueCount}
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                      words
+                    </span>
                   </div>
-                )}
-              </motion.div>
+                </div>
+                <div className="pl-5" style={{ borderLeft: "1px solid var(--line)" }}>
+                  <div className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    Fresh Ink
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-display text-[30px] font-bold tabular-nums" style={{ color: "var(--sage)" }}>
+                      {newCount}
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                      new
+                    </span>
+                  </div>
+                </div>
+                <div className="pl-5" style={{ borderLeft: "1px solid var(--line)" }}>
+                  <div className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    Pace
+                  </div>
+                  <div className="font-display text-[18px] font-semibold mt-1 capitalize">{difficulty}</div>
+                </div>
+              </>
+            ) : (
+              <div>
+                <div className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                  Library
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-display text-[30px] font-bold tabular-nums" style={{ color: "var(--gold-deep)" }}>
+                    {wordCount}
+                  </span>
+                  <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    words gathered
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* CTA */}
-          <Link href="/session" className="block">
-            <Button
-              size="lg"
-              variant={hasWork ? "default" : "outline"}
-              className={`w-full text-base gap-2 py-4 ${
-                hasWork
-                  ? "shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
-                  : ""
-              }`}
-            >
-              <Swords className="size-5" />
-              {hasWork ? "Embark on Training" : "Free Training"}
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+          <p className="mt-3 text-xs" style={{ color: "var(--muted-foreground)" }}>
+            {backlog} · {summary}
+          </p>
+        </div>
+
+        <Link href="/session" className={hasWork ? "btn-illum pulse-gold" : "btn-illum"}>
+          <Sword size={18} />
+          {hasWork ? "Take the Field" : "Free Training"}
+          <ChevronRight size={16} />
+        </Link>
+      </div>
     </motion.div>
   );
 }

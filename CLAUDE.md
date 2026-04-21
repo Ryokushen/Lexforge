@@ -10,7 +10,7 @@ Local-first RPG vocabulary trainer. Next.js 16 App Router, Dexie/IndexedDB, ts-f
 npm run dev      # local dev server
 npm run lint     # ESLint
 npm run build    # production build (--webpack)
-npm run test     # Vitest (55+ tests)
+npm run test     # Vitest (87 tests)
 ```
 
 ## Architecture
@@ -26,8 +26,11 @@ npm run test     # Vitest (55+ tests)
 - **Build must pass without Supabase env vars**: cloud sync is gated at runtime, not build time.
 - **Adaptive drilling**: words move through rescue → stabilize → fluent stages based on recent review performance. The `buildRetrievalDrillProfile` function in session-engine.ts is the source of truth for stage classification.
 - **Rapid Retrieval has two phases**: a read phase (untimed, definition displayed) and a retrieval phase (timed countdown). The timer measures recall speed, not reading speed. Grading uses proportional thresholds relative to the timeout.
+- **Context mode now has three prompt variants**: rescue words use replacement-style prompts, stabilize words use typed target-word sentence production, and fluent words can get rewrite-transfer prompts that preserve scenario anchors with deterministic grading and cue fallback.
 - **Review logs carry retrieval metadata**: `cueLevel`, `retrievalKind`, and `responseTimeMs` on every log entry. These feed back into drill profiles and stats.
-- **RPG stats are currently decorative**: they grow from performance but do not yet influence session generation. This is a planned next step.
+- **Sync hardening is already shipped**: normalized word keys, additive TOT merge behavior, explicit `session_id` handling, review-card reconciliation, and retryable background sync are in `master`. Treat these as existing behavior — avoid re-implementing them.
+- **RPG stats now influence session generation**: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association mode weighting in `pickMode`, and live profile stats also personalize Rapid Retrieval timeout pressure plus rescue-cue timing inside `buildRetrievalDrillProfile` while still respecting rescue/stabilize/fluent drill stages.
+- **Next RPG tuning step**: deepen context production beyond the current target-word sentence variant and broaden stat-aware personalization into other training surfaces.
 
 ## Testing
 

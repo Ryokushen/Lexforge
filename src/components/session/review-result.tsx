@@ -2,10 +2,8 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, XCircle, ArrowRight, Timer } from "lucide-react";
 import type { SessionWord, SessionResult } from "@/lib/types";
+import { Check, Cross, ChevronRight } from "@/components/rpg/sigils";
 
 interface ReviewResultProps {
   sessionWord: SessionWord;
@@ -13,11 +11,7 @@ interface ReviewResultProps {
   onNext: () => void;
 }
 
-export function ReviewResult({
-  sessionWord,
-  result,
-  onNext,
-}: ReviewResultProps) {
+export function ReviewResult({ sessionWord, result, onNext }: ReviewResultProps) {
   const { word } = sessionWord;
 
   useEffect(() => {
@@ -32,13 +26,7 @@ export function ReviewResult({
   }, [onNext]);
 
   const ratingLabel =
-    result.rating === 1
-      ? "Again"
-      : result.rating === 2
-        ? "Hard"
-        : result.rating === 3
-          ? "Good"
-          : "Easy";
+    result.rating === 1 ? "Again" : result.rating === 2 ? "Hard" : result.rating === 3 ? "Good" : "Easy";
 
   const modeLabel =
     result.mode === "context"
@@ -48,9 +36,18 @@ export function ReviewResult({
         : result.mode === "association"
           ? "ASC"
           : "RCL";
+
   const retrievalKind = result.retrievalKind ?? (result.correct ? "exact" : "failed");
-  const retrievalLabel =
-    retrievalKind === "assisted"
+  const isTransferContext =
+    result.mode === "context" &&
+    (result.contextPromptKind === "produce" || result.contextPromptKind === "rewrite");
+  const retrievalLabel = isTransferContext
+    ? retrievalKind === "approximate"
+      ? "Close"
+      : retrievalKind === "failed"
+        ? "Miss"
+        : "Used"
+    : retrievalKind === "assisted"
       ? "Cue"
       : retrievalKind === "approximate"
         ? "Close"
@@ -59,125 +56,146 @@ export function ReviewResult({
           : retrievalKind === "failed"
             ? "Miss"
             : "Clean";
-  const retrievalTone =
-    retrievalKind === "assisted"
-      ? "bg-amber-500/10 text-amber-500"
-      : retrievalKind === "approximate"
-        ? "bg-orange-500/10 text-orange-500"
-        : retrievalKind === "created"
-          ? "bg-rose-500/10 text-rose-500"
-          : retrievalKind === "failed"
-            ? "bg-red-500/10 text-red-500"
-            : "bg-sky-500/10 text-sky-500";
+
+  const accent = result.correct ? "var(--sage)" : "var(--crimson)";
+  const headline = result.correct ? "A true strike." : "The foe evades.";
+  const subtext = result.correct
+    ? "The word answers to your call."
+    : "Commit it to memory. It will come again.";
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
+      className="w-full max-w-2xl mx-auto"
     >
-      <Card
-        size="sm"
-        className={`w-full max-w-2xl mx-auto transition-colors border-l-4 ${
-          result.correct
-            ? "border-l-emerald-500 ring-1 ring-emerald-500/15 bg-emerald-500/5"
-            : "border-l-red-500 ring-1 ring-red-500/15 bg-red-500/5"
-        }`}
+      <div
+        className="relative overflow-hidden rounded-[var(--radius)]"
+        style={{
+          background: `linear-gradient(180deg,
+            color-mix(in oklab, var(--paper-2), ${accent} 5%),
+            var(--paper))`,
+          border: "1px solid var(--line)",
+          borderLeft: `4px solid ${accent}`,
+          boxShadow: "var(--shadow-md)",
+        }}
       >
-        <CardContent className="space-y-4">
-          <div className="text-center">
+        <div className="relative z-[1] p-6">
+          <div className="flex items-center gap-4 mb-4">
             <motion.div
               initial={{ scale: 0, rotate: -20 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 15,
-                delay: 0.05,
+              transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.05 }}
+              className="flex items-center justify-center size-11 rounded-[3px] shrink-0"
+              style={{
+                background: accent,
+                color: "#fff",
+                boxShadow: "0 4px 10px rgba(0,0,0,.2)",
               }}
-              className="mb-2 inline-flex"
             >
-              {result.correct ? (
-                <CheckCircle2 className="size-10 text-emerald-500" />
-              ) : (
-                <XCircle className="size-10 text-red-500" />
-              )}
+              {result.correct ? <Check size={24} /> : <Cross size={24} />}
             </motion.div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="text-2xl font-bold"
-            >
-              {word.word}
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.25 }}
-              className="text-muted-foreground mt-1"
-            >
-              {word.definition}
-            </motion.p>
+            <div>
+              <div className="font-display text-[22px] font-bold" style={{ color: accent }}>
+                {headline}
+              </div>
+              <div className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
+                {subtext}
+              </div>
+            </div>
           </div>
 
-          {word.examples.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-lg bg-muted/50 p-3 space-y-1"
+          <div
+            className="px-4 py-3 rounded-[3px]"
+            style={{
+              background: "color-mix(in oklab, var(--paper), var(--gold) 3%)",
+              border: "1px solid var(--line-soft)",
+            }}
+          >
+            <div
+              className="font-display text-[28px] font-bold leading-tight"
+              style={{ color: "var(--ink)", letterSpacing: ".02em" }}
             >
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                Example
-              </p>
-              <p className="text-sm italic">{word.examples[0]}</p>
-            </motion.div>
-          )}
+              {word.word}
+            </div>
+            <div className="text-[15px] mt-1.5" style={{ color: "var(--ink-2)" }}>
+              {word.definition}
+            </div>
+
+            {word.examples.length > 0 && (
+              <div
+                className="italic mt-2 text-sm pl-2.5"
+                style={{ color: "var(--muted-foreground)", borderLeft: "2px solid var(--line-soft)" }}
+              >
+                &ldquo;{word.examples[0]}&rdquo;
+              </div>
+            )}
+            {word.synonyms.length > 0 && (
+              <div className="mt-2.5 flex gap-1.5 flex-wrap">
+                {word.synonyms.map((s) => (
+                  <span key={s} className="lex-badge">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.35 }}
-            className="flex items-center justify-between text-sm text-muted-foreground"
+            transition={{ delay: 0.25 }}
+            className="flex items-center justify-between text-[11px] mt-3 flex-wrap gap-2"
+            style={{ color: "var(--muted-foreground)" }}
           >
-            <span className="inline-flex items-center gap-1.5">
-              <Timer className="size-3.5" />
-              {(result.responseTimeMs / 1000).toFixed(1)}s
-            </span>
+            <span className="font-mono-num">{(result.responseTimeMs / 1000).toFixed(1)}s</span>
             <span className="flex items-center gap-2">
-              <span className="text-xs bg-muted px-2 py-0.5 rounded-md font-medium">
-                {modeLabel}
-              </span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${retrievalTone}`}>
+              <span className="lex-badge">{modeLabel}</span>
+              <span
+                className="font-display uppercase text-[10px] px-2 py-0.5 rounded-[3px]"
+                style={{
+                  letterSpacing: ".18em",
+                  background: `color-mix(in oklab, ${accent}, transparent 85%)`,
+                  color: accent,
+                }}
+              >
                 {retrievalLabel}
               </span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${
-                result.rating >= 3
-                  ? "bg-emerald-500/10 text-emerald-500"
-                  : result.rating === 2
-                    ? "bg-amber-500/10 text-amber-500"
-                    : "bg-red-500/10 text-red-500"
-              }`}>
+              <span
+                className="font-display uppercase text-[10px] px-2 py-0.5 rounded-[3px]"
+                style={{
+                  letterSpacing: ".18em",
+                  background:
+                    result.rating >= 3
+                      ? "color-mix(in oklab, var(--sage), transparent 85%)"
+                      : result.rating === 2
+                        ? "color-mix(in oklab, var(--ember), transparent 85%)"
+                        : "color-mix(in oklab, var(--crimson), transparent 85%)",
+                  color:
+                    result.rating >= 3
+                      ? "var(--sage)"
+                      : result.rating === 2
+                        ? "var(--ember)"
+                        : "var(--crimson)",
+                }}
+              >
                 {ratingLabel}
               </span>
             </span>
           </motion.div>
 
-          <motion.div
+          <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.3 }}
+            onClick={onNext}
+            className="btn-illum w-full mt-4"
           >
-            <Button onClick={onNext} className="w-full gap-2" size="lg">
-              Next
-              <ArrowRight className="size-4" />
-            </Button>
-          </motion.div>
-        </CardContent>
-      </Card>
+            Onward <ChevronRight size={14} />
+          </motion.button>
+        </div>
+      </div>
     </motion.div>
   );
 }

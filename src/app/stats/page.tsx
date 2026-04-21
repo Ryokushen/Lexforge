@@ -5,22 +5,8 @@ import { motion } from "framer-motion";
 import { db } from "@/lib/db";
 import { useBootstrap } from "@/lib/bootstrap-context";
 import { useStats } from "@/hooks/use-stats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BarChart3,
-  Trophy,
-  Zap,
-  Target,
-  Flame,
-  Clock,
-  BookOpen,
-  ScrollText,
-  Brain,
-  Eye,
-  Lightbulb,
-  Gauge,
   Lock,
-  TrendingUp,
   HeartPulse,
   ShieldAlert,
   AlertTriangle,
@@ -32,6 +18,22 @@ import {
 import { useRetrievalHealth } from "@/hooks/use-retrieval-health";
 import type { ReviewLog } from "@/lib/types";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "@/lib/types";
+import { getRecentRetrievalMetrics } from "./page.helpers";
+import { IllumCard } from "@/components/rpg/illum-card";
+import { HeronDivider } from "@/components/rpg/heron-divider";
+import {
+  Compass,
+  FlameSm,
+  Shield,
+  Tome,
+  Flame,
+  Star,
+  Sun,
+  Vine,
+  RuneEasy,
+  RuneNormal,
+  RuneHard,
+} from "@/components/rpg/sigils";
 
 // ── Animation helpers ────────────────────────────────────────────────────
 
@@ -41,80 +43,34 @@ const fadeUp = (delay: number) => ({
   transition: { delay, duration: 0.3 },
 });
 
-// ── Accuracy color helper ────────────────────────────────────────────────
-
-function accuracyColor(pct: number): string {
-  if (pct > 70) return "text-emerald-400";
-  if (pct >= 40) return "text-amber-400";
-  return "text-red-400";
-}
-
-function accuracyBarColor(pct: number): string {
-  if (pct > 70) return "bg-emerald-500";
-  if (pct >= 40) return "bg-amber-500";
-  return "bg-red-500";
-}
-
-// ── RPG stat config (mirrors stat-diamond) ──────────────────────────────
+// ── Tier + stat configs ──────────────────────────────────────────────────
 
 const STAT_CONFIG = [
-  {
-    key: "recall" as const,
-    label: "Recall",
-    desc: "Word retrieval",
-    icon: Target,
-    color: "text-blue-400",
-    bg: "bg-blue-500",
-    bgLight: "bg-blue-500/10",
-    gradient: "from-blue-500/8 to-transparent",
-  },
-  {
-    key: "retention" as const,
-    label: "Retention",
-    desc: "Long-term memory",
-    icon: Brain,
-    color: "text-purple-400",
-    bg: "bg-purple-500",
-    bgLight: "bg-purple-500/10",
-    gradient: "from-purple-500/8 to-transparent",
-  },
-  {
-    key: "perception" as const,
-    label: "Perception",
-    desc: "Processing speed",
-    icon: Eye,
-    color: "text-amber-400",
-    bg: "bg-amber-500",
-    bgLight: "bg-amber-500/10",
-    gradient: "from-amber-500/8 to-transparent",
-  },
-  {
-    key: "creativity" as const,
-    label: "Creativity",
-    desc: "Visual association",
-    icon: Lightbulb,
-    color: "text-emerald-400",
-    bg: "bg-emerald-500",
-    bgLight: "bg-emerald-500/10",
-    gradient: "from-emerald-500/8 to-transparent",
-  },
+  { key: "recall" as const, label: "Recall", sigil: Flame, color: "var(--ajah-recall)", note: "Word retrieval" },
+  { key: "retention" as const, label: "Retention", sigil: Star, color: "var(--ajah-retention)", note: "Long-term memory" },
+  { key: "perception" as const, label: "Perception", sigil: Sun, color: "var(--ajah-perception)", note: "Processing speed" },
+  { key: "creativity" as const, label: "Creativity", sigil: Vine, color: "var(--ajah-creativity)", note: "Visual association" },
 ];
 
-// ── Difficulty display ───────────────────────────────────────────────────
-
 const DIFFICULTY_DISPLAY = {
-  easy: { label: "Easy", color: "text-emerald-400", bg: "bg-emerald-500/10", icon: Gauge },
-  normal: { label: "Normal", color: "text-amber-400", bg: "bg-amber-500/10", icon: Flame },
-  hard: { label: "Hard", color: "text-red-400", bg: "bg-red-500/10", icon: Zap },
+  easy: { label: "Easy", color: "var(--sage)", sigil: RuneEasy },
+  normal: { label: "Normal", color: "var(--gold-deep)", sigil: RuneNormal },
+  hard: { label: "Hard", color: "var(--crimson)", sigil: RuneHard },
 };
 
-// ── Tier info ────────────────────────────────────────────────────────────
-
-const TIER_INFO: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  "1": { label: "Core Articulation", color: "text-emerald-500", bg: "bg-emerald-500", border: "border-emerald-500/30" },
-  "2": { label: "Precision Vocabulary", color: "text-blue-500", bg: "bg-blue-500", border: "border-blue-500/30" },
-  "3": { label: "Power Words", color: "text-purple-500", bg: "bg-purple-500", border: "border-purple-500/30" },
+const TIER_INFO: Record<string, { label: string; numeral: string; color: string }> = {
+  "1": { label: "Core Articulation", numeral: "I", color: "var(--sage)" },
+  "2": { label: "Precision Vocabulary", numeral: "II", color: "var(--lapis)" },
+  "3": { label: "Power Words", numeral: "III", color: "var(--crimson)" },
 };
+
+// ── Utilities ────────────────────────────────────────────────────────────
+
+function accuracyColor(pct: number): string {
+  if (pct > 70) return "var(--sage)";
+  if (pct >= 40) return "var(--ember)";
+  return "var(--crimson)";
+}
 
 // ── Page ─────────────────────────────────────────────────────────────────
 
@@ -123,6 +79,7 @@ export default function StatsPage() {
   const { profile, dueCount, wordCount, loading } = useStats();
   const retrieval = useRetrievalHealth();
   const [recentLogs, setRecentLogs] = useState<ReviewLog[]>([]);
+  const [trend, setTrend] = useState<number[]>(() => Array(14).fill(0));
 
   useEffect(() => {
     db.reviewLogs
@@ -133,10 +90,33 @@ export default function StatsPage() {
       .then(setRecentLogs);
   }, [seedStatus]);
 
+  useEffect(() => {
+    async function loadTrend() {
+      const logs = await db.reviewLogs.orderBy("reviewedAt").reverse().toArray();
+      const now = new Date();
+      const counts = Array(14).fill(0) as number[];
+      for (const log of logs) {
+        const d = new Date(log.reviewedAt);
+        const diffDays = Math.floor(
+          (now.getTime() - d.getTime()) / (24 * 60 * 60 * 1000),
+        );
+        if (diffDays >= 0 && diffDays < 14) {
+          // bucket index: 0 = oldest (14 days ago), 13 = today
+          const idx = 13 - diffDays;
+          counts[idx] += 1;
+        }
+      }
+      setTrend(counts);
+    }
+    void loadTrend();
+  }, [seedStatus, recentLogs.length]);
+
   if (loading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="uppercase-tracked text-xs" style={{ color: "var(--muted-foreground)" }}>
+          Loading…
+        </p>
       </div>
     );
   }
@@ -150,469 +130,635 @@ export default function StatsPage() {
 
   const recentCorrect = recentLogs.filter((l) => l.correct).length;
   const recentAccuracy =
-    recentLogs.length > 0
-      ? Math.round((recentCorrect / recentLogs.length) * 100)
-      : 0;
+    recentLogs.length > 0 ? Math.round((recentCorrect / recentLogs.length) * 100) : 0;
 
   const avgResponseTime =
     recentLogs.length > 0
-      ? recentLogs.reduce((sum, l) => sum + l.responseTimeMs, 0) /
-        recentLogs.length /
-        1000
+      ? recentLogs.reduce((sum, l) => sum + l.responseTimeMs, 0) / recentLogs.length / 1000
       : 0;
-  const recentCueUses = recentLogs.filter((l) => (l.cueLevel ?? 0) > 0).length;
-  const recentCueUseRate =
-    recentLogs.length > 0 ? Math.round((recentCueUses / recentLogs.length) * 100) : 0;
-  const recentCleanRetrievals = recentLogs.filter((l) => {
-    const retrievalKind = l.retrievalKind ?? (l.correct ? "exact" : "failed");
-    return retrievalKind === "exact" && (l.cueLevel ?? 0) === 0;
-  }).length;
-  const recentCleanRate =
-    recentLogs.length > 0
-      ? Math.round((recentCleanRetrievals / recentLogs.length) * 100)
-      : 0;
+  const recentRetrievalMetrics = getRecentRetrievalMetrics(recentLogs);
 
-  const maxStat = Math.max(...Object.values(profile.stats), 10);
-
+  const maxStat = Math.max(...Object.values(profile.stats), 40);
   const diffDisplay = DIFFICULTY_DISPLAY[profile.difficulty];
   const diffConfig = DIFFICULTY_CONFIG[profile.difficulty];
 
-  // ── Overview tiles ─────────────────────────────────────────────────────
+  const trendMax = Math.max(...trend, 1);
 
   const overviewTiles = [
     {
-      icon: Trophy,
-      label: "Level",
-      value: profile.level,
-      color: "text-amber-400",
-      bg: "bg-amber-500/10",
-    },
-    {
-      icon: Zap,
-      label: "Sessions",
+      label: "Trials Fought",
       value: profile.totalSessions,
-      color: "text-primary",
-      bg: "bg-primary/10",
+      color: "var(--gold-deep)",
+      Icon: Compass,
     },
     {
-      icon: Target,
+      label: "Best Flame",
+      value: `${profile.longestStreak}d`,
+      color: "var(--ember)",
+      Icon: FlameSm,
+    },
+    {
       label: "Accuracy",
       value: `${lifetimeAccuracy}%`,
       color: accuracyColor(lifetimeAccuracy),
-      bg:
-        lifetimeAccuracy > 70
-          ? "bg-emerald-500/10"
-          : lifetimeAccuracy >= 40
-            ? "bg-amber-500/10"
-            : "bg-red-500/10",
+      Icon: Shield,
     },
     {
-      icon: Flame,
-      label: "Best Streak",
-      value: `${profile.longestStreak}d`,
-      color: "text-red-400",
-      bg: "bg-red-500/10",
+      label: "Words Bound",
+      value: wordCount,
+      color: "var(--lapis)",
+      Icon: Tome,
     },
   ];
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-4 space-y-4">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <motion.div {...fadeUp(0)} className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-          <BarChart3 className="size-4.5" />
+    <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+      {/* Header */}
+      <motion.div {...fadeUp(0)}>
+        <div className="uppercase-tracked text-[11px]" style={{ color: "var(--gold-deep)" }}>
+          Chronicle
         </div>
-        <div>
-          <h1 className="text-xl font-bold">Stats & Progress</h1>
-          <p className="text-xs text-muted-foreground">Your journey at a glance</p>
-        </div>
+        <h1 className="font-display text-[34px] font-bold mt-0.5" style={{ color: "var(--ink)" }}>
+          Deeds &amp; Omens
+        </h1>
+        <p className="italic mt-1" style={{ color: "var(--muted-foreground)" }}>
+          A record of strikes true and strikes false, kept since the first rising.
+        </p>
       </motion.div>
 
-      {/* ── Overview Cards ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {overviewTiles.map(({ icon: Icon, label, value, color, bg }, i) => (
+      <HeronDivider />
+
+      {/* Overview tiles */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        {overviewTiles.map(({ label, value, color, Icon }, i) => (
           <motion.div key={label} {...fadeUp(0.05 + i * 0.07)}>
-            <Card size="sm" className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-primary/5 to-transparent rounded-bl-full pointer-events-none" />
-              <CardContent className="pt-4 pb-3 text-center relative">
-                <div
-                  className={`inline-flex items-center justify-center size-8 rounded-full ${bg} ${color} mb-1.5`}
-                >
-                  <Icon className="size-4" />
+            <IllumCard className="p-4" corners={false}>
+              <div className="flex items-center gap-3">
+                <span style={{ color }}>
+                  <Icon size={22} />
+                </span>
+                <div>
+                  <div
+                    className="uppercase-tracked text-[10px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {label}
+                  </div>
+                  <div
+                    className="font-display text-[26px] font-bold tabular-nums"
+                    style={{ color }}
+                  >
+                    {value}
+                  </div>
                 </div>
-                <div className={`text-xl font-bold tabular-nums ${color}`}>{value}</div>
-                <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-              </CardContent>
-            </Card>
+              </div>
+            </IllumCard>
           </motion.div>
         ))}
       </div>
 
-      {/* ── RPG Stats + Recent Performance ─────────────────────────────── */}
+      {/* Disciplines + 14-day chart */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* RPG Stats */}
         <motion.div {...fadeUp(0.25)}>
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <span className="text-base">&#x2694;&#xFE0F;</span>
-                RPG Stats
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {STAT_CONFIG.map(({ key, label, desc, icon: Icon, color, bg, bgLight, gradient }, i) => (
-                  <motion.div
-                    key={key}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 + i * 0.07, duration: 0.28 }}
-                    className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${gradient} bg-muted/30 p-3`}
-                  >
-                    {/* Watermark icon */}
-                    <Icon
-                      className={`absolute -right-2 -bottom-2 size-14 ${color} opacity-[0.06]`}
-                    />
-                    <div className="relative space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`flex items-center justify-center size-8 rounded-lg ${bgLight} ${color}`}
-                        >
-                          <Icon className="size-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-medium text-muted-foreground">{label}</p>
-                          <p className="text-xl font-bold tabular-nums leading-tight">
-                            {profile.stats[key]}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full rounded-full ${bg}`}
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${(profile.stats[key] / maxStat) * 100}%`,
-                          }}
-                          transition={{
-                            duration: 0.6,
-                            ease: "easeOut",
-                            delay: 0.45 + i * 0.1,
-                          }}
-                        />
-                      </div>
-                      <p className="text-[10px] text-muted-foreground/60">{desc}</p>
+          <IllumCard>
+            <div
+              className="uppercase-tracked text-[11px] mb-3"
+              style={{ color: "var(--gold-deep)" }}
+            >
+              Disciplines — Current Aspect
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {STAT_CONFIG.map((s) => (
+                <div
+                  key={s.key}
+                  className="grid items-center gap-3 py-2.5 px-3 rounded-[2px]"
+                  style={{
+                    gridTemplateColumns: "36px 1fr auto",
+                    border: "1px solid var(--line-soft)",
+                    borderLeft: `3px solid ${s.color}`,
+                    background: `color-mix(in oklab, ${s.color}, transparent 94%)`,
+                  }}
+                >
+                  <span style={{ color: s.color }}>
+                    <s.sigil size={26} />
+                  </span>
+                  <div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-display text-sm font-semibold">{s.label}</span>
+                      <span
+                        className="font-mono-num text-xs tabular-nums"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        {profile.stats[s.key]}
+                      </span>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Recent Performance */}
-        <motion.div {...fadeUp(0.32)}>
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <ScrollText className="size-4 text-primary" />
-                Recent Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Accuracy bar */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-muted-foreground">Recent Accuracy</span>
+                    <div className="plate mt-1" style={{ height: 5 }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${Math.min(100, (profile.stats[s.key] / maxStat) * 100)}%`,
+                        }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                        style={{ height: "100%", background: s.color, opacity: 0.85 }}
+                      />
+                    </div>
+                  </div>
                   <span
-                    className={`text-sm font-bold tabular-nums ${accuracyColor(recentAccuracy)}`}
+                    className="text-[11px] italic"
+                    style={{ color: "var(--muted-foreground)" }}
                   >
-                    {recentAccuracy}%
+                    {s.note}
                   </span>
                 </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${accuracyBarColor(recentAccuracy)}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${recentAccuracy}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground/60">
-                  Last {recentLogs.length} reviews
-                </p>
-              </div>
+              ))}
+            </div>
+          </IllumCard>
+        </motion.div>
 
-              {/* Stat rows */}
-              <div className="space-y-2 pt-0.5">
-                {[
-                  {
-                    icon: Clock,
-                    label: "Avg Response",
-                    value: `${avgResponseTime.toFixed(1)}s`,
-                    color: "text-muted-foreground",
-                  },
-                  {
-                    icon: Target,
-                    label: "Clean Retrieval",
-                    value: `${recentCleanRate}%`,
-                    color: recentCleanRate >= 70 ? "text-emerald-400" : recentCleanRate >= 40 ? "text-amber-400" : "text-red-400",
-                  },
-                  {
-                    icon: Lightbulb,
-                    label: "Cue Use",
-                    value: `${recentCueUseRate}%`,
-                    color: recentCueUseRate <= 20 ? "text-emerald-400" : recentCueUseRate <= 40 ? "text-amber-400" : "text-red-400",
-                  },
-                  {
-                    icon: Target,
-                    label: "To Review",
-                    value: dueCount,
-                    color: dueCount > 0 ? "text-amber-400" : "text-emerald-400",
-                  },
-                  {
-                    icon: BookOpen,
-                    label: "Total Words",
-                    value: wordCount,
-                    color: "text-primary",
-                  },
-                  {
-                    icon: ScrollText,
-                    label: "Reviews Logged",
-                    value: profile.totalReviewed,
-                    color: "text-muted-foreground",
-                  },
-                  {
-                    icon: TrendingUp,
-                    label: "Total Correct",
-                    value: profile.totalCorrect,
-                    color: "text-emerald-400",
-                  },
-                ].map(({ icon: Icon, label, value, color }) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Icon className="size-3.5" />
-                      {label}
-                    </span>
-                    <span className={`text-xs font-bold tabular-nums ${color}`}>{value}</span>
-                  </div>
-                ))}
+        <motion.div {...fadeUp(0.32)}>
+          <IllumCard>
+            <div className="flex justify-between items-center mb-3">
+              <div
+                className="uppercase-tracked text-[11px]"
+                style={{ color: "var(--gold-deep)" }}
+              >
+                Recent Trials — 14 days
               </div>
-            </CardContent>
-          </Card>
+              <span className="lex-badge">Words struck per day</span>
+            </div>
+            <svg viewBox="0 0 400 160" width="100%" height="160" aria-hidden>
+              {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+                <line
+                  key={t}
+                  x1="30"
+                  x2="395"
+                  y1={20 + t * 120}
+                  y2={20 + t * 120}
+                  stroke="var(--line-soft)"
+                  strokeDasharray="2 3"
+                  opacity=".6"
+                />
+              ))}
+              {trend.map((v, i) => {
+                const x = 36 + i * 25;
+                const h = (v / trendMax) * 120;
+                return (
+                  <g key={i}>
+                    <rect
+                      x={x}
+                      y={140 - h}
+                      width="16"
+                      height={h}
+                      fill="var(--gold)"
+                      stroke="var(--gold-deep)"
+                      strokeWidth=".6"
+                    />
+                    {h > 0 && (
+                      <rect x={x} y={140 - h} width="16" height="3" fill="var(--gold-bright)" />
+                    )}
+                  </g>
+                );
+              })}
+              {[0, Math.max(1, Math.round(trendMax / 2)), trendMax].map((v, i) => (
+                <text
+                  key={i}
+                  x="26"
+                  y={144 - (v / trendMax) * 120}
+                  fontSize="9"
+                  fill="var(--muted-foreground)"
+                  textAnchor="end"
+                  fontFamily="var(--font-mono), monospace"
+                >
+                  {v}
+                </text>
+              ))}
+            </svg>
+            <div
+              className="flex justify-between mt-1.5 text-[10px]"
+              style={{
+                color: "var(--muted-foreground)",
+                fontFamily: "var(--font-display), serif",
+                letterSpacing: ".12em",
+              }}
+            >
+              <span>14d ago</span>
+              <span>7d</span>
+              <span>today</span>
+            </div>
+
+            <div
+              className="mt-3 pt-3 grid grid-cols-2 gap-3"
+              style={{ borderTop: "1px solid var(--line-soft)" }}
+            >
+              <div>
+                <div
+                  className="uppercase-tracked text-[10px]"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Recent accuracy
+                </div>
+                <div
+                  className="font-display text-2xl font-bold tabular-nums"
+                  style={{ color: accuracyColor(recentAccuracy) }}
+                >
+                  {recentAccuracy}%
+                </div>
+                <div className="text-[11px] italic" style={{ color: "var(--muted-foreground)" }}>
+                  last {recentLogs.length} reviews
+                </div>
+              </div>
+              <div>
+                <div
+                  className="uppercase-tracked text-[10px]"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Avg cadence
+                </div>
+                <div
+                  className="font-display text-2xl font-bold tabular-nums"
+                  style={{ color: "var(--ember)" }}
+                >
+                  {avgResponseTime.toFixed(1)}s
+                </div>
+                <div className="text-[11px] italic" style={{ color: "var(--muted-foreground)" }}>
+                  per word
+                </div>
+              </div>
+            </div>
+          </IllumCard>
         </motion.div>
       </div>
 
-      {/* ── Retrieval Health ──────────────────────────────────────────── */}
+      <HeronDivider label="Retrieval Health" />
+
+      {/* Retrieval health */}
       {!retrieval.loading && (
         <motion.div {...fadeUp(0.36)}>
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <HeartPulse className="size-4 text-rose-400" />
-                Retrieval Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Headline metrics with trend arrows */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Unassisted Recall */}
-                <div className="rounded-xl bg-muted/30 p-3 space-y-1">
-                  <p className="text-[10px] font-medium text-muted-foreground">Unassisted Recall</p>
-                  <p className={`text-2xl font-bold tabular-nums ${accuracyColor(retrieval.unassistedRate)}`}>
-                    {retrieval.unassistedRate}%
-                  </p>
-                  {retrieval.unassistedRateDelta !== null && (
-                    <p className="flex items-center gap-0.5 text-[10px]">
-                      {retrieval.unassistedRateDelta > 0 ? (
-                        <ArrowUpRight className="size-3 text-emerald-400" />
-                      ) : retrieval.unassistedRateDelta < 0 ? (
-                        <ArrowDownRight className="size-3 text-red-400" />
-                      ) : (
-                        <Minus className="size-3 text-muted-foreground" />
-                      )}
-                      <span className={
-                        retrieval.unassistedRateDelta > 0
-                          ? "text-emerald-400"
-                          : retrieval.unassistedRateDelta < 0
-                            ? "text-red-400"
-                            : "text-muted-foreground"
-                      }>
-                        {retrieval.unassistedRateDelta > 0 ? "+" : ""}
-                        {retrieval.unassistedRateDelta}pp vs last week
-                      </span>
-                    </p>
-                  )}
-                </div>
-
-                {/* Retrieval Speed */}
-                <div className="rounded-xl bg-muted/30 p-3 space-y-1">
-                  <p className="text-[10px] font-medium text-muted-foreground">Retrieval Speed</p>
-                  <p className="text-2xl font-bold tabular-nums text-muted-foreground">
-                    {retrieval.medianLatencyMs !== null
-                      ? `${(retrieval.medianLatencyMs / 1000).toFixed(1)}s`
-                      : "\u2014"}
-                  </p>
-                  {retrieval.latencyDeltaMs !== null && (
-                    <p className="flex items-center gap-0.5 text-[10px]">
-                      {retrieval.latencyDeltaMs < -50 ? (
-                        <ArrowDownRight className="size-3 text-emerald-400" />
-                      ) : retrieval.latencyDeltaMs > 50 ? (
-                        <ArrowUpRight className="size-3 text-red-400" />
-                      ) : (
-                        <Minus className="size-3 text-muted-foreground" />
-                      )}
-                      <span className={
-                        retrieval.latencyDeltaMs < -50
-                          ? "text-emerald-400"
-                          : retrieval.latencyDeltaMs > 50
-                            ? "text-red-400"
-                            : "text-muted-foreground"
-                      }>
-                        {retrieval.latencyDeltaMs > 0 ? "+" : ""}
-                        {(retrieval.latencyDeltaMs / 1000).toFixed(1)}s vs last week
-                      </span>
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Supporting counts */}
-              <div className="space-y-2">
-                {[
-                  {
-                    icon: ShieldAlert,
-                    label: "Cue-Dependent Words",
-                    value: retrieval.cueDependentWordCount,
-                    color: retrieval.cueDependentWordCount > 0 ? "text-amber-400" : "text-emerald-400",
-                  },
-                  {
-                    icon: AlertTriangle,
-                    label: "TOT This Week",
-                    value: retrieval.totThisWeek,
-                    color: retrieval.totThisWeek > 0 ? "text-amber-400" : "text-emerald-400",
-                  },
-                  {
-                    icon: LifeBuoy,
-                    label: "In Rescue Stage",
-                    value: retrieval.rescueWordCount,
-                    color: retrieval.rescueWordCount > 3
-                      ? "text-red-400"
-                      : retrieval.rescueWordCount > 0
-                        ? "text-amber-400"
-                        : "text-emerald-400",
-                  },
-                ].map(({ icon: Icon, label, value, color }) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Icon className="size-3.5" />
+          <IllumCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                [
+                  "Rescue",
+                  retrieval.rescueWordCount,
+                  "Words clinging to memory by a thread.",
+                  "var(--crimson)",
+                ],
+                [
+                  "Stabilize",
+                  recentRetrievalMetrics.cueUseRate ?? 0,
+                  recentRetrievalMetrics.cueUseRate !== null
+                    ? `${recentRetrievalMetrics.cueUseRate}% leaning on cues — gaining steadiness.`
+                    : "Gaining steadiness.",
+                  "var(--ember)",
+                ],
+                [
+                  "Fluent",
+                  recentRetrievalMetrics.cleanRate ?? 0,
+                  recentRetrievalMetrics.cleanRate !== null
+                    ? `${recentRetrievalMetrics.cleanRate}% clean strikes — answering without pause.`
+                    : "Answering without pause.",
+                  "var(--sage)",
+                ],
+              ].map(([label, value, desc, color]) => {
+                const stringValue = typeof value === "string" ? value : String(value);
+                const displayValue =
+                  label === "Rescue" ? stringValue : `${stringValue}%`;
+                return (
+                  <div key={String(label)}>
+                    <div
+                      className="font-display text-[30px] font-bold tabular-nums"
+                      style={{ color: color as string }}
+                    >
+                      {displayValue}
+                    </div>
+                    <div
+                      className="uppercase-tracked text-[11px] mt-0.5"
+                      style={{ color: color as string }}
+                    >
                       {label}
-                    </span>
-                    <span className={`text-xs font-bold tabular-nums ${color}`}>{value}</span>
+                    </div>
+                    <div
+                      className="text-[13px] italic mt-1"
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      {desc}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          </IllumCard>
         </motion.div>
       )}
 
-      {/* ── Training History ────────────────────────────────────────────── */}
-      <motion.div {...fadeUp(0.42)}>
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BookOpen className="size-4 text-primary" />
-              Training History
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Difficulty row */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Current Pace</span>
+      {/* Retrieval metrics (unassisted, latency) */}
+      {!retrieval.loading && (
+        <motion.div {...fadeUp(0.40)}>
+          <IllumCard>
+            <div
+              className="uppercase-tracked text-[11px] mb-3 flex items-center gap-2"
+              style={{ color: "var(--gold-deep)" }}
+            >
+              <HeartPulse className="size-4" />
+              Pulse of Retrieval
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
-                className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold ${diffDisplay.bg} ${diffDisplay.color}`}
+                className="rounded-[3px] p-3.5"
+                style={{
+                  background: "color-mix(in oklab, var(--paper), var(--gold) 2%)",
+                  border: "1px solid var(--line-soft)",
+                }}
               >
-                <diffDisplay.icon className="size-3" />
-                {diffDisplay.label}
-                <span className="font-normal opacity-70">{diffConfig.description}</span>
+                <p
+                  className="uppercase-tracked text-[10px]"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Unassisted Recall
+                </p>
+                <p
+                  className="font-display text-[28px] font-bold tabular-nums"
+                  style={{
+                    color:
+                      retrieval.unassistedRate !== null
+                        ? accuracyColor(retrieval.unassistedRate)
+                        : "var(--muted-foreground)",
+                  }}
+                >
+                  {retrieval.unassistedRate !== null
+                    ? `${retrieval.unassistedRate}%`
+                    : "—"}
+                </p>
+                {retrieval.unassistedRateDelta !== null && (
+                  <p className="flex items-center gap-1 text-[11px] italic mt-0.5">
+                    {retrieval.unassistedRateDelta > 0 ? (
+                      <ArrowUpRight className="size-3" style={{ color: "var(--sage)" }} />
+                    ) : retrieval.unassistedRateDelta < 0 ? (
+                      <ArrowDownRight className="size-3" style={{ color: "var(--crimson)" }} />
+                    ) : (
+                      <Minus
+                        className="size-3"
+                        style={{ color: "var(--muted-foreground)" }}
+                      />
+                    )}
+                    <span
+                      style={{
+                        color:
+                          retrieval.unassistedRateDelta > 0
+                            ? "var(--sage)"
+                            : retrieval.unassistedRateDelta < 0
+                              ? "var(--crimson)"
+                              : "var(--muted-foreground)",
+                      }}
+                    >
+                      {retrieval.unassistedRateDelta > 0 ? "+" : ""}
+                      {retrieval.unassistedRateDelta}pp vs last week
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div
+                className="rounded-[3px] p-3.5"
+                style={{
+                  background: "color-mix(in oklab, var(--paper), var(--gold) 2%)",
+                  border: "1px solid var(--line-soft)",
+                }}
+              >
+                <p
+                  className="uppercase-tracked text-[10px]"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Cadence of Retrieval
+                </p>
+                <p
+                  className="font-display text-[28px] font-bold tabular-nums"
+                  style={{ color: "var(--ember)" }}
+                >
+                  {retrieval.medianLatencyMs !== null
+                    ? `${(retrieval.medianLatencyMs / 1000).toFixed(1)}s`
+                    : "—"}
+                </p>
+                {retrieval.latencyDeltaMs !== null && (
+                  <p className="flex items-center gap-1 text-[11px] italic mt-0.5">
+                    {retrieval.latencyDeltaMs < -50 ? (
+                      <ArrowDownRight className="size-3" style={{ color: "var(--sage)" }} />
+                    ) : retrieval.latencyDeltaMs > 50 ? (
+                      <ArrowUpRight className="size-3" style={{ color: "var(--crimson)" }} />
+                    ) : (
+                      <Minus
+                        className="size-3"
+                        style={{ color: "var(--muted-foreground)" }}
+                      />
+                    )}
+                    <span
+                      style={{
+                        color:
+                          retrieval.latencyDeltaMs < -50
+                            ? "var(--sage)"
+                            : retrieval.latencyDeltaMs > 50
+                              ? "var(--crimson)"
+                              : "var(--muted-foreground)",
+                      }}
+                    >
+                      {retrieval.latencyDeltaMs > 0 ? "+" : ""}
+                      {(retrieval.latencyDeltaMs / 1000).toFixed(1)}s vs last week
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Tier unlock progress */}
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Tier Unlocks</p>
-              <div className="space-y-2">
-                {(["1", "2", "3"] as const).map((tier) => {
-                  const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
-                  const isUnlocked = profile.level >= unlockLevel;
-                  const info = TIER_INFO[tier];
-
-                  return (
-                    <div key={tier} className="flex items-center gap-3">
-                      <div
-                        className={`flex items-center justify-center size-6 rounded-md text-[10px] font-bold ${
-                          isUnlocked
-                            ? `${info.bg} text-white`
-                            : "bg-muted/50 text-muted-foreground"
-                        }`}
-                      >
-                        {isUnlocked ? tier : <Lock className="size-3" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`text-xs font-medium ${isUnlocked ? info.color : "text-muted-foreground"}`}
-                          >
-                            {info.label}
-                          </span>
-                          {!isUnlocked && (
-                            <span className="text-[10px] text-muted-foreground/60">
-                              Lv. {unlockLevel}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {isUnlocked && (
-                        <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                          Unlocked
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Words learned vs total */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-baseline">
-                <p className="text-xs text-muted-foreground">Words Collected</p>
-                <span className="text-xs font-bold tabular-nums text-primary">
-                  {wordCount}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { label: "To Review", value: dueCount, color: dueCount > 0 ? "text-amber-400" : "text-emerald-400" },
-                  { label: "Reviewed", value: profile.totalReviewed, color: "text-primary" },
-                  { label: "Correct %", value: `${lifetimeAccuracy}%`, color: accuracyColor(lifetimeAccuracy) },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="text-center rounded-lg bg-muted/20 px-2 py-2">
-                    <p className={`text-sm font-bold tabular-nums ${color}`}>{value}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+            <div
+              className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3"
+            >
+              {[
+                {
+                  Icon: ShieldAlert,
+                  label: "Cue-dependent",
+                  value: retrieval.cueDependentWordCount,
+                  color:
+                    retrieval.cueDependentWordCount > 0
+                      ? "var(--ember)"
+                      : "var(--sage)",
+                },
+                {
+                  Icon: AlertTriangle,
+                  label: "TOT this week",
+                  value: retrieval.totThisWeek,
+                  color:
+                    retrieval.totThisWeek > 0 ? "var(--ember)" : "var(--sage)",
+                },
+                {
+                  Icon: LifeBuoy,
+                  label: "In rescue",
+                  value: retrieval.rescueWordCount,
+                  color:
+                    retrieval.rescueWordCount > 3
+                      ? "var(--crimson)"
+                      : retrieval.rescueWordCount > 0
+                        ? "var(--ember)"
+                        : "var(--sage)",
+                },
+              ].map(({ Icon, label, value, color }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-[2px]"
+                  style={{ border: "1px solid var(--line-soft)" }}
+                >
+                  <Icon className="size-4" style={{ color }} />
+                  <div
+                    className="uppercase-tracked text-[10px] flex-1"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {label}
                   </div>
-                ))}
-              </div>
+                  <div
+                    className="font-display text-sm font-bold tabular-nums"
+                    style={{ color }}
+                  >
+                    {value}
+                  </div>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </IllumCard>
+        </motion.div>
+      )}
+
+      {/* Training history */}
+      <motion.div {...fadeUp(0.42)}>
+        <IllumCard>
+          <div
+            className="uppercase-tracked text-[11px] mb-3"
+            style={{ color: "var(--gold-deep)" }}
+          >
+            Training History
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+              Current pace
+            </span>
+            <div
+              className="inline-flex items-center gap-2 rounded-[3px] px-3 py-1.5 font-display uppercase text-[11px]"
+              style={{
+                letterSpacing: ".16em",
+                background: `color-mix(in oklab, ${diffDisplay.color}, transparent 88%)`,
+                color: diffDisplay.color,
+                border: `1px solid ${diffDisplay.color}`,
+              }}
+            >
+              <diffDisplay.sigil size={14} />
+              {diffDisplay.label}
+              <span className="opacity-75 text-[10px] normal-case" style={{ letterSpacing: ".06em" }}>
+                · {diffConfig.description}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+              Tier Unlocks
+            </p>
+            <div className="space-y-1.5">
+              {(["1", "2", "3"] as const).map((tier) => {
+                const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
+                const isUnlocked = profile.level >= unlockLevel;
+                const info = TIER_INFO[tier];
+                return (
+                  <div
+                    key={tier}
+                    className="flex items-center gap-3 px-2.5 py-2 rounded-[2px]"
+                    style={{
+                      border: "1px solid var(--line-soft)",
+                      opacity: isUnlocked ? 1 : 0.6,
+                    }}
+                  >
+                    <div
+                      className="flex items-center justify-center size-7 rounded-[2px] font-display font-bold"
+                      style={{
+                        background: isUnlocked ? info.color : "color-mix(in oklab, var(--paper), black 10%)",
+                        color: isUnlocked ? "#fff" : "var(--muted-foreground)",
+                      }}
+                    >
+                      {isUnlocked ? info.numeral : <Lock className="size-3" />}
+                    </div>
+                    <div className="flex-1 min-w-0 flex items-center justify-between">
+                      <span
+                        className="font-display text-sm font-semibold"
+                        style={{ color: isUnlocked ? info.color : "var(--muted-foreground)" }}
+                      >
+                        {info.label}
+                      </span>
+                      <span
+                        className="text-[11px] italic"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        {isUnlocked ? "Unlocked" : `Rank ${unlockLevel}`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex justify-between items-baseline">
+              <span
+                className="uppercase-tracked text-[10px]"
+                style={{ color: "var(--muted-foreground)" }}
+              >
+                Words Collected
+              </span>
+              <span
+                className="font-display text-sm font-bold tabular-nums"
+                style={{ color: "var(--gold-deep)" }}
+              >
+                {wordCount}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-1.5">
+              {[
+                {
+                  label: "To Review",
+                  value: dueCount,
+                  color:
+                    dueCount > 0 ? "var(--crimson)" : "var(--sage)",
+                },
+                { label: "Reviewed", value: profile.totalReviewed, color: "var(--gold-deep)" },
+                {
+                  label: "Correct",
+                  value: `${lifetimeAccuracy}%`,
+                  color: accuracyColor(lifetimeAccuracy),
+                },
+              ].map(({ label, value, color }) => (
+                <div
+                  key={label}
+                  className="text-center rounded-[2px] py-2.5"
+                  style={{
+                    background: "color-mix(in oklab, var(--paper), var(--gold) 2%)",
+                    border: "1px solid var(--line-soft)",
+                  }}
+                >
+                  <div
+                    className="font-display text-base font-bold tabular-nums"
+                    style={{ color }}
+                  >
+                    {value}
+                  </div>
+                  <div
+                    className="uppercase-tracked text-[9px] mt-0.5"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </IllumCard>
       </motion.div>
     </main>
   );

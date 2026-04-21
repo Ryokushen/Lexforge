@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Uncial_Antiqua } from "next/font/google";
+import { Cinzel, EB_Garamond, JetBrains_Mono, Uncial_Antiqua } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const ebGaramond = EB_Garamond({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const cinzel = Cinzel({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 const uncialAntiqua = Uncial_Antiqua({
@@ -41,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${uncialAntiqua.variable} h-full antialiased dark`}
+      className={`${ebGaramond.variable} ${jetbrainsMono.variable} ${cinzel.variable} ${uncialAntiqua.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>

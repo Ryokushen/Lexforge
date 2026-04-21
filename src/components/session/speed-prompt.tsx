@@ -2,12 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { playTick } from "@/lib/sounds";
-import { TimerReset, Zap } from "lucide-react";
 import type { AnswerMetadata, SessionWord } from "@/lib/types";
+import { IllumCard } from "@/components/rpg/illum-card";
+import { Lantern, Sword } from "@/components/rpg/sigils";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 const WARNING_RATIO = 0.30;
@@ -60,12 +58,10 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
     );
   }, [cueVisible]);
 
-  // Focus Go button on mount
   useEffect(() => {
     goButtonRef.current?.focus();
   }, []);
 
-  // Start timer when retrieval phase begins
   useEffect(() => {
     if (phase !== "retrieve") return;
 
@@ -123,7 +119,7 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
 
   const pct = phase === "retrieve" ? Math.max(0, 1 - elapsed / timeoutMs) * 100 : 100;
   const isWarning = phase === "retrieve" && elapsed > timeoutMs - warningMs;
-  const cueText = `${sessionWord.word.word[0].toUpperCase()} \u2022 ${sessionWord.word.word.length} letters`;
+  const cueText = `${sessionWord.word.word[0].toUpperCase()} • ${sessionWord.word.word.length} letters`;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -138,31 +134,31 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
       exit={{ opacity: 0, x: -40 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card
-        size="sm"
-        className="w-full max-w-2xl mx-auto border-l-4 border-l-amber-500/40 ring-1 ring-amber-500/15"
-      >
+      <IllumCard className="w-full max-w-2xl mx-auto p-0 overflow-hidden">
         {phase === "retrieve" && (
-          <div className="h-1.5 bg-muted/30 rounded-t-xl overflow-hidden mx-px mt-px">
+          <div className="h-1.5 overflow-hidden" style={{ background: "color-mix(in oklab, var(--paper), black 10%)" }}>
             <motion.div
-              className={`h-full rounded-t-xl transition-colors ${
-                isWarning ? "bg-red-500" : "bg-amber-500"
-              }`}
-              style={{ width: `${pct}%` }}
+              className="h-full"
+              style={{
+                width: `${pct}%`,
+                background: isWarning ? "var(--crimson)" : "var(--ember)",
+                transition: "background-color .2s",
+              }}
             />
           </div>
         )}
 
-        <CardContent className={`space-y-4 ${phase === "retrieve" ? "pt-3" : "pt-5"}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-amber-500">
-              <Zap className="size-3.5" />
-              <span className="text-xs font-semibold uppercase tracking-widest">
-                Rapid Retrieval
-              </span>
+        <div className="p-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2" style={{ color: "var(--ember)" }}>
+              <Sword size={16} />
+              <span className="uppercase-tracked text-[11px]">Rapid Retrieval</span>
             </div>
             {phase === "retrieve" && (
-              <span className="text-xs font-mono tabular-nums text-muted-foreground">
+              <span
+                className="font-mono-num text-[12px] tabular-nums"
+                style={{ color: isWarning ? "var(--crimson)" : "var(--muted-foreground)" }}
+              >
                 {Math.max(0, Math.ceil((timeoutMs - elapsed) / 1000))}s
               </span>
             )}
@@ -172,35 +168,35 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.05 }}
-            className="space-y-2 py-2"
+            className="space-y-2"
           >
-            <p className="text-xs uppercase tracking-widest text-amber-500/80">
+            <p className="uppercase-tracked text-[10px]" style={{ color: "var(--ember)" }}>
               {phase === "read"
-                ? "Read the definition, then start retrieval"
+                ? "Read the definition, then begin the strike"
                 : cueRevealMs === null
-                  ? "Retrieve the word without a rescue cue"
-                  : "Retrieve the word before the rescue cue appears"}
+                  ? "Retrieve the word — no cue will come"
+                  : "Retrieve the word before the cue breaks"}
             </p>
-            <p className="text-lg leading-relaxed border-l-2 border-amber-500/25 pl-3">
+            <p
+              className="font-serif text-[19px] leading-[1.4] pl-3"
+              style={{ borderLeft: "3px solid var(--ember)", color: "var(--ink)" }}
+            >
               {sessionWord.word.definition}
             </p>
           </motion.div>
 
           {phase === "read" && (
-            <motion.div
+            <motion.button
+              ref={goButtonRef}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
+              onClick={startRetrieval}
+              className="btn-illum w-full"
             >
-              <Button
-                ref={goButtonRef}
-                onClick={startRetrieval}
-                className="w-full gap-2"
-              >
-                <Zap className="size-4" />
-                Start Retrieval
-              </Button>
-            </motion.div>
+              <Sword size={14} />
+              Begin Strike
+            </motion.button>
           )}
 
           {phase === "retrieve" && (
@@ -209,40 +205,42 @@ export function SpeedPrompt({ sessionWord, onSubmit }: SpeedPromptProps) {
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-[3px] px-3 py-2 text-sm"
+                  style={{
+                    background: "color-mix(in oklab, var(--ember), transparent 85%)",
+                    border: "1px solid color-mix(in oklab, var(--ember), transparent 60%)",
+                  }}
                 >
-                  <span className="flex items-center gap-1.5 text-amber-500">
-                    <TimerReset className="size-4" />
-                    Rescue cue
+                  <span className="flex items-center gap-1.5" style={{ color: "var(--ember)" }}>
+                    <Lantern size={14} />
+                    <span className="uppercase-tracked text-[10px]">Rescue cue</span>
                   </span>
-                  <span className="font-mono text-amber-100/90">{cueText}</span>
+                  <span className="font-mono-num text-[12px]" style={{ color: "var(--ink-2)" }}>
+                    {cueText}
+                  </span>
                 </motion.div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-2">
-                <Input
+              <form onSubmit={handleSubmit} className="space-y-2.5">
+                <input
                   ref={inputRef}
+                  className="inkwell"
                   value={answer}
                   onChange={(event) => setAnswer(event.target.value)}
-                  placeholder="Type the word..."
-                  className="h-10 text-base bg-muted/30 border-border/50 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
+                  placeholder="Speak the word…"
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
                 />
-                <Button
-                  type="submit"
-                  className="w-full gap-2"
-                  disabled={!answer.trim()}
-                >
-                  <Zap className="size-4" />
-                  Submit Retrieval
-                </Button>
+                <button type="submit" className="btn-illum w-full" disabled={!answer.trim()}>
+                  <Sword size={14} />
+                  Strike
+                </button>
               </form>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </IllumCard>
     </motion.div>
   );
 }

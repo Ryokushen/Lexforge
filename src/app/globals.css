@@ -9,8 +9,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-lexforge: var(--font-lexforge);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-display);
+  --font-serif: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -40,6 +42,24 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-bright: var(--gold-bright);
+  --color-crimson: var(--crimson);
+  --color-crimson-2: var(--crimson-2);
+  --color-sage: var(--sage);
+  --color-lapis: var(--lapis);
+  --color-ember: var(--ember);
+  --color-ajah-recall: var(--ajah-recall);
+  --color-ajah-retention: var(--ajah-retention);
+  --color-ajah-perception: var(--ajah-perception);
+  --color-ajah-creativity: var(--ajah-creativity);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,96 +69,162 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ── Light mode: warm parchment + deep ink ── */
+/* ── Flame of Tar Valon — warm parchment + candle gold + deep ink + crimson ── */
 :root {
-  --background: oklch(0.97 0.005 80);
-  --foreground: oklch(0.18 0.02 280);
+  --bg: #efe6d2;
+  --bg-2: #e6d9bc;
+  --paper: #f6ecd4;
+  --paper-2: #faf3de;
+  --ink: #1d1208;
+  --ink-2: #3b2a18;
+  --muted-fg: #7a6241;
+  --muted-fg-2: #a88d63;
+  --line: #b99d6e;
+  --line-soft: #cfb588;
+  --gold: #b88a2a;
+  --gold-deep: #8b6612;
+  --gold-bright: #e0ba58;
+  --crimson: #8a1e1e;
+  --crimson-2: #b73232;
+  --sage: #4d6b3c;
+  --lapis: #2a4564;
+  --ember: #b85820;
 
-  --card: oklch(0.99 0.003 80);
-  --card-foreground: oklch(0.18 0.02 280);
+  --ajah-recall: #8a1e1e;
+  --ajah-retention: #2a4564;
+  --ajah-perception: #b88a2a;
+  --ajah-creativity: #4d6b3c;
 
-  --popover: oklch(0.99 0.003 80);
-  --popover-foreground: oklch(0.18 0.02 280);
+  --background: var(--bg);
+  --foreground: var(--ink);
 
-  --primary: oklch(0.45 0.18 275);
-  --primary-foreground: oklch(0.98 0.005 275);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
 
-  --secondary: oklch(0.93 0.01 275);
-  --secondary-foreground: oklch(0.30 0.06 275);
+  --popover: var(--paper-2);
+  --popover-foreground: var(--ink);
 
-  --muted: oklch(0.94 0.008 80);
-  --muted-foreground: oklch(0.50 0.02 275);
+  --primary: var(--gold-deep);
+  --primary-foreground: #faf3de;
 
-  --accent: oklch(0.78 0.15 75);
-  --accent-foreground: oklch(0.25 0.04 75);
+  --secondary: color-mix(in oklab, var(--paper), var(--gold) 8%);
+  --secondary-foreground: var(--ink-2);
 
-  --destructive: oklch(0.577 0.245 27.325);
+  --muted: color-mix(in oklab, var(--paper), var(--gold) 3%);
+  --muted-foreground: var(--muted-fg);
 
-  --border: oklch(0.88 0.015 275);
-  --input: oklch(0.90 0.01 275);
-  --ring: oklch(0.55 0.15 275);
+  --accent: var(--gold);
+  --accent-foreground: #1b1204;
 
-  --chart-1: oklch(0.55 0.18 275);
-  --chart-2: oklch(0.65 0.15 155);
-  --chart-3: oklch(0.75 0.14 75);
-  --chart-4: oklch(0.60 0.18 330);
-  --chart-5: oklch(0.55 0.12 200);
+  --destructive: var(--crimson);
 
-  --radius: 0.75rem;
+  --border: var(--line);
+  --input: color-mix(in oklab, var(--paper), white 20%);
+  --ring: var(--gold);
 
-  --sidebar: oklch(0.96 0.008 275);
-  --sidebar-foreground: oklch(0.18 0.02 280);
-  --sidebar-primary: oklch(0.45 0.18 275);
-  --sidebar-primary-foreground: oklch(0.98 0.005 275);
-  --sidebar-accent: oklch(0.92 0.02 275);
-  --sidebar-accent-foreground: oklch(0.30 0.06 275);
-  --sidebar-border: oklch(0.88 0.015 275);
-  --sidebar-ring: oklch(0.55 0.15 275);
+  --chart-1: var(--gold);
+  --chart-2: var(--sage);
+  --chart-3: var(--crimson);
+  --chart-4: var(--lapis);
+  --chart-5: var(--ember);
+
+  --radius: 0.25rem;
+
+  --sidebar: var(--bg-2);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--gold-deep);
+  --sidebar-primary-foreground: #faf3de;
+  --sidebar-accent: color-mix(in oklab, var(--paper), var(--gold) 10%);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--gold);
+
+  --shadow-sm: 0 1px 0 rgba(60, 40, 15, 0.08), 0 1px 3px rgba(60, 40, 15, 0.12);
+  --shadow-md: 0 2px 0 rgba(60, 40, 15, 0.08), 0 6px 14px rgba(60, 40, 15, 0.14);
+  --shadow-lg: 0 4px 0 rgba(60, 40, 15, 0.08), 0 12px 28px rgba(60, 40, 15, 0.18);
+
+  --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.25  0 0 0 0 0.17  0 0 0 0 0.06  0 0 0 0.07 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+
+  --noise-opacity: 0.4;
+  --noise-blend: multiply;
 }
 
-/* ── Dark mode: deep dungeon tones ── */
+/* ── Stone of Tear — dark basalt + weathered bronze + heron-mark silver + ember ── */
 .dark {
-  --background: oklch(0.16 0.025 275);
-  --foreground: oklch(0.93 0.01 275);
+  --bg: #17120c;
+  --bg-2: #0f0b07;
+  --paper: #1f1810;
+  --paper-2: #261e15;
+  --ink: #efe3c9;
+  --ink-2: #cdbb96;
+  --muted-fg: #9c8763;
+  --muted-fg-2: #6f5d3f;
+  --line: #4d3e29;
+  --line-soft: #3a2f1f;
+  --gold: #c79a3e;
+  --gold-deep: #8e6c1d;
+  --gold-bright: #ecc673;
+  --crimson: #c04848;
+  --crimson-2: #e96a6a;
+  --sage: #7a9a5e;
+  --lapis: #6687a6;
+  --ember: #e08244;
 
-  --card: oklch(0.20 0.03 275);
-  --card-foreground: oklch(0.93 0.01 275);
+  --ajah-recall: #c04848;
+  --ajah-retention: #6687a6;
+  --ajah-perception: #c79a3e;
+  --ajah-creativity: #7a9a5e;
 
-  --popover: oklch(0.22 0.03 275);
-  --popover-foreground: oklch(0.93 0.01 275);
+  --background: var(--bg);
+  --foreground: var(--ink);
 
-  --primary: oklch(0.65 0.20 275);
-  --primary-foreground: oklch(0.98 0.005 275);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
 
-  --secondary: oklch(0.26 0.04 275);
-  --secondary-foreground: oklch(0.90 0.01 275);
+  --popover: var(--paper-2);
+  --popover-foreground: var(--ink);
 
-  --muted: oklch(0.24 0.03 275);
-  --muted-foreground: oklch(0.65 0.03 275);
+  --primary: var(--gold);
+  --primary-foreground: #1b1204;
 
-  --accent: oklch(0.78 0.15 75);
-  --accent-foreground: oklch(0.20 0.04 75);
+  --secondary: color-mix(in oklab, var(--paper), var(--gold) 10%);
+  --secondary-foreground: var(--ink);
 
-  --destructive: oklch(0.65 0.22 25);
+  --muted: color-mix(in oklab, var(--paper), black 20%);
+  --muted-foreground: var(--muted-fg);
 
-  --border: oklch(0.30 0.04 275);
-  --input: oklch(0.28 0.04 275);
-  --ring: oklch(0.55 0.18 275);
+  --accent: var(--gold-bright);
+  --accent-foreground: #1b1204;
 
-  --chart-1: oklch(0.65 0.20 275);
-  --chart-2: oklch(0.70 0.16 155);
-  --chart-3: oklch(0.78 0.15 75);
-  --chart-4: oklch(0.65 0.18 330);
-  --chart-5: oklch(0.60 0.14 200);
+  --destructive: var(--crimson);
 
-  --sidebar: oklch(0.18 0.025 275);
-  --sidebar-foreground: oklch(0.93 0.01 275);
-  --sidebar-primary: oklch(0.65 0.20 275);
-  --sidebar-primary-foreground: oklch(0.98 0.005 275);
-  --sidebar-accent: oklch(0.26 0.04 275);
-  --sidebar-accent-foreground: oklch(0.90 0.01 275);
-  --sidebar-border: oklch(0.30 0.04 275);
-  --sidebar-ring: oklch(0.55 0.18 275);
+  --border: var(--line);
+  --input: color-mix(in oklab, var(--paper), black 20%);
+  --ring: var(--gold);
+
+  --chart-1: var(--gold);
+  --chart-2: var(--sage);
+  --chart-3: var(--crimson);
+  --chart-4: var(--lapis);
+  --chart-5: var(--ember);
+
+  --sidebar: var(--bg-2);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--gold);
+  --sidebar-primary-foreground: #1b1204;
+  --sidebar-accent: color-mix(in oklab, var(--paper), var(--gold) 10%);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--gold);
+
+  --shadow-sm: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 6px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.6);
+
+  --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.75  0 0 0 0 0.45  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+
+  --noise-opacity: 0.28;
+  --noise-blend: screen;
 }
 
 @layer base {
@@ -147,8 +233,285 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans), Georgia, serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: var(--noise);
+    opacity: var(--noise-opacity);
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: var(--noise-blend);
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans), Georgia, serif;
   }
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+}
+
+/* ── Illumination utilities ─────────────────────────────────────────────── */
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display), "Cinzel", serif;
+    letter-spacing: 0.04em;
+  }
+
+  .font-serif {
+    font-family: var(--font-sans), "EB Garamond", Georgia, serif;
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  .uppercase-tracked {
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-family: var(--font-display), "Cinzel", serif;
+    font-weight: 500;
+  }
+
+  /* Illuminated card frame with double-line inner border */
+  .illum {
+    position: relative;
+    background: linear-gradient(180deg, var(--paper-2) 0%, var(--paper) 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+  }
+
+  .illum > .illum-inner {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--line-soft);
+    border-radius: calc(var(--radius) - 2px);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  /* Corner flourish positioning */
+  .corner-flourish {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    color: var(--gold-deep);
+    opacity: 0.8;
+    pointer-events: none;
+  }
+  .corner-flourish.tl {
+    top: 6px;
+    left: 6px;
+  }
+  .corner-flourish.tr {
+    top: 6px;
+    right: 6px;
+    transform: scaleX(-1);
+  }
+  .corner-flourish.bl {
+    bottom: 6px;
+    left: 6px;
+    transform: scaleY(-1);
+  }
+  .corner-flourish.br {
+    bottom: 6px;
+    right: 6px;
+    transform: scale(-1, -1);
+  }
+
+  /* Heron mark divider */
+  .heron-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--gold-deep);
+  }
+  .heron-divider::before,
+  .heron-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+
+  /* Plate: progress bar track */
+  .plate {
+    background: color-mix(in oklab, var(--paper), black 8%);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+  .dark .plate {
+    background: color-mix(in oklab, var(--paper), black 40%);
+  }
+
+  /* Nav link: hover color shift */
+  .nav-link-lex:hover {
+    color: var(--ink) !important;
+  }
+
+  /* Journey panel row (link) */
+  .journey-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: color-mix(in oklab, var(--paper), transparent 30%);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    color: var(--ink);
+    transition:
+      background 0.12s,
+      border-color 0.12s;
+    text-decoration: none;
+  }
+  .journey-link:hover {
+    background: color-mix(in oklab, var(--paper-2), var(--gold) 6%);
+    border-color: var(--line);
+  }
+
+  /* Illuminated button */
+  .btn-illum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color: #1b1204;
+    border: 1px solid var(--gold-deep);
+    border-radius: var(--radius);
+    font-family: var(--font-display), "Cinzel", serif;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 13px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 240, 200, 0.6),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+      0 1px 0 rgba(0, 0, 0, 0.1),
+      0 3px 8px rgba(120, 80, 10, 0.25);
+    transition:
+      transform 0.08s,
+      box-shadow 0.12s,
+      filter 0.12s;
+    cursor: pointer;
+  }
+  .btn-illum:hover {
+    filter: brightness(1.06);
+  }
+  .btn-illum:active {
+    transform: translateY(1px);
+  }
+  .btn-illum:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .btn-illum-ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    box-shadow: none;
+  }
+  .btn-illum-ghost:hover {
+    background: color-mix(in oklab, var(--paper-2), var(--gold) 10%);
+  }
+  .btn-illum-crimson {
+    background: linear-gradient(180deg, var(--crimson-2), var(--crimson));
+    border-color: #5f1414;
+    color: #fff3e6;
+  }
+
+  /* Inkwell: styled input field */
+  .inkwell {
+    width: 100%;
+    padding: 12px 14px;
+    background: color-mix(in oklab, var(--paper), white 20%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-family: var(--font-sans), "EB Garamond", Georgia, serif;
+    font-size: 18px;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(60, 40, 15, 0.08);
+  }
+  .dark .inkwell {
+    background: color-mix(in oklab, var(--paper), black 20%);
+  }
+  .inkwell:focus {
+    border-color: var(--gold);
+    box-shadow:
+      inset 0 2px 4px rgba(60, 40, 15, 0.08),
+      0 0 0 3px color-mix(in oklab, var(--gold), transparent 75%);
+  }
+
+  /* Badge: parchment-backed pill */
+  .lex-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-family: var(--font-display), "Cinzel", serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: color-mix(in oklab, var(--paper), white 10%);
+    color: var(--muted-foreground);
+  }
+  .dark .lex-badge {
+    background: color-mix(in oklab, var(--paper), black 10%);
+  }
+}
+
+/* ── Keyframes ──────────────────────────────────────────────────────────── */
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.shake {
+  animation: shake 0.4s ease-out;
+}
+
+@keyframes pulse-gold {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold), transparent 60%);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--gold), transparent 95%);
+  }
+}
+
+.pulse-gold {
+  animation: pulse-gold 2s ease-in-out infinite;
 }

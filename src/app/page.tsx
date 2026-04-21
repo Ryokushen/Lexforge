@@ -38,7 +38,7 @@ export default function Dashboard() {
   if (loading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground font-display uppercase-tracked text-xs">Loading…</p>
       </div>
     );
   }
@@ -47,13 +47,20 @@ export default function Dashboard() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-400">
+          <div
+            className="flex size-14 items-center justify-center rounded-[var(--radius)]"
+            style={{
+              background: "color-mix(in oklab, var(--crimson), transparent 88%)",
+              color: "var(--crimson)",
+              border: "1px solid color-mix(in oklab, var(--crimson), transparent 60%)",
+            }}
+          >
             <AlertTriangle className="size-7" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold">Starter library unavailable</h1>
-            <p className="max-w-md text-sm text-muted-foreground">
-              {seedError ?? "Lexforge couldn&apos;t finish preparing the built-in word set."}
+            <h1 className="font-display text-2xl font-bold">Starter library unavailable</h1>
+            <p className="max-w-md text-sm text-muted-foreground italic">
+              {seedError ?? "Lexforge couldn't finish preparing the built-in word set."}
             </p>
           </div>
           <Button onClick={retrySeed} className="gap-2">
@@ -66,9 +73,16 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-4 space-y-4">
+    <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
       {savedProgressMessage && (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <div
+          className="rounded-[var(--radius)] px-4 py-3 text-sm italic"
+          style={{
+            background: "color-mix(in oklab, var(--sage), transparent 88%)",
+            border: "1px solid color-mix(in oklab, var(--sage), transparent 60%)",
+            color: "var(--ink)",
+          }}
+        >
           {savedProgressMessage}
         </div>
       )}

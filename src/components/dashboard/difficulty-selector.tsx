@@ -1,40 +1,55 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Flame, Gauge, Zap } from "lucide-react";
 import type { Difficulty } from "@/lib/types";
+import { RuneEasy, RuneNormal, RuneHard } from "@/components/rpg/sigils";
 
 interface DifficultySelectorProps {
   current: Difficulty;
   onChange: (difficulty: Difficulty) => void;
 }
 
-const OPTIONS: { key: Difficulty; icon: typeof Gauge; label: string; desc: string; color: string; activeBg: string }[] = [
-  { key: "easy", icon: Gauge, label: "Easy", desc: "5 new/day", color: "text-emerald-500", activeBg: "bg-emerald-500/15 ring-emerald-500/30" },
-  { key: "normal", icon: Flame, label: "Normal", desc: "10 new/day", color: "text-amber-500", activeBg: "bg-amber-500/15 ring-amber-500/30" },
-  { key: "hard", icon: Zap, label: "Hard", desc: "20 new/day", color: "text-red-500", activeBg: "bg-red-500/15 ring-red-500/30" },
+const OPTIONS: {
+  key: Difficulty;
+  label: string;
+  desc: string;
+  sigil: React.ComponentType<{ size?: number }>;
+  color: string;
+}[] = [
+  { key: "easy", label: "Easy", desc: "5 new/day", sigil: RuneEasy, color: "var(--sage)" },
+  { key: "normal", label: "Normal", desc: "10 new/day", sigil: RuneNormal, color: "var(--gold-deep)" },
+  { key: "hard", label: "Hard", desc: "20 new/day", sigil: RuneHard, color: "var(--crimson)" },
 ];
 
 export function DifficultySelector({ current, onChange }: DifficultySelectorProps) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground shrink-0">Pace:</span>
-      {OPTIONS.map(({ key, icon: Icon, label, desc, color, activeBg }) => {
-        const isActive = current === key;
+    <div className="flex items-center gap-3 flex-wrap px-0.5">
+      <span className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+        Pace
+      </span>
+      {OPTIONS.map(({ key, label, desc, sigil: Sigil, color }) => {
+        const active = current === key;
         return (
           <motion.button
             key={key}
             whileTap={{ scale: 0.97 }}
             onClick={() => onChange(key)}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all ring-1 ${
-              isActive
-                ? `${activeBg} ${color} font-semibold`
-                : "ring-border/30 text-muted-foreground hover:ring-border/50"
-            }`}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[3px] font-display text-[11px] uppercase transition-colors"
+            style={{
+              letterSpacing: ".16em",
+              background: active ? `color-mix(in oklab, ${color}, transparent 88%)` : "transparent",
+              color: active ? color : "var(--muted-foreground)",
+              border: `1px solid ${active ? color : "var(--line-soft)"}`,
+              fontWeight: active ? 600 : 500,
+            }}
           >
-            <Icon className="size-3" />
-            <span>{label}</span>
-            {isActive && <span className="text-[10px] opacity-70">{desc}</span>}
+            <Sigil size={14} />
+            {label}
+            {active && (
+              <span className="text-[10px] normal-case opacity-75" style={{ letterSpacing: ".06em" }}>
+                · {desc}
+              </span>
+            )}
           </motion.button>
         );
       })}

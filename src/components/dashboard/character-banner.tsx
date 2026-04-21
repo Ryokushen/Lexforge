@@ -1,292 +1,159 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Crown, Flame, Heart, Shield, Sparkles, Star } from "lucide-react";
 import type { UserProfile } from "@/lib/types";
+import { IllumCard } from "@/components/rpg/illum-card";
+import { Plate } from "@/components/rpg/plate";
+import { HeronWheel, FlameSm } from "@/components/rpg/sigils";
 
 interface CharacterBannerProps {
   profile: UserProfile;
 }
 
-// ── Tier system — visual theme evolves with level ──────────────────────
-
-interface BannerTier {
-  title: string;
-  icon: typeof Shield;
-  border: string;
-  ring: string;
-  shadow: string;
-  gradient: string;
-  radialFrom: string;
-  radialTo: string;
-  titleGradient: string;
-  xpBarColor: string;
-  ringStroke: string;
-  ringTrack: string;
+function tierTitle(level: number): string {
+  if (level <= 2) return "Novice Scribe";
+  if (level <= 5) return "Word Apprentice";
+  if (level <= 8) return "Lexicon Adept";
+  if (level <= 12) return "Recall Knight";
+  if (level <= 16) return "Memory Sage";
+  if (level <= 20) return "Arcane Scholar";
+  return "Grand Loremaster";
 }
 
-function getTier(level: number): BannerTier {
-  if (level <= 2) return {
-    title: "Novice Scribe",
-    icon: Shield,
-    border: "border-muted-foreground/20",
-    ring: "ring-muted-foreground/10",
-    shadow: "shadow-md shadow-muted/10",
-    gradient: "from-muted/15 via-background to-muted/10",
-    radialFrom: "from-muted-foreground/5",
-    radialTo: "from-muted-foreground/3",
-    titleGradient: "from-muted-foreground to-muted-foreground/70",
-    xpBarColor: "from-muted-foreground/60 to-muted-foreground/40",
-    ringStroke: "text-muted-foreground/60",
-    ringTrack: "text-muted/30",
-  };
-  if (level <= 5) return {
-    title: "Word Apprentice",
-    icon: Shield,
-    border: "border-primary/25",
-    ring: "ring-primary/10",
-    shadow: "shadow-md shadow-primary/10",
-    gradient: "from-primary/12 via-background to-primary/5",
-    radialFrom: "from-primary/8",
-    radialTo: "from-primary/5",
-    titleGradient: "from-primary to-primary/70",
-    xpBarColor: "from-primary to-primary/70",
-    ringStroke: "text-primary",
-    ringTrack: "text-muted/40",
-  };
-  if (level <= 8) return {
-    title: "Lexicon Adept",
-    icon: Shield,
-    border: "border-primary/30",
-    ring: "ring-primary/15",
-    shadow: "shadow-lg shadow-primary/15",
-    gradient: "from-primary/18 via-background to-accent/8",
-    radialFrom: "from-primary/12",
-    radialTo: "from-accent/8",
-    titleGradient: "from-primary to-accent/80",
-    xpBarColor: "from-primary to-accent/60",
-    ringStroke: "text-primary",
-    ringTrack: "text-primary/15",
-  };
-  if (level <= 12) return {
-    title: "Recall Knight",
-    icon: Star,
-    border: "border-primary/35",
-    ring: "ring-primary/20",
-    shadow: "shadow-lg shadow-primary/20",
-    gradient: "from-primary/20 via-background to-accent/12",
-    radialFrom: "from-primary/15",
-    radialTo: "from-accent/12",
-    titleGradient: "from-primary via-accent to-primary",
-    xpBarColor: "from-primary via-accent/50 to-primary/70",
-    ringStroke: "text-accent",
-    ringTrack: "text-primary/20",
-  };
-  if (level <= 16) return {
-    title: "Memory Sage",
-    icon: Sparkles,
-    border: "border-accent/40",
-    ring: "ring-accent/20",
-    shadow: "shadow-xl shadow-accent/20",
-    gradient: "from-accent/15 via-primary/10 to-accent/8",
-    radialFrom: "from-accent/15",
-    radialTo: "from-primary/10",
-    titleGradient: "from-accent via-primary to-accent",
-    xpBarColor: "from-accent to-primary",
-    ringStroke: "text-accent",
-    ringTrack: "text-accent/15",
-  };
-  if (level <= 20) return {
-    title: "Arcane Scholar",
-    icon: Sparkles,
-    border: "border-amber-500/40",
-    ring: "ring-amber-500/20",
-    shadow: "shadow-xl shadow-amber-500/20",
-    gradient: "from-amber-500/12 via-primary/10 to-amber-500/8",
-    radialFrom: "from-amber-500/15",
-    radialTo: "from-primary/12",
-    titleGradient: "from-amber-400 via-amber-300 to-amber-500",
-    xpBarColor: "from-amber-500 to-amber-400",
-    ringStroke: "text-amber-400",
-    ringTrack: "text-amber-500/15",
-  };
-  return {
-    title: "Grand Loremaster",
-    icon: Crown,
-    border: "border-amber-400/50",
-    ring: "ring-amber-400/25",
-    shadow: "shadow-2xl shadow-amber-500/30",
-    gradient: "from-amber-500/15 via-primary/12 to-amber-400/10",
-    radialFrom: "from-amber-400/20",
-    radialTo: "from-amber-500/15",
-    titleGradient: "from-amber-300 via-amber-200 to-amber-400",
-    xpBarColor: "from-amber-400 via-amber-300 to-amber-500",
-    ringStroke: "text-amber-300",
-    ringTrack: "text-amber-400/20",
-  };
-}
-
-// ── XP Ring ────────────────────────────────────────────────────────────
-
-function XPRing({ level, xp, xpToNextLevel, tier }: {
-  level: number; xp: number; xpToNextLevel: number; tier: BannerTier;
+function XPRing({
+  level,
+  xp,
+  xpToNextLevel,
+}: {
+  level: number;
+  xp: number;
+  xpToNextLevel: number;
 }) {
-  const size = 80;
-  const strokeWidth = level > 12 ? 6 : 5;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
+  const size = 108;
+  const r = 48;
+  const circumference = 2 * Math.PI * r;
   const progress = xpToNextLevel > 0 ? xp / xpToNextLevel : 0;
   const offset = circumference * (1 - progress);
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        {/* Background track */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          className={tier.ringTrack}
-          strokeWidth={strokeWidth}
-        />
-        {/* XP progress arc */}
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 -rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--line)" strokeWidth="2" />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           fill="none"
-          stroke="currentColor"
-          className={tier.ringStroke}
-          strokeWidth={strokeWidth}
+          stroke="var(--gold)"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
           transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
         />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={42}
+          fill="none"
+          stroke="var(--line-soft)"
+          strokeDasharray="2 4"
+          opacity=".6"
+        />
       </svg>
-      {/* Level number centered */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <tier.icon className={`size-4 ${tier.ringStroke} mb-0.5`} />
-        <span className="text-xl font-bold tabular-nums leading-none">{level}</span>
+        <div style={{ color: "var(--gold-deep)" }} className="mb-1">
+          <HeronWheel size={24} />
+        </div>
+        <div className="font-display text-[36px] font-extrabold leading-none tabular-nums">{level}</div>
+        <div className="uppercase-tracked text-[9px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
+          Rank
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Banner ──────────────────────────────────────────────────────────────
-
 export function CharacterBanner({ profile }: CharacterBannerProps) {
-  const hpPct = (profile.hp / profile.maxHp) * 100;
-  const xpPct = profile.xpToNextLevel > 0 ? (profile.xp / profile.xpToNextLevel) * 100 : 0;
-  const tier = getTier(profile.level);
-  const isLowHp = hpPct < 30;
-  const isMidHp = hpPct < 60;
-
-  const streakGlow =
-    profile.currentStreak >= 14
-      ? "drop-shadow-[0_0_12px_rgba(245,158,11,0.7)]"
-      : profile.currentStreak >= 7
-        ? "drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-        : "";
+  const title = tierTitle(profile.level);
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className={`relative overflow-hidden rounded-2xl border ${tier.border} bg-gradient-to-br ${tier.gradient} px-4 py-4 ${tier.shadow} ring-1 ${tier.ring}`}
-    >
-      {/* Decorative radials — intensity scales with tier */}
-      <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] ${tier.radialFrom} via-transparent to-transparent pointer-events-none`} />
-      <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] ${tier.radialTo} via-transparent to-transparent pointer-events-none`} />
+    <IllumCard className="p-[26px]">
+      <div className="grid gap-6 items-center grid-cols-1 md:grid-cols-[auto_1fr_auto]">
+        {/* Left: level emblem */}
+        <div className="flex justify-center md:justify-start">
+          <XPRing level={profile.level} xp={profile.xp} xpToNextLevel={profile.xpToNextLevel} />
+        </div>
 
-      {/* Corner sparkles for high tiers */}
-      {profile.level > 16 && (
-        <Sparkles className="absolute top-3 right-3 size-4 text-amber-400/30 animate-pulse" />
-      )}
-      {profile.level > 20 && (
-        <Sparkles className="absolute bottom-3 left-3 size-3 text-amber-400/20 animate-pulse" />
-      )}
-
-      <div className="relative flex flex-col items-center gap-3 md:flex-row md:items-center md:gap-4">
-        {/* Level Emblem */}
-        <XPRing level={profile.level} xp={profile.xp} xpToNextLevel={profile.xpToNextLevel} tier={tier} />
-
-        {/* Title & XP */}
-        <div className="flex-1 text-center md:text-left space-y-1">
+        {/* Center: title + XP */}
+        <div className="text-center md:text-left">
+          <div
+            className="uppercase-tracked text-[10.5px] mb-0.5"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            Al&apos;Thoren of the Two Rivers
+          </div>
           <motion.h2
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className={`text-xl font-bold bg-gradient-to-r ${tier.titleGradient} bg-clip-text text-transparent`}
+            className="font-display text-[32px] font-bold leading-[1.05]"
+            style={{ color: "var(--ink)" }}
           >
-            {tier.title}
+            {title}
           </motion.h2>
-          {/* XP Bar */}
-          <div className="space-y-1 max-w-md">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>XP to Level {profile.level + 1}</span>
-              <span className="tabular-nums">{profile.xp} / {profile.xpToNextLevel}</span>
-            </div>
-            <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden ring-1 ring-muted/20">
-              <motion.div
-                className={`h-full rounded-full bg-gradient-to-r ${tier.xpBarColor}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.max(xpPct, 2)}%` }}
-                transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
-              />
-            </div>
+          <div
+            className="italic text-sm mt-1"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            &ldquo;The wheel weaves as the wheel wills.&rdquo;
+          </div>
+          <div className="mt-3 md:max-w-[420px] mx-auto md:mx-0">
+            <Plate
+              value={profile.xp}
+              max={profile.xpToNextLevel}
+              tone="gold"
+              label={`To rank ${profile.level + 1}`}
+              sublabel={`${profile.xp} / ${profile.xpToNextLevel} xp`}
+            />
           </div>
         </div>
 
-        {/* HP + Streak vitals */}
-        <div className="flex items-center gap-6 md:gap-5">
-          {/* HP */}
-          <div className={`flex items-center gap-2 ${isLowHp ? "animate-pulse" : ""}`}>
-            <Heart
-              className={`size-5 ${
-                isLowHp ? "text-red-500" : isMidHp ? "text-amber-500" : "text-emerald-500"
-              }`}
-              fill="currentColor"
-            />
-            <div className="space-y-0.5">
-              <span className="text-sm font-semibold tabular-nums">
+        {/* Right: HP + streak vitals */}
+        <div className="flex flex-col gap-3 min-w-[170px] mx-auto md:mx-0">
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="uppercase-tracked text-[10px]" style={{ color: "var(--crimson)" }}>
+                Vitality
+              </span>
+              <span className="font-mono-num text-[12px] tabular-nums">
                 {profile.hp}/{profile.maxHp}
               </span>
-              <div className="h-1.5 w-16 bg-muted/50 rounded-full overflow-hidden">
-                <motion.div
-                  className={`h-full rounded-full ${
-                    isLowHp ? "bg-red-500" : isMidHp ? "bg-amber-500" : "bg-emerald-500"
-                  }`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${hpPct}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 }}
-                />
-              </div>
             </div>
+            <Plate value={profile.hp} max={profile.maxHp} tone="crimson" height={8} />
           </div>
-
-          {/* Streak */}
-          <div className="flex items-center gap-1.5">
-            <Flame
-              className={`size-5 ${
-                profile.currentStreak > 0
-                  ? `text-amber-500 ${streakGlow}`
-                  : "text-muted-foreground"
-              }`}
-            />
-            <div className="text-center">
-              <span className="text-sm font-semibold tabular-nums">
-                {profile.currentStreak}
-              </span>
-              <span className="text-xs text-muted-foreground ml-0.5">d</span>
+          <div
+            className="flex items-center gap-2.5 rounded-[var(--radius)] px-3 py-2"
+            style={{
+              background: "color-mix(in oklab, var(--ember), transparent 88%)",
+              border: "1px solid color-mix(in oklab, var(--ember), transparent 60%)",
+            }}
+          >
+            <span style={{ color: "var(--ember)" }}>
+              <FlameSm size={20} />
+            </span>
+            <div>
+              <div className="font-display text-[20px] font-bold leading-none tabular-nums">
+                {profile.currentStreak}d
+              </div>
+              <div className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                streak · best {profile.longestStreak}d
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </motion.section>
+    </IllumCard>
   );
 }

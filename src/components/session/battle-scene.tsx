@@ -1,27 +1,55 @@
 "use client";
 
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { SessionResult } from "@/lib/types";
+import { CornerFlourish } from "@/components/rpg/sigils";
 
-// ── Monster pool ───────────────────────────────────────────────────────
+// ── Foe pool ─────────────────────────────────────────────────────────────
 
-const MONSTERS = [
-  { name: "Minotaur", icon: "/icons/monster-minotaur.svg" },
-  { name: "Troll", icon: "/icons/monster-troll.svg" },
-  { name: "Ogre", icon: "/icons/monster-ogre.svg" },
-  { name: "Daemon", icon: "/icons/monster-daemon.svg" },
-  { name: "Zombie", icon: "/icons/monster-zombie.svg" },
-  { name: "Shambler", icon: "/icons/monster-shambler.svg" },
+const FOES = [
+  {
+    name: "Myrddraal",
+    subtitle: "Eyeless Half-man",
+    color: "#3a3a3a",
+    accent: "#8a1e1e",
+    hpLabel: "Truths",
+  },
+  {
+    name: "Trolloc Warband",
+    subtitle: "Spawn of the Shadow",
+    color: "#5a3318",
+    accent: "#b85820",
+    hpLabel: "Banners",
+  },
+  {
+    name: "Draghkar",
+    subtitle: "Whisperer of the Dark",
+    color: "#2a1a2e",
+    accent: "#7a3e7a",
+    hpLabel: "Wards",
+  },
+  {
+    name: "Gholam",
+    subtitle: "Blood-drinker, Ageless",
+    color: "#3b1f1f",
+    accent: "#a02020",
+    hpLabel: "Seals",
+  },
+  {
+    name: "Fade",
+    subtitle: "Shadowed Captain",
+    color: "#1e1a2e",
+    accent: "#5a5a8f",
+    hpLabel: "Threads",
+  },
+  {
+    name: "Dark Hound",
+    subtitle: "Pack of the Blight",
+    color: "#2e1a14",
+    accent: "#d0692c",
+    hpLabel: "Chains",
+  },
 ];
-
-const PLAYERS = [
-  "/icons/player-knight.svg",
-  "/icons/player-cavalry.svg",
-  "/icons/player-helm.svg",
-];
-
-// ── Props ──────────────────────────────────────────────────────────────
 
 interface BattleSceneProps {
   sessionSeed: number;
@@ -31,211 +59,199 @@ interface BattleSceneProps {
   lastResult: SessionResult | null;
 }
 
-export function BattleScene({
-  sessionSeed,
-  totalWords,
-  results,
-  lastResult,
-}: BattleSceneProps) {
-  // Stable cosmetic selection derived from the session seed.
-  const monster = MONSTERS[sessionSeed % MONSTERS.length];
-  const playerIcon =
-    PLAYERS[Math.floor(sessionSeed / MONSTERS.length) % PLAYERS.length];
-  const attackPhase = lastResult
-    ? (lastResult.correct ? "hit" : "miss")
-    : "idle";
+export function BattleScene({ sessionSeed, totalWords, results, lastResult }: BattleSceneProps) {
+  const foe = FOES[sessionSeed % FOES.length];
 
-  // Monster HP: starts at totalWords, decreases by 1 per correct answer
-  const correctCount = results.filter(r => r.correct).length;
-  const monsterMaxHp = totalWords;
-  const monsterHp = Math.max(monsterMaxHp - correctCount, 0);
-  const hpPct = monsterMaxHp > 0 ? (monsterHp / monsterMaxHp) * 100 : 0;
-  const isDead = monsterHp === 0;
-  const isLowHp = hpPct < 30 && !isDead;
-
-  // Shake intensity scales inversely with HP: low HP = bigger shake
-  const shakeIntensity = isLowHp
-    ? [0, -12, 12, -8, 8, -4, 4, 0]
-    : [0, 8, -8, 4, -4, 0];
+  const correctCount = results.filter((r) => r.correct).length;
+  const maxHp = totalWords;
+  const hp = Math.max(maxHp - correctCount, 0);
+  const isDead = hp === 0;
+  const attackPhase = lastResult ? (lastResult.correct ? "hit" : "miss") : "idle";
+  const shaking = lastResult && lastResult.correct;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Monster info bar */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-xs font-semibold text-red-400">{monster.name}</span>
-        <div className="flex-1 h-2 bg-muted/40 rounded-full overflow-hidden">
-          <motion.div
-            className={`h-full rounded-full ${
-              hpPct > 50 ? "bg-red-500" : hpPct > 25 ? "bg-amber-500" : "bg-red-600"
-            }`}
-            animate={{ width: `${hpPct}%` }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          />
-        </div>
-        <span className="text-xs font-mono tabular-nums text-muted-foreground">
-          {monsterHp}/{monsterMaxHp}
-        </span>
-      </div>
+      <motion.div
+        key={`foe-${lastResult?.wordId ?? "idle"}-${attackPhase}`}
+        animate={
+          shaking
+            ? { x: [0, -8, 8, -4, 4, 0] }
+            : attackPhase === "miss"
+              ? { x: [0, 4, -4, 0] }
+              : { x: 0 }
+        }
+        transition={{ duration: 0.4 }}
+        className="relative mx-auto overflow-hidden"
+        style={{
+          width: 220,
+          height: 300,
+          background: `linear-gradient(160deg,
+            color-mix(in oklab, ${foe.color}, black 10%) 0%,
+            color-mix(in oklab, ${foe.color}, black 40%) 100%)`,
+          border: "3px solid var(--gold-deep)",
+          outline: "1px solid var(--line)",
+          outlineOffset: 3,
+          borderRadius: 6,
+          boxShadow: "0 10px 30px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,240,200,.12)",
+        }}
+      >
+        {/* Corner flourishes */}
+        {(["tl", "tr", "bl", "br"] as const).map((p) => (
+          <span
+            key={p}
+            aria-hidden
+            className="absolute"
+            style={{
+              top: p.includes("t") ? 4 : undefined,
+              bottom: p.includes("b") ? 4 : undefined,
+              left: p.includes("l") ? 4 : undefined,
+              right: p.includes("r") ? 4 : undefined,
+              color: "var(--gold-bright)",
+              opacity: 0.85,
+              transform:
+                p === "tr"
+                  ? "scaleX(-1)"
+                  : p === "bl"
+                    ? "scaleY(-1)"
+                    : p === "br"
+                      ? "scale(-1,-1)"
+                      : "none",
+            }}
+          >
+            <CornerFlourish size={22} />
+          </span>
+        ))}
 
-      {/* Battle arena */}
-      <div className="relative h-24 flex items-center justify-between px-4 rounded-xl bg-muted/20 border border-border/40 overflow-hidden">
-        {/* Decorative ground line */}
-        <div className="absolute bottom-0 inset-x-0 h-px bg-border/30" />
-
-        {/* Player character (left) */}
-        <motion.div
-          key={`player-${lastResult?.wordId ?? "idle"}-${attackPhase}`}
-          className="relative z-10"
-          animate={
-            attackPhase === "hit"
-              ? { x: [0, 40, 0] }
-              : attackPhase === "miss"
-                ? { x: [0, 15, 0] }
-                : { y: [0, -3, 0] }
-          }
-          transition={
-            attackPhase === "idle"
-              ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
-              : { duration: 0.3, ease: "easeOut" }
-          }
+        {/* Foe silhouette — hooded figure */}
+        <svg
+          viewBox="0 0 220 300"
+          width="100%"
+          height="100%"
+          className="absolute inset-0"
+          aria-hidden
         >
-          {/* Red flash on player when monster "counterattacks" on miss */}
-          <AnimatePresence>
-            {attackPhase === "miss" && (
-              <motion.div
-                key={`player-flash-${lastResult?.wordId}`}
-                initial={{ opacity: 0.7 }}
-                animate={{ opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-                className="absolute inset-0 rounded-full bg-red-500 blur-md z-0"
-              />
-            )}
-          </AnimatePresence>
-          <Image
-            src={playerIcon}
-            alt="Player"
-            width={64}
-            height={64}
-            className="relative size-16 opacity-90 drop-shadow-[0_0_6px_rgba(139,92,246,0.4)]"
-            style={{ filter: "brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(230deg)" }}
+          <defs>
+            <radialGradient id="foeglow" cx="50%" cy="40%" r="50%">
+              <stop offset="0%" stopColor={foe.accent} stopOpacity=".5" />
+              <stop offset="100%" stopColor={foe.accent} stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="110" cy="125" r="100" fill="url(#foeglow)" />
+          <path
+            d="M 58 100 Q 110 46 162 100 L 184 276 L 36 276 Z"
+            fill="rgba(0,0,0,.55)"
+            stroke={foe.accent}
+            strokeWidth="1.2"
+            strokeOpacity=".6"
           />
-        </motion.div>
+          <path
+            d="M 76 114 Q 110 86 144 114 L 150 196 Q 110 216 68 196 Z"
+            fill="rgba(0,0,0,.85)"
+          />
+          {!isDead && (
+            <>
+              <ellipse cx="95" cy="150" rx="4.5" ry="2" fill={foe.accent} opacity=".9" />
+              <ellipse cx="125" cy="150" rx="4.5" ry="2" fill={foe.accent} opacity=".9" />
+            </>
+          )}
+          <path d="M 46 184 L 174 184" stroke={foe.accent} strokeWidth=".6" opacity=".25" />
+          <path d="M 40 230 L 180 230" stroke={foe.accent} strokeWidth=".6" opacity=".25" />
+        </svg>
 
-        {/* Clash FX (center) */}
-        <AnimatePresence>
-          {lastResult && (
-            <motion.div
-              key={`clash-${lastResult.wordId}-${attackPhase}`}
-              initial={{ scale: 0, opacity: 0, rotate: -30 }}
-              animate={{ scale: [0, 1.2, 0.9], opacity: [0, 1, 0], rotate: [-30, 0, 0] }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
-            >
-              <Image
-                src="/icons/fx-sword-clash.svg"
-                alt=""
-                width={48}
-                height={48}
-                className={`size-12 ${
-                  attackPhase === "hit"
-                    ? "drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]"
-                    : "drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"
-                }`}
+        {/* HP pip bar on top */}
+        <div className="absolute top-3 left-3.5 right-3.5">
+          <div
+            className="flex justify-between items-baseline text-[9px] mb-1"
+            style={{ color: "#f0e1b5", letterSpacing: ".15em" }}
+          >
+            <span className="font-display">{foe.hpLabel.toUpperCase()}</span>
+            <span className="font-mono-num">
+              {hp}/{maxHp}
+            </span>
+          </div>
+          <div className="flex gap-[3px]">
+            {Array.from({ length: maxHp }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-1"
                 style={{
-                  filter: attackPhase === "hit"
-                    ? "brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(90deg)"
-                    : "brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(330deg)"
+                  height: 6,
+                  background: i < hp ? foe.accent : "rgba(0,0,0,.5)",
+                  border: `1px solid ${i < hp ? "var(--gold-bright)" : "rgba(0,0,0,.7)"}`,
+                  boxShadow: i < hp ? `0 0 4px ${foe.accent}` : "none",
                 }}
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ))}
+          </div>
+        </div>
 
-        {/* Floating damage / miss number */}
+        {/* Name banner at bottom */}
+        <div
+          className="absolute left-2.5 right-2.5 bottom-2.5 px-3 py-2 text-center"
+          style={{
+            background: "linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,0,0,.85))",
+            border: "1px solid var(--gold-deep)",
+          }}
+        >
+          <div
+            className="font-display text-base font-bold"
+            style={{ color: "var(--gold-bright)", letterSpacing: ".15em" }}
+          >
+            {foe.name.toUpperCase()}
+          </div>
+          <div className="text-[10px] italic mt-0.5" style={{ color: "#d7c9a7" }}>
+            {foe.subtitle}
+          </div>
+        </div>
+
+        {/* Damage / Miss floater */}
         <AnimatePresence>
           {lastResult && (
             <motion.div
               key={`dmg-${results.length}`}
               initial={{ y: 0, opacity: 1 }}
-              animate={{ y: -30, opacity: 0 }}
+              animate={{ y: -36, opacity: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className={`absolute right-12 top-6 z-30 font-bold text-sm pointer-events-none select-none ${
-                attackPhase === "hit" ? "text-green-400" : "text-red-400"
-              }`}
+              className="absolute right-4 top-12 font-display font-bold text-sm pointer-events-none select-none"
+              style={{
+                color: attackPhase === "hit" ? "var(--sage)" : "var(--crimson-2)",
+                textShadow: "0 1px 0 rgba(0,0,0,.6)",
+                letterSpacing: ".1em",
+              }}
             >
               {attackPhase === "hit" ? "-1" : "MISS"}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Monster (right) */}
+        {/* Death overlay */}
         <AnimatePresence>
-          {!isDead ? (
+          {isDead && (
             <motion.div
-              key={`monster-${lastResult?.wordId ?? "idle"}-${attackPhase}`}
-              className="relative z-10"
-              animate={
-                attackPhase === "hit"
-                  ? { x: shakeIntensity, opacity: [1, 0.5, 1] }
-                  : attackPhase === "miss"
-                    ? { scale: [1, 1.1, 1] }
-                    : isLowHp
-                      ? { rotate: [0, 1, -1, 0] }
-                      : { x: 0, scale: 1 }
-              }
-              transition={
-                attackPhase === "idle" && isLowHp
-                  ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
-                  : { duration: 0.4 }
-              }
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: "rgba(0,0,0,.55)" }}
             >
-              <Image
-                src={monster.icon}
-                alt={monster.name}
-                width={64}
-                height={64}
-                className="size-16 opacity-90 drop-shadow-[0_0_6px_rgba(239,68,68,0.4)]"
-                style={{ filter: "brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(330deg)", transform: "scaleX(-1)" }}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="monster-dead"
-              className="relative z-10 flex flex-col items-center"
-            >
-              {/* Dramatic death: scale to 0, rotate 45deg, fade out */}
-              <motion.div
-                initial={{ opacity: 1, scale: 1, rotate: 0 }}
-                animate={{ opacity: 0, scale: 0, rotate: 45 }}
-                transition={{ duration: 0.7, ease: "easeIn" }}
-              >
-                <Image
-                  src="/icons/fx-death.svg"
-                  alt="Defeated"
-                  width={64}
-                  height={64}
-                  className="size-16 opacity-80"
-                />
-              </motion.div>
-
-              {/* VICTORY text — gold, springs up from 0 */}
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.4 }}
-                className="absolute inset-0 flex items-center justify-center"
+                transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.3 }}
+                className="font-display font-black tracking-[0.3em]"
+                style={{
+                  color: "var(--gold-bright)",
+                  fontSize: 28,
+                  textShadow: "0 0 12px rgba(236,198,115,.7)",
+                }}
               >
-                <span className="text-amber-400 font-black text-lg tracking-widest drop-shadow-[0_0_8px_rgba(251,191,36,0.7)]">
-                  VICTORY
-                </span>
+                FALLEN
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     </div>
   );
 }

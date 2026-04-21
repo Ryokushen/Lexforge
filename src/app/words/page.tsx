@@ -7,8 +7,6 @@ import { useBootstrap } from "@/lib/bootstrap-context";
 import { addWordWithCard } from "@/lib/scheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -17,15 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertTriangle,
-  BookOpen,
-  ChevronDown,
-  Lock,
-  Plus,
-  RotateCcw,
-  Search,
-} from "lucide-react";
+import { AlertTriangle, Lock, Plus, RotateCcw, Search } from "lucide-react";
 import { useStats } from "@/hooks/use-stats";
 import type { TOTCaptureSource, Word } from "@/lib/types";
 import { TIER_UNLOCK_LEVELS, TOT_CAPTURE_SOURCES } from "@/lib/types";
@@ -37,21 +27,20 @@ import {
   normalizeWord,
   type LibraryTierFilter,
 } from "@/lib/word-library";
+import { IllumCard } from "@/components/rpg/illum-card";
+import { HeronDivider } from "@/components/rpg/heron-divider";
+import { Anvil, ChevronRight, Tome } from "@/components/rpg/sigils";
 
 // ── Tier config ────────────────────────────────────────────────────────
 
-const TIER_BADGE_COLORS: Record<string, string> = {
-  "1": "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  "2": "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  "3": "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  custom: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-};
-
-const TIER_INFO: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  "1": { label: "Core Articulation", color: "text-emerald-500", bg: "bg-emerald-500", border: "border-l-emerald-500/40" },
-  "2": { label: "Precision Vocabulary", color: "text-blue-500", bg: "bg-blue-500", border: "border-l-blue-500/40" },
-  "3": { label: "Power Words", color: "text-purple-500", bg: "bg-purple-500", border: "border-l-purple-500/40" },
-  custom: { label: "Custom", color: "text-amber-500", bg: "bg-amber-500", border: "border-l-amber-500/40" },
+const TIER_INFO: Record<
+  string,
+  { label: string; numeral: string; color: string }
+> = {
+  "1": { label: "Core Articulation", numeral: "I", color: "var(--sage)" },
+  "2": { label: "Precision Vocabulary", numeral: "II", color: "var(--lapis)" },
+  "3": { label: "Power Words", numeral: "III", color: "var(--crimson)" },
+  custom: { label: "Custom", numeral: "★", color: "var(--ember)" },
 };
 
 const TOT_SOURCE_LABELS: Record<TOTCaptureSource, string> = {
@@ -77,10 +66,7 @@ function trimOptional(value: string): string | undefined {
 
 function formatCaptureDate(capturedAt: string): string {
   const parsed = new Date(capturedAt);
-  if (Number.isNaN(parsed.getTime())) {
-    return "Unknown";
-  }
-
+  if (Number.isNaN(parsed.getTime())) return "Unknown";
   return parsed.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -88,34 +74,79 @@ function formatCaptureDate(capturedAt: string): string {
   });
 }
 
+function tierBadgeStyle(color: string) {
+  return {
+    borderColor: color,
+    color,
+    background: `color-mix(in oklab, ${color}, transparent 90%)`,
+  } as const;
+}
+
 // ── Word row ───────────────────────────────────────────────────────────
 
-function WordRow({ word, isExpanded, onToggle }: { word: Word; isExpanded: boolean; onToggle: () => void }) {
+function WordRow({
+  word,
+  isExpanded,
+  onToggle,
+  isLast,
+}: {
+  word: Word;
+  isExpanded: boolean;
+  onToggle: () => void;
+  isLast: boolean;
+}) {
   const tierKey = String(word.tier);
+  const tier = TIER_INFO[tierKey] ?? TIER_INFO.custom;
 
   return (
-    <div>
+    <div
+      style={{
+        borderBottom: isLast ? "none" : "1px solid var(--line-soft)",
+      }}
+    >
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/30 transition-colors border-b border-border/30 last:border-b-0 group"
+        className="w-full text-left grid items-center gap-3 py-3 px-5 transition-colors hover:bg-[color-mix(in_oklab,var(--paper),var(--gold)_4%)]"
+        style={{
+          gridTemplateColumns: "20px 1fr auto auto",
+          borderLeft: `4px solid ${tier.color}`,
+        }}
       >
-        <span className="font-semibold text-sm min-w-[120px] sm:min-w-[140px] shrink-0">{word.word}</span>
-        <Badge
-          variant="outline"
-          className={`text-[10px] border shrink-0 ${TIER_BADGE_COLORS[tierKey] ?? TIER_BADGE_COLORS.custom}`}
+        <span
+          style={{
+            color: "var(--gold-deep)",
+            transform: isExpanded ? "rotate(90deg)" : "none",
+            transition: "transform .15s",
+          }}
+          aria-hidden
         >
-          {word.tier === "custom" ? "Custom" : `T${word.tier}`}
-        </Badge>
-        {word.totCapture && (
-          <Badge
-            variant="outline"
-            className="text-[10px] border border-amber-500/30 bg-amber-500/10 text-amber-500 shrink-0"
+          <ChevronRight size={14} />
+        </span>
+        <div className="min-w-0">
+          <div
+            className="font-display text-[19px] font-bold"
+            style={{ color: "var(--ink)" }}
           >
-            TOT x{word.totCapture.count}
-          </Badge>
+            {word.word}
+          </div>
+          <div
+            className="text-[13.5px] truncate mt-0.5"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            {word.definition}
+          </div>
+        </div>
+        <span className="lex-badge shrink-0" style={tierBadgeStyle(tier.color)}>
+          {word.tier === "custom" ? "Custom" : `Tier ${word.tier}`}
+        </span>
+        {word.totCapture && (
+          <span
+            className="lex-badge shrink-0"
+            style={tierBadgeStyle("var(--ember)")}
+          >
+            TOT ×{word.totCapture.count}
+          </span>
         )}
-        <span className="text-sm text-muted-foreground truncate flex-1">{word.definition}</span>
-        <ChevronDown className={`size-3.5 text-muted-foreground shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
       </button>
 
       <AnimatePresence>
@@ -127,61 +158,99 @@ function WordRow({ word, isExpanded, onToggle }: { word: Word; isExpanded: boole
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 py-3 bg-muted/20 border-b border-border/30 space-y-2.5">
-              <p className="text-sm">{word.definition}</p>
-
+            <div
+              className="py-4 pl-16 pr-5 space-y-3"
+              style={{
+                background: "color-mix(in oklab, var(--paper), var(--gold) 2%)",
+              }}
+            >
               {word.examples.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Examples</p>
+                <div className="space-y-1.5">
+                  <p
+                    className="uppercase-tracked text-[10px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    Omens
+                  </p>
                   {word.examples.map((ex, i) => (
-                    <p key={i} className="text-sm text-muted-foreground italic pl-2 border-l-2 border-border/40">
-                      {ex}
+                    <p
+                      key={i}
+                      className="italic text-sm pl-2.5"
+                      style={{
+                        color: "var(--ink-2)",
+                        borderLeft: "2px solid var(--gold)",
+                      }}
+                    >
+                      &ldquo;{ex}&rdquo;
                     </p>
                   ))}
                 </div>
               )}
 
               {word.synonyms.length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs text-muted-foreground">Synonyms:</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className="uppercase-tracked text-[10px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    Kin
+                  </span>
                   {word.synonyms.map((s) => (
-                    <Badge key={s} variant="secondary" className="text-xs">
+                    <span key={s} className="lex-badge">
                       {s}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               )}
 
               {word.totCapture && (
-                <div className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                <div
+                  className="space-y-2 rounded-[var(--radius)] p-3"
+                  style={{
+                    background: "color-mix(in oklab, var(--ember), transparent 92%)",
+                    border: "1px solid color-mix(in oklab, var(--ember), transparent 70%)",
+                  }}
+                >
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="size-4 text-amber-500" />
-                    <p className="text-xs uppercase tracking-widest text-amber-500 font-medium">
+                    <AlertTriangle
+                      className="size-4"
+                      style={{ color: "var(--ember)" }}
+                    />
+                    <p
+                      className="uppercase-tracked text-[10px]"
+                      style={{ color: "var(--ember)" }}
+                    >
                       Blanking Capture
                     </p>
-                    <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-500">
+                    <span className="lex-badge" style={tierBadgeStyle("var(--ember)")}>
                       {word.totCapture.count} logged
-                    </Badge>
+                    </span>
                   </div>
-                  <div className="grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
+                  <div
+                    className="grid gap-1 text-sm sm:grid-cols-2"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
                     <p>
-                      <span className="text-foreground">Source:</span>{" "}
+                      <span style={{ color: "var(--ink)" }}>Source:</span>{" "}
                       {TOT_SOURCE_LABELS[word.totCapture.source]}
                     </p>
                     <p>
-                      <span className="text-foreground">Last captured:</span>{" "}
+                      <span style={{ color: "var(--ink)" }}>Last captured:</span>{" "}
                       {formatCaptureDate(word.totCapture.capturedAt)}
                     </p>
                   </div>
                   {word.totCapture.weakSubstitute && (
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-foreground">Used instead:</span>{" "}
+                    <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                      <span style={{ color: "var(--ink)" }}>Used instead:</span>{" "}
                       {word.totCapture.weakSubstitute}
                     </p>
                   )}
                   {word.totCapture.context && (
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      <span className="text-foreground">Context:</span>{" "}
+                    <p
+                      className="text-sm whitespace-pre-wrap"
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      <span style={{ color: "var(--ink)" }}>Context:</span>{" "}
                       {word.totCapture.context}
                     </p>
                   )}
@@ -236,23 +305,18 @@ export default function WordsPage() {
     }
 
     void loadInitialWords();
-
     return () => {
       cancelled = true;
     };
   }, [seedStatus]);
 
-  // Filter by tier + search
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
     return words
       .filter((w) => activeTier === "all" || w.tier === activeTier)
       .filter((w) => {
-        if (!normalizedSearch) {
-          return true;
-        }
-
+        if (!normalizedSearch) return true;
         return [
           w.word,
           w.definition,
@@ -262,7 +326,6 @@ export default function WordsPage() {
       });
   }, [words, activeTier, search]);
 
-  // Group by tier for "all" view
   const grouped = useMemo(() => {
     if (activeTier !== "all") return null;
     const groups: { tier: string; words: Word[] }[] = [];
@@ -275,7 +338,6 @@ export default function WordsPage() {
     return groups;
   }, [filtered, activeTier]);
 
-  // Tier counts (from all words, ignoring search)
   const tierCounts = useMemo(() => {
     const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, custom: 0 };
     for (const w of words) {
@@ -305,12 +367,13 @@ export default function WordsPage() {
     setTotForm(INITIAL_TOT_FORM);
   }, []);
 
-  const handleTOTDialogChange = useCallback((open: boolean) => {
-    setTotDialogOpen(open);
-    if (!open) {
-      resetTOTForm();
-    }
-  }, [resetTOTForm]);
+  const handleTOTDialogChange = useCallback(
+    (open: boolean) => {
+      setTotDialogOpen(open);
+      if (!open) resetTOTForm();
+    },
+    [resetTOTForm],
+  );
 
   const handleCaptureTOT = async () => {
     const targetWord = totForm.word.trim();
@@ -334,16 +397,12 @@ export default function WordsPage() {
           context,
           capturedAt,
           updatedAt: capturedAt,
-          count: Math.max(
-            existingTOTWord.totCapture?.count ?? 0,
-            eventIds.length,
-          ),
+          count: Math.max(existingTOTWord.totCapture?.count ?? 0, eventIds.length),
           eventIds,
         },
       });
     } else {
       const eventIds = [createTOTEventId()];
-
       await addWordWithCard({
         word: targetWord,
         definition,
@@ -369,33 +428,35 @@ export default function WordsPage() {
 
   const tierFilters: { key: LibraryTierFilter; label: string }[] = [
     { key: "all", label: "All" },
-    { key: 1, label: "Tier 1" },
-    { key: 2, label: "Tier 2" },
-    { key: 3, label: "Tier 3" },
-    { key: "custom", label: "Custom" },
+    { key: 1, label: "I" },
+    { key: 2, label: "II" },
+    { key: 3, label: "III" },
+    { key: "custom", label: "★" },
   ];
 
   const renderWordList = (wordList: Word[]) => (
-    <Card size="sm" className="overflow-hidden">
+    <IllumCard className="p-0 overflow-hidden" corners={false} innerBorder={false}>
       <div>
-        {wordList.map((w) => (
+        {wordList.map((w, i) => (
           <WordRow
             key={w.id}
             word={w}
             isExpanded={expandedId === w.id}
             onToggle={() => setExpandedId(expandedId === w.id ? null : (w.id ?? null))}
+            isLast={i === wordList.length - 1}
           />
         ))}
       </div>
-    </Card>
+    </IllumCard>
   );
 
   if (seedStatus === "seeding" && words.length === 0) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-4">
+      <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
-          <span className="text-3xl animate-pulse">&#x2692;&#xFE0F;</span>
-          <p className="text-sm text-muted-foreground">Stocking your library...</p>
+          <span className="uppercase-tracked text-xs" style={{ color: "var(--gold-deep)" }}>
+            Stocking the lexicon…
+          </span>
         </div>
       </main>
     );
@@ -403,14 +464,21 @@ export default function WordsPage() {
 
   if (seedStatus === "error" && words.length === 0) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-4">
+      <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-400">
+          <div
+            className="flex size-14 items-center justify-center rounded-[var(--radius)]"
+            style={{
+              background: "color-mix(in oklab, var(--crimson), transparent 88%)",
+              color: "var(--crimson)",
+              border: "1px solid color-mix(in oklab, var(--crimson), transparent 60%)",
+            }}
+          >
             <AlertTriangle className="size-7" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold">Library setup failed</h1>
-            <p className="max-w-md text-sm text-muted-foreground">
+            <h1 className="font-display text-2xl font-bold">Library setup failed</h1>
+            <p className="max-w-md text-sm italic" style={{ color: "var(--muted-foreground)" }}>
               {seedError ?? "Retry setup to load the built-in word library."}
             </p>
           </div>
@@ -424,29 +492,32 @@ export default function WordsPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+    <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <BookOpen className="size-4.5" />
+      <div className="flex items-baseline justify-between gap-4 flex-wrap">
+        <div>
+          <div className="uppercase-tracked text-[11px]" style={{ color: "var(--gold-deep)" }}>
+            Tome of Words
           </div>
-          <div>
-            <h1 className="text-xl font-bold">Word Library</h1>
-            <p className="text-xs text-muted-foreground">
-              {words.length} words collected
-            </p>
-          </div>
+          <h1
+            className="font-display text-[34px] font-bold mt-0.5"
+            style={{ color: "var(--ink)" }}
+          >
+            The Lexicon
+          </h1>
+          <p className="italic mt-1" style={{ color: "var(--muted-foreground)" }}>
+            {words.length} words gathered across three disciplines.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Dialog open={totDialogOpen} onOpenChange={handleTOTDialogChange}>
-            <DialogTrigger render={<Button size="sm" variant="outline" className="gap-1.5" />}>
+            <DialogTrigger render={<button className="btn-illum btn-illum-ghost" />}>
               <AlertTriangle className="size-3.5" />
               Capture TOT
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Capture Blanking Moment</DialogTitle>
+                <DialogTitle className="font-display">Capture Blanking Moment</DialogTitle>
                 <DialogDescription>
                   Save the exact word that stalled, what you used instead, and where it happened.
                 </DialogDescription>
@@ -456,26 +527,25 @@ export default function WordsPage() {
                   placeholder="Target word"
                   value={totForm.word}
                   onChange={(event) =>
-                    setTotForm((current) => ({ ...current, word: event.target.value }))
+                    setTotForm((c) => ({ ...c, word: event.target.value }))
                   }
                 />
-                {normalizedTOTWord && (
-                  existingTOTWord ? (
-                    <p className="text-sm text-emerald-500">
+                {normalizedTOTWord &&
+                  (existingTOTWord ? (
+                    <p className="text-sm italic" style={{ color: "var(--sage)" }}>
                       This word is already in your library. Saving here will reinforce that entry.
                     </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
                       This will create a new custom word, so add a definition before saving.
                     </p>
-                  )
-                )}
+                  ))}
                 {totNeedsDefinition && (
                   <Input
                     placeholder="Definition"
                     value={totForm.definition}
                     onChange={(event) =>
-                      setTotForm((current) => ({ ...current, definition: event.target.value }))
+                      setTotForm((c) => ({ ...c, definition: event.target.value }))
                     }
                   />
                 )}
@@ -483,34 +553,37 @@ export default function WordsPage() {
                   placeholder="What you said instead (optional)"
                   value={totForm.weakSubstitute}
                   onChange={(event) =>
-                    setTotForm((current) => ({
-                      ...current,
-                      weakSubstitute: event.target.value,
-                    }))
+                    setTotForm((c) => ({ ...c, weakSubstitute: event.target.value }))
                   }
                 />
                 <div className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                  <label
+                    className="uppercase-tracked text-[10px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
                     Context
                   </label>
                   <textarea
                     value={totForm.context}
                     onChange={(event) =>
-                      setTotForm((current) => ({ ...current, context: event.target.value }))
+                      setTotForm((c) => ({ ...c, context: event.target.value }))
                     }
                     placeholder="Where did it happen? Paste the sentence or describe the moment."
                     className="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                  <label
+                    className="uppercase-tracked text-[10px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
                     Source
                   </label>
                   <select
                     value={totForm.source}
                     onChange={(event) =>
-                      setTotForm((current) => ({
-                        ...current,
+                      setTotForm((c) => ({
+                        ...c,
                         source: event.target.value as TOTCaptureSource,
                       }))
                     }
@@ -523,25 +596,27 @@ export default function WordsPage() {
                     ))}
                   </select>
                 </div>
-                <Button
+                <button
                   onClick={handleCaptureTOT}
-                  className="w-full gap-2"
-                  disabled={!totForm.word.trim() || (totNeedsDefinition && !totForm.definition.trim())}
+                  className="btn-illum w-full"
+                  disabled={
+                    !totForm.word.trim() || (totNeedsDefinition && !totForm.definition.trim())
+                  }
                 >
                   <AlertTriangle className="size-4" />
                   Save Blanking Moment
-                </Button>
+                </button>
               </div>
             </DialogContent>
           </Dialog>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
-              <Plus className="size-3.5" />
-              Add Word
+            <DialogTrigger render={<button className="btn-illum" />}>
+              <Anvil size={14} />
+              Forge a Word
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Custom Word</DialogTitle>
+                <DialogTitle className="font-display">Forge a Custom Word</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 pt-3">
                 <Input
@@ -550,7 +625,7 @@ export default function WordsPage() {
                   onChange={(e) => setNewWord(e.target.value)}
                 />
                 {duplicateWord && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm italic" style={{ color: "var(--crimson)" }}>
                     This word is already in your library.
                   </p>
                 )}
@@ -564,88 +639,118 @@ export default function WordsPage() {
                   value={newExample}
                   onChange={(e) => setNewExample(e.target.value)}
                 />
-                <Button
+                <button
                   onClick={handleAdd}
-                  className="w-full"
+                  className="btn-illum w-full"
                   disabled={!newWord.trim() || !newDef.trim() || duplicateWord}
                 >
-                  Add to Library
-                </Button>
+                  <Plus className="size-4" />
+                  Add to Lexicon
+                </button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-        <Input
-          placeholder="Search words, definitions, or blanking notes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 h-9 text-sm bg-muted/30 border-border/50"
-        />
-      </div>
+      <HeronDivider />
 
-      {/* Tier filter pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto">
-        {tierFilters.map(({ key, label }) => {
-          const count = tierCounts[String(key)] || 0;
-          const isActive = activeTier === key;
-          const tierInfo = key !== "all" ? TIER_INFO[String(key)] : null;
-          const locked = isTierLocked(key, playerLevel);
-
-          return (
-            <Button
-              key={String(key)}
-              variant={isActive ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTier(key)}
-              disabled={locked}
-              className={`gap-1 text-xs shrink-0 ${
-                isActive && tierInfo ? `${tierInfo.bg} hover:${tierInfo.bg}/90` : ""
-              }`}
-            >
-              {locked && <Lock className="size-3" />}
-              {label}
-              <span className={`text-[10px] tabular-nums ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
-                {count}
-              </span>
-            </Button>
-          );
-        })}
+      {/* Search + tier filter */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-4 pointer-events-none"
+            style={{ color: "var(--muted-foreground)" }}
+          />
+          <input
+            className="inkwell pl-9"
+            style={{ fontSize: 15 }}
+            placeholder="Seek a word…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div
+          className="inline-flex overflow-hidden"
+          style={{ border: "1px solid var(--line)", borderRadius: 3 }}
+        >
+          {tierFilters.map(({ key, label }, i) => {
+            const active = activeTier === key;
+            const count = tierCounts[String(key)] || 0;
+            const locked = isTierLocked(key, playerLevel);
+            return (
+              <button
+                key={String(key)}
+                onClick={() => setActiveTier(key)}
+                disabled={locked}
+                className="font-display uppercase text-[11px] px-3 py-2 flex items-center gap-1.5 disabled:opacity-40"
+                style={{
+                  letterSpacing: ".18em",
+                  background: active ? "var(--gold)" : "transparent",
+                  color: active ? "#1b1204" : "var(--muted-foreground)",
+                  borderRight: i < tierFilters.length - 1 ? "1px solid var(--line)" : "none",
+                }}
+              >
+                {locked && <Lock className="size-3" />}
+                {label}
+                <span
+                  className="tabular-nums text-[10px]"
+                  style={{ opacity: active ? 0.8 : 0.6 }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Word list */}
       {grouped ? (
-        // "All" view: grouped by tier with section headers
-        <div className="space-y-4">
+        <div className="space-y-5">
           {grouped.map(({ tier, words: tierWords }) => {
             const info = TIER_INFO[tier];
             const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
             const isLocked = playerLevel < unlockLevel;
             return (
-              <div key={tier} className="space-y-1.5">
-                <div className={`flex items-center gap-2 pl-2 border-l-2 ${info.border}`}>
-                  <span className={`text-xs font-semibold uppercase tracking-widest ${info.color}`}>
-                    {tier === "custom" ? "Custom" : `Tier ${tier}`}
+              <div key={tier} className="space-y-2">
+                <div
+                  className="flex items-center gap-3 pl-3 py-1"
+                  style={{ borderLeft: `2px solid ${info.color}` }}
+                >
+                  <span
+                    className="uppercase-tracked text-[11px]"
+                    style={{ color: info.color }}
+                  >
+                    {tier === "custom" ? "Custom" : `Tier ${info.numeral}`}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {info.label} ({tierWords.length})
+                  <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    {info.label} · {tierWords.length} gathered
                   </span>
                   {isLocked && (
-                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
-                      <Lock className="size-2.5" />
-                      Unlocks at Level {unlockLevel}
+                    <span
+                      className="flex items-center gap-1 text-[10px]"
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      <Lock className="size-3" />
+                      Unlocks at Rank {unlockLevel}
                     </span>
                   )}
                 </div>
                 {isLocked ? (
-                  <div className="rounded-xl bg-muted/10 border border-border/20 p-4 text-center text-sm text-muted-foreground/50">
-                    <Lock className="size-5 mx-auto mb-1.5 opacity-40" />
-                    Reach Level {unlockLevel} to unlock {info.label}
-                  </div>
+                  <IllumCard
+                    className="p-6 text-center"
+                    corners={false}
+                    innerBorder={false}
+                  >
+                    <Lock
+                      className="size-5 mx-auto mb-2 opacity-50"
+                      style={{ color: "var(--muted-foreground)" }}
+                    />
+                    <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
+                      Reach Rank {unlockLevel} to unlock {info.label}
+                    </p>
+                  </IllumCard>
                 ) : (
                   renderWordList(tierWords)
                 )}
@@ -654,23 +759,28 @@ export default function WordsPage() {
           })}
         </div>
       ) : selectedTierLocked ? (
-        <div className="rounded-xl bg-muted/10 border border-border/20 p-4 text-center text-sm text-muted-foreground/50">
-          <Lock className="size-5 mx-auto mb-1.5 opacity-40" />
-          Reach Level {TIER_UNLOCK_LEVELS[String(activeTier)]} to unlock{" "}
-          {TIER_INFO[String(activeTier)]?.label ?? "this tier"}
-        </div>
-      ) : (
-        // Filtered single-tier view
-        filtered.length > 0 ? (
-          renderWordList(filtered)
-        ) : null
-      )}
+        <IllumCard className="p-6 text-center" corners={false} innerBorder={false}>
+          <Lock
+            className="size-5 mx-auto mb-2 opacity-50"
+            style={{ color: "var(--muted-foreground)" }}
+          />
+          <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
+            Reach Rank {TIER_UNLOCK_LEVELS[String(activeTier)]} to unlock{" "}
+            {TIER_INFO[String(activeTier)]?.label ?? "this tier"}
+          </p>
+        </IllumCard>
+      ) : filtered.length > 0 ? (
+        renderWordList(filtered)
+      ) : null}
 
       {filtered.length === 0 && !selectedTierLocked && (
-        <div className="text-center py-8">
-          <BookOpen className="size-7 text-muted-foreground/50 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
-            {search ? "No words match your search." : "No words in library."}
+        <div className="text-center py-10">
+          <Tome
+            size={28}
+            className="mx-auto mb-2"
+          />
+          <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
+            {search ? "No words match your search." : "No words in the lexicon."}
           </p>
         </div>
       )}
