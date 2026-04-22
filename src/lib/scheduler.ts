@@ -6,7 +6,7 @@ import {
   Rating,
 } from "ts-fsrs";
 import { db } from "./db";
-import type { ReviewCard, Word } from "./types";
+import type { ReviewCard, Word, WordTier } from "./types";
 
 // ── FSRS instance ───────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ export async function getDueCards(limit: number = 10): Promise<ReviewCard[]> {
 /** Get cards for new/unseen words (state === 0 = New), filtered by unlocked tiers. */
 export async function getNewCards(
   limit: number = 10,
-  unlockedTiers?: (1 | 2 | 3 | "custom")[],
+  unlockedTiers?: WordTier[],
 ): Promise<ReviewCard[]> {
   const all = await db.reviewCards.toArray();
   let newCards = all.filter((rc) => rc.card.state === 0);
@@ -69,7 +69,7 @@ export async function getNewCards(
     const wordIds = new Set<number>();
     const words = await db.words.toArray();
     for (const w of words) {
-      if (unlockedTiers.includes(w.tier as 1 | 2 | 3 | "custom")) {
+      if (unlockedTiers.includes(w.tier as WordTier)) {
         wordIds.add(w.id!);
       }
     }

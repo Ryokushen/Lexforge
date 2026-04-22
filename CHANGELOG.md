@@ -2,7 +2,7 @@
 
 All notable changes to this project should be documented in this file.
 
-## [Unreleased] - 2026-04-20
+## [Unreleased] - 2026-04-21
 
 ### Added
 
@@ -19,7 +19,7 @@ All notable changes to this project should be documented in this file.
 - TOT capture flow in the word library now records real-world blanking moments with source, weak substitute, and context, and can create a new custom word if needed
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
-- Automated coverage now spans 87 tests across scheduler, session, sync, stats helpers, and hook logic
+- Automated coverage now spans 127 tests across scheduler, session, sync, stats helpers, and hook logic
 
 ### Changed
 
@@ -50,6 +50,7 @@ All notable changes to this project should be documented in this file.
 - New Retrieval Health section on the stats page surfaces unassisted recall rate with week-over-week trend, median retrieval speed with trend, cue-dependent word count, weekly TOT incidents, and rescue-stage word count
 - Stats page "Words Due" to "To Review" (only counts previously-seen cards past due date)
 - Updated public and project documentation to describe Rapid Retrieval as verbal fluency training and to narrow scientific claims around vocabulary retrieval rather than broad brain-training promises
+- Development docs now track the planned 700-word curriculum recut: retier the full 700 seeded words, expand from 3 seeded phases to 4, and evaluate a gating strategy that keeps unseen higher-phase words out of lower-level play
 - Session assembly now prioritizes TOT-captured words within due/new buckets and biases them toward Recall and Rapid Retrieval
 - Session mode selection now blends drill stage + RPG stats so Recall / Perception / Creativity influence Recall / Rapid Retrieval / Association weighting while preserving rescue/stabilize/fluent guardrails
 - Retrieval drill timing is now stat-aware too: live profile stats feed into session loading so Perception tightens Rapid Retrieval timeout pressure, Recall delays rescue cue reveal when stabilizing words recover, and fluent no-cue safeguards remain intact

@@ -32,5 +32,7 @@ describe("word library helpers", () => {
     expect(isTierLocked(2, 5)).toBe(false);
     expect(isTierLocked(3, 9)).toBe(true);
     expect(isTierLocked(3, 10)).toBe(false);
+    expect(isTierLocked(4, 14)).toBe(true);
+    expect(isTierLocked(4, 15)).toBe(false);
   });
 });

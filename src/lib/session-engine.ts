@@ -19,6 +19,7 @@ import type {
   SessionSummary,
   SessionWord,
   Word,
+  WordTier,
 } from "./types";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "./types";
 
@@ -975,11 +976,11 @@ export function pickMode(
 }
 
 /** Get unlocked tiers for a given level. */
-export function getUnlockedTiers(level: number): (1 | 2 | 3 | "custom")[] {
-  const tiers: (1 | 2 | 3 | "custom")[] = [];
+export function getUnlockedTiers(level: number): WordTier[] {
+  const tiers: WordTier[] = [];
   for (const [tier, unlockLevel] of Object.entries(TIER_UNLOCK_LEVELS)) {
     if (level >= unlockLevel) {
-      tiers.push(tier === "custom" ? "custom" : (Number(tier) as 1 | 2 | 3));
+      tiers.push(tier === "custom" ? "custom" : (Number(tier) as Exclude<WordTier, "custom">));
     }
   }
   return tiers;

@@ -10,7 +10,8 @@ Local-first RPG vocabulary trainer. Next.js 16 App Router, Dexie/IndexedDB, ts-f
 npm run dev      # local dev server
 npm run lint     # ESLint
 npm run build    # production build (--webpack)
-npm run test     # Vitest (87 tests)
+npm run test     # Vitest suite
+./scripts/verify.sh   # repo-local lint + test + build helper for Codex desktop
 ```
 
 ## Architecture
@@ -30,11 +31,11 @@ npm run test     # Vitest (87 tests)
 - **Review logs carry retrieval metadata**: `cueLevel`, `retrievalKind`, and `responseTimeMs` on every log entry. These feed back into drill profiles and stats.
 - **Sync hardening is already shipped**: normalized word keys, additive TOT merge behavior, explicit `session_id` handling, review-card reconciliation, and retryable background sync are in `master`. Treat these as existing behavior — avoid re-implementing them.
 - **RPG stats now influence session generation**: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association mode weighting in `pickMode`, and live profile stats also personalize Rapid Retrieval timeout pressure plus rescue-cue timing inside `buildRetrievalDrillProfile` while still respecting rescue/stabilize/fluent drill stages.
-- **Next RPG tuning step**: deepen context production beyond the current target-word sentence variant and broaden stat-aware personalization into other training surfaces.
+- **Next RPG tuning steps**: broaden stat-aware personalization into other training surfaces, run a frequency-based re-tier pass on the seed corpus (see `docs/word-frequency-audit.md`), expand the seed list toward 700 words using `docs/word-addition-candidates.md`, and only then deepen context production beyond the current target-word sentence variant.
 
 ## Testing
 
-Tests live next to source files (`*.test.ts`, `*.test.tsx`). Vitest with jsdom environment. Mocks for Dexie db and scheduler. Run `npm run test` before committing.
+Tests live next to source files (`*.test.ts`, `*.test.tsx`). Vitest with jsdom environment. Mocks for Dexie db and scheduler. Run `npm run test` before committing, or `./scripts/verify.sh` in the Codex desktop environment if the bundled app `node` cannot load native modules.
 
 ## Conventions
 
