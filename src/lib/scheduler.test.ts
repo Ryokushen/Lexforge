@@ -111,15 +111,17 @@ describe("scheduler", () => {
       makeReviewCard({ wordId: 2, due: "2026-04-10T10:00:00.000Z", state: 0 }),
       makeReviewCard({ wordId: 3, due: "2026-04-10T10:00:00.000Z", state: 0 }),
       makeReviewCard({ wordId: 4, due: "2026-04-10T10:00:00.000Z", state: 2 }),
+      makeReviewCard({ wordId: 5, due: "2026-04-10T10:00:00.000Z", state: 0 }),
     ]);
     dbMock.words.toArray.mockResolvedValue([
       makeWord(1, 1),
       makeWord(2, 2),
       makeWord(3, "custom"),
       makeWord(4, 3),
+      makeWord(5, 4),
     ]);
 
-    const newCards = await getNewCards(2, [1, "custom"]);
+    const newCards = await getNewCards(3, [1, "custom"]);
 
     expect(newCards.map((card) => card.wordId)).toEqual([1, 3]);
   });

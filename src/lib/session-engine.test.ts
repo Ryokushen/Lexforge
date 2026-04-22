@@ -1006,6 +1006,7 @@ describe("session engine", () => {
     expect(getUnlockedTiers(1)).toEqual([1, "custom"]);
     expect(getUnlockedTiers(5)).toEqual([1, 2, "custom"]);
     expect(getUnlockedTiers(10)).toEqual([1, 2, 3, "custom"]);
+    expect(getUnlockedTiers(15)).toEqual([1, 2, 3, 4, "custom"]);
   });
 
   it("matches the intended mode distribution when context is available", () => {
@@ -1433,12 +1434,12 @@ describe("session engine", () => {
     schedulerMock.getDueCards.mockResolvedValue([makeReviewCard(30)]);
     schedulerMock.getNewCards.mockResolvedValue([]);
     dbMock.reviewLogs.toArray.mockResolvedValue([]);
-    dbMock.words.get.mockResolvedValue(makeWord(30, 3));
+    dbMock.words.get.mockResolvedValue(makeWord(30, 4));
 
     const sessionWords = await loadSessionWords("easy", 1);
 
     expect(sessionWords).toHaveLength(1);
-    expect(sessionWords[0].word.tier).toBe(3);
+    expect(sessionWords[0].word.tier).toBe(4);
     expect(schedulerMock.getNewCards).toHaveBeenCalledWith(5, [1, "custom"]);
   });
 

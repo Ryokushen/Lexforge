@@ -40,6 +40,7 @@ const TIER_INFO: Record<
   "1": { label: "Core Articulation", numeral: "I", color: "var(--sage)" },
   "2": { label: "Precision Vocabulary", numeral: "II", color: "var(--lapis)" },
   "3": { label: "Power Words", numeral: "III", color: "var(--crimson)" },
+  "4": { label: "Rarefied Lexicon", numeral: "IV", color: "var(--ember)" },
   custom: { label: "Custom", numeral: "★", color: "var(--ember)" },
 };
 
@@ -329,7 +330,7 @@ export default function WordsPage() {
   const grouped = useMemo(() => {
     if (activeTier !== "all") return null;
     const groups: { tier: string; words: Word[] }[] = [];
-    for (const tier of ["1", "2", "3", "custom"] as const) {
+    for (const tier of ["1", "2", "3", "4", "custom"] as const) {
       const tierWords = filtered.filter((w) => String(w.tier) === tier);
       if (tierWords.length > 0) {
         groups.push({ tier, words: tierWords });
@@ -339,7 +340,7 @@ export default function WordsPage() {
   }, [filtered, activeTier]);
 
   const tierCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, custom: 0 };
+    const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, "4": 0, custom: 0 };
     for (const w of words) {
       counts[String(w.tier)] = (counts[String(w.tier)] || 0) + 1;
     }
@@ -431,6 +432,7 @@ export default function WordsPage() {
     { key: 1, label: "I" },
     { key: 2, label: "II" },
     { key: 3, label: "III" },
+    { key: 4, label: "IV" },
     { key: "custom", label: "★" },
   ];
 

@@ -62,6 +62,7 @@ const TIER_INFO: Record<string, { label: string; numeral: string; color: string 
   "1": { label: "Core Articulation", numeral: "I", color: "var(--sage)" },
   "2": { label: "Precision Vocabulary", numeral: "II", color: "var(--lapis)" },
   "3": { label: "Power Words", numeral: "III", color: "var(--crimson)" },
+  "4": { label: "Rarefied Lexicon", numeral: "IV", color: "var(--ember)" },
 };
 
 // ── Utilities ────────────────────────────────────────────────────────────
@@ -662,7 +663,7 @@ export default function StatsPage() {
               Tier Unlocks
             </p>
             <div className="space-y-1.5">
-              {(["1", "2", "3"] as const).map((tier) => {
+              {(["1", "2", "3", "4"] as const).map((tier) => {
                 const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
                 const isUnlocked = profile.level >= unlockLevel;
                 const info = TIER_INFO[tier];

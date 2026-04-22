@@ -1,7 +1,7 @@
-import type { TOTCapture, Word } from "./types";
+import type { SeedTier, TOTCapture, Word } from "./types";
 import { TIER_UNLOCK_LEVELS } from "./types";
 
-export type LibraryTierFilter = "all" | 1 | 2 | 3 | "custom";
+export type LibraryTierFilter = "all" | SeedTier | "custom";
 
 export function normalizeWord(value: string): string {
   return value.trim().toLowerCase();

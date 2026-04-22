@@ -25,6 +25,13 @@ const seedWordsMock = vi.hoisted<SeedWord[]>(() => [
     synonyms: ["fragile"],
     tier: 2,
   },
+  {
+    word: "recondite",
+    definition: "difficult to understand; obscure",
+    examples: ["A recondite treatise."],
+    synonyms: ["obscure"],
+    tier: 4,
+  },
 ]);
 
 vi.mock("./db", () => ({
@@ -63,7 +70,10 @@ describe("seed database", () => {
   });
 
   it("adds only missing seed words and leaves existing progress alone", async () => {
-    dbMock.words.toArray.mockResolvedValue([makeExistingWord("lucid")]);
+    dbMock.words.toArray.mockResolvedValue([
+      makeExistingWord("lucid"),
+      makeExistingWord("recondite", { id: 13, tier: 4 }),
+    ]);
 
     await seedDatabase();
 
@@ -82,20 +92,23 @@ describe("seed database", () => {
     dbMock.words.toArray.mockResolvedValue([
       makeExistingWord("lucid", { id: 11, tier: 2 }),
       makeExistingWord("tenuous", { id: 12, tier: 1 }),
+      makeExistingWord("recondite", { id: 13, tier: 3 }),
     ]);
 
     await seedDatabase();
 
     expect(addWordWithCardMock).not.toHaveBeenCalled();
-    expect(dbMock.words.update).toHaveBeenCalledTimes(2);
+    expect(dbMock.words.update).toHaveBeenCalledTimes(3);
     expect(dbMock.words.update).toHaveBeenCalledWith(11, { tier: 1 });
     expect(dbMock.words.update).toHaveBeenCalledWith(12, { tier: 2 });
+    expect(dbMock.words.update).toHaveBeenCalledWith(13, { tier: 4 });
   });
 
   it("leaves custom words and unchanged tiers untouched", async () => {
     dbMock.words.toArray.mockResolvedValue([
       makeExistingWord("lucid", { id: 21, tier: 1 }),
       makeExistingWord("tenuous", { id: 22, tier: 2 }),
+      makeExistingWord("recondite", { id: 24, tier: 4 }),
       makeExistingWord("mytag", { id: 23, tier: "custom" }),
     ]);
 
