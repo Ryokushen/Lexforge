@@ -19,14 +19,15 @@ These capabilities are already in `master` and should be treated as baseline beh
 
 ## Current Product Gap
 
-- RPG stats now drive both session mode weighting and retrieval-drill timing, and Context mode now spans replacement, target-word production, and a first fluent rewrite-transfer prompt. The remaining gaps are broader stat-aware personalization in other training surfaces, a frequency-grounded pass on seed-word phase ordering, plus any future Context transfer depth beyond this deterministic rewrite slice.
+- RPG stats now drive both session mode weighting and retrieval-drill timing, and Context mode now spans replacement, target-word production, and a first fluent rewrite-transfer prompt. The remaining gaps are broader stat-aware personalization in other training surfaces, a frequency-grounded pass on seed-word phase ordering, an expansion pass to grow the seed corpus from 531 to roughly 700 words, plus any future Context transfer depth beyond this deterministic rewrite slice.
 
 ## Active Next Priorities
 
 1. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
 2. Add targeted regression tests around newly introduced sync changes (without reworking shipped sync architecture).
 3. Re-rank the seeded word list against English usage frequency and decide whether the curriculum should stay at 3 phases or expand to 4. See [docs/word-frequency-audit.md](docs/word-frequency-audit.md).
-4. If Context mode needs another step, deepen transfer beyond the current rewrite slice without introducing LLM grading or bloated UX.
+4. Expand the seed list from 531 to about 700 words using the curated addition set in [docs/word-addition-candidates.md](docs/word-addition-candidates.md).
+5. If Context mode needs another step, deepen transfer beyond the current rewrite slice without introducing LLM grading or bloated UX.
 
 ## Verification Baseline
 

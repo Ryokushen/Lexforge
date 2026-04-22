@@ -31,7 +31,7 @@ npm run test     # Vitest suite
 - **Review logs carry retrieval metadata**: `cueLevel`, `retrievalKind`, and `responseTimeMs` on every log entry. These feed back into drill profiles and stats.
 - **Sync hardening is already shipped**: normalized word keys, additive TOT merge behavior, explicit `session_id` handling, review-card reconciliation, and retryable background sync are in `master`. Treat these as existing behavior — avoid re-implementing them.
 - **RPG stats now influence session generation**: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association mode weighting in `pickMode`, and live profile stats also personalize Rapid Retrieval timeout pressure plus rescue-cue timing inside `buildRetrievalDrillProfile` while still respecting rescue/stabilize/fluent drill stages.
-- **Next RPG tuning steps**: broaden stat-aware personalization into other training surfaces, run a frequency-based re-tier pass on the seed corpus (see `docs/word-frequency-audit.md`), and only then deepen context production beyond the current target-word sentence variant.
+- **Next RPG tuning steps**: broaden stat-aware personalization into other training surfaces, run a frequency-based re-tier pass on the seed corpus (see `docs/word-frequency-audit.md`), expand the seed list toward 700 words using `docs/word-addition-candidates.md`, and only then deepen context production beyond the current target-word sentence variant.
 
 ## Testing
 

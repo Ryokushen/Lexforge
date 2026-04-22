@@ -200,3 +200,4 @@ For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](
 - broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
 - re-rank the seeded vocabulary against English usage frequency and decide whether Lexforge should keep 3 phases or move to 4; current audit lives in [docs/word-frequency-audit.md](docs/word-frequency-audit.md)
+- expand the seed corpus from 531 to about 700 words using the reviewed candidate set in [docs/word-addition-candidates.md](docs/word-addition-candidates.md)
