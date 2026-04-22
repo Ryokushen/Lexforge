@@ -27,6 +27,7 @@ import {
   normalizeWord,
   type LibraryTierFilter,
 } from "@/lib/word-library";
+import { buildWordGroups } from "./page.helpers";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import { Anvil, ChevronRight, Tome } from "@/components/rpg/sigils";
@@ -329,15 +330,8 @@ export default function WordsPage() {
 
   const grouped = useMemo(() => {
     if (activeTier !== "all") return null;
-    const groups: { tier: string; words: Word[] }[] = [];
-    for (const tier of ["1", "2", "3", "4", "custom"] as const) {
-      const tierWords = filtered.filter((w) => String(w.tier) === tier);
-      if (tierWords.length > 0) {
-        groups.push({ tier, words: tierWords });
-      }
-    }
-    return groups;
-  }, [filtered, activeTier]);
+    return buildWordGroups(filtered, playerLevel);
+  }, [filtered, activeTier, playerLevel]);
 
   const tierCounts = useMemo(() => {
     const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, "4": 0, custom: 0 };
@@ -710,12 +704,10 @@ export default function WordsPage() {
       {/* Word list */}
       {grouped ? (
         <div className="space-y-5">
-          {grouped.map(({ tier, words: tierWords }) => {
-            const info = TIER_INFO[tier];
-            const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
-            const isLocked = playerLevel < unlockLevel;
+          {grouped.map((group) => {
+            const info = TIER_INFO[group.tier];
             return (
-              <div key={tier} className="space-y-2">
+              <div key={group.tier} className="space-y-2">
                 <div
                   className="flex items-center gap-3 pl-3 py-1"
                   style={{ borderLeft: `2px solid ${info.color}` }}
@@ -724,22 +716,22 @@ export default function WordsPage() {
                     className="uppercase-tracked text-[11px]"
                     style={{ color: info.color }}
                   >
-                    {tier === "custom" ? "Custom" : `Tier ${info.numeral}`}
+                    {group.tier === "custom" ? "Custom" : `Tier ${info.numeral}`}
                   </span>
                   <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                    {info.label} · {tierWords.length} gathered
+                    {info.label} · {(group.words.length + group.trackedLockedWords.length + group.hiddenLockedCount)} gathered
                   </span>
-                  {isLocked && (
+                  {group.isLocked && (
                     <span
                       className="flex items-center gap-1 text-[10px]"
                       style={{ color: "var(--muted-foreground)" }}
                     >
                       <Lock className="size-3" />
-                      Unlocks at Rank {unlockLevel}
+                      Unlocks at Rank {group.unlockLevel}
                     </span>
                   )}
                 </div>
-                {isLocked ? (
+                {group.isLocked ? (
                   <IllumCard
                     className="p-6 text-center"
                     corners={false}
@@ -750,11 +742,47 @@ export default function WordsPage() {
                       style={{ color: "var(--muted-foreground)" }}
                     />
                     <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
-                      Reach Rank {unlockLevel} to unlock {info.label}
+                      Reach Rank {group.unlockLevel} to unlock {info.label}
                     </p>
+                    {group.trackedLockedWords.length > 0 && (
+                      <div
+                        className="mt-4 space-y-2 rounded-[var(--radius)] p-3 text-left"
+                        style={{
+                          background: "color-mix(in oklab, var(--ember), transparent 94%)",
+                          border: "1px solid color-mix(in oklab, var(--ember), transparent 72%)",
+                        }}
+                      >
+                        <p
+                          className="uppercase-tracked text-[10px]"
+                          style={{ color: "var(--ember)" }}
+                        >
+                          Tracked while locked
+                        </p>
+                        <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
+                          These words are saved from your blanking captures. They stay tracked, but they will not enter normal sessions until this phase unlocks.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {group.trackedLockedWords.map((word) => (
+                            <span
+                              key={word.id}
+                              className="lex-badge"
+                              style={tierBadgeStyle("var(--ember)")}
+                            >
+                              {word.word}
+                              {word.totCapture ? ` · TOT ×${word.totCapture.count}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {group.hiddenLockedCount > 0 && (
+                      <p className="mt-3 text-xs italic" style={{ color: "var(--muted-foreground)" }}>
+                        {group.hiddenLockedCount} other {group.hiddenLockedCount === 1 ? "word remains" : "words remain"} locked until Rank {group.unlockLevel}.
+                      </p>
+                    )}
                   </IllumCard>
                 ) : (
-                  renderWordList(tierWords)
+                  renderWordList(group.words)
                 )}
               </div>
             );
