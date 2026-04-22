@@ -50,6 +50,7 @@ All notable changes to this project should be documented in this file.
 - New Retrieval Health section on the stats page surfaces unassisted recall rate with week-over-week trend, median retrieval speed with trend, cue-dependent word count, weekly TOT incidents, and rescue-stage word count
 - Stats page "Words Due" to "To Review" (only counts previously-seen cards past due date)
 - Updated public and project documentation to describe Rapid Retrieval as verbal fluency training and to narrow scientific claims around vocabulary retrieval rather than broad brain-training promises
+- Development docs now track the planned 700-word curriculum recut: retier the full 700 seeded words, expand from 3 seeded phases to 4, and evaluate a gating strategy that keeps unseen higher-phase words out of lower-level play
 - Session assembly now prioritizes TOT-captured words within due/new buckets and biases them toward Recall and Rapid Retrieval
 - Session mode selection now blends drill stage + RPG stats so Recall / Perception / Creativity influence Recall / Rapid Retrieval / Association weighting while preserving rescue/stabilize/fluent guardrails
 - Retrieval drill timing is now stat-aware too: live profile stats feed into session loading so Perception tightens Rapid Retrieval timeout pressure, Recall delays rescue cue reveal when stabilizing words recover, and fluent no-cue safeguards remain intact

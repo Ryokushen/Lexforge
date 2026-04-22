@@ -199,5 +199,6 @@ For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](
 - deepen Context transfer beyond the new fluent rewrite slice into richer scenario variation only if deterministic grading can stay sane
 - broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
-- re-rank the seeded vocabulary against English usage frequency and decide whether Lexforge should keep 3 phases or move to 4; current audit lives in [docs/word-frequency-audit.md](docs/word-frequency-audit.md)
-- expand the seed corpus from 531 to about 700 words using the reviewed candidate set in [docs/word-addition-candidates.md](docs/word-addition-candidates.md)
+- retier the full 700-word seeded corpus from easiest/most common to hardest/least common and make that ranking authoritative for future seed updates; working brief: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md)
+- refactor Lexforge from 3 seeded tiers/phases to 4 across seed data, unlock rules, stats/library views, and session selection
+- implement a gating method so lower levels do not see unseen higher-phase words in session generation, while already-introduced reviews and custom words remain available

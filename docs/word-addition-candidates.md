@@ -6,10 +6,14 @@ _Generated: 2026-04-22_
 
 Find additional seed words that would broaden a learner's vocabulary without drifting into words that are extremely rare, obsolete, or effectively never used.
 
+Development follow-up:
+
+- This candidate set should now be treated as input to the full 700-word curriculum recut, not as a standalone add-on to the old three-tier ordering. See [docs/700-word-retiering-plan.md](700-word-retiering-plan.md).
+
 ## Method
 
 - Started from a manually curated pool of useful abstract, academic, professional, and descriptive headwords.
-- Removed anything already present in [src/lib/seed-words.ts](/Users/charlesdorfeuille/Artificial/Obsidian/memory-and-vocabulary/src/lib/seed-words.ts).
+- Removed anything already present in [src/lib/seed-words.ts](../src/lib/seed-words.ts).
 - Scored candidates with `wordfreq` Zipf frequency for English.
 - Kept words above a practical floor of roughly `Zipf 3.1+`, which is still uncommon enough to feel vocabulary-building but not so rare that the words are fringe.
 - Assigned a `suggested_current_tier` for compatibility with the app's current 3-tier system:
@@ -39,7 +43,7 @@ Suggested tier split for the current 3-tier app:
 
 Exact list with frequency scores:
 
-- [docs/word-addition-candidates.csv](/Users/charlesdorfeuille/Artificial/Obsidian/memory-and-vocabulary/docs/word-addition-candidates.csv)
+- [docs/word-addition-candidates.csv](word-addition-candidates.csv)
 
 CSV columns:
 
@@ -65,5 +69,6 @@ Tier 3 additions:
 ## Notes
 
 - This is a compatibility-minded addition set, not a full replacement ranking of the entire corpus.
-- Some of these words would likely move phases if the app adopts the 4-phase frequency audit from [docs/word-frequency-audit.md](/Users/charlesdorfeuille/Artificial/Obsidian/memory-and-vocabulary/docs/word-frequency-audit.md).
+- Some of these words would likely move phases if the app adopts the 4-phase frequency audit from [docs/word-frequency-audit.md](word-frequency-audit.md).
 - The next practical step would be to turn the accepted candidates into full seed entries with definitions, examples, and synonyms.
+- The current development plan is to merge these candidates into the canonical 700-word recut and then assign final four-phase placement there, rather than preserving the legacy `suggested_current_tier` buckets as the long-term structure.

@@ -6,9 +6,13 @@ _Generated: 2026-04-22_
 
 Check whether the current seeded vocabulary phases are ordered by English usage frequency, and propose a cleaner frequency-based ranking where needed.
 
+Development follow-up:
+
+- The working plan is now to retier the full 700-word seeded corpus into four phases and add stronger gating so lower levels do not see unseen higher-phase words too early. See [docs/700-word-retiering-plan.md](700-word-retiering-plan.md).
+
 ## Method
 
-- Parsed all 531 seeded words from [src/lib/seed-words.ts](/Users/charlesdorfeuille/Artificial/Obsidian/memory-and-vocabulary/src/lib/seed-words.ts).
+- Parsed all 531 seeded words from [src/lib/seed-words.ts](../src/lib/seed-words.ts).
 - Scored each headword with `wordfreq` 3.1.1 using `zipf_frequency(word, "en")`.
 - Interpreted higher Zipf values as more common usage.
 
@@ -110,7 +114,7 @@ Current Tier 3 words that are too common for a final rarity phase:
 
 The full ranking export is in:
 
-- [docs/word-frequency-ranking.csv](/Users/charlesdorfeuille/Artificial/Obsidian/memory-and-vocabulary/docs/word-frequency-ranking.csv)
+- [docs/word-frequency-ranking.csv](word-frequency-ranking.csv)
 
 CSV columns:
 
@@ -129,3 +133,5 @@ If you want the smallest product change:
 If you want the cleanest frequency-first curriculum:
 
 - Move to 4 phases and use the `recommended_phase_4` column as the new canonical ranking.
+
+That is now the active development direction; use this audit as source material and the implementation brief in [docs/700-word-retiering-plan.md](700-word-retiering-plan.md) as the current execution note.
