@@ -16,6 +16,7 @@ import {
   Minus,
 } from "lucide-react";
 import { useRetrievalHealth } from "@/hooks/use-retrieval-health";
+import { SEEDED_PHASE_INFO } from "@/lib/curriculum-copy";
 import type { ReviewLog } from "@/lib/types";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "@/lib/types";
 import { getRecentRetrievalMetrics } from "./page.helpers";
@@ -58,11 +59,7 @@ const DIFFICULTY_DISPLAY = {
   hard: { label: "Hard", color: "var(--crimson)", sigil: RuneHard },
 };
 
-const TIER_INFO: Record<string, { label: string; numeral: string; color: string }> = {
-  "1": { label: "Core Articulation", numeral: "I", color: "var(--sage)" },
-  "2": { label: "Precision Vocabulary", numeral: "II", color: "var(--lapis)" },
-  "3": { label: "Power Words", numeral: "III", color: "var(--crimson)" },
-};
+const TIER_INFO: Record<string, { label: string; numeral: string; color: string }> = SEEDED_PHASE_INFO;
 
 // ── Utilities ────────────────────────────────────────────────────────────
 
@@ -659,10 +656,10 @@ export default function StatsPage() {
 
           <div className="mt-4 space-y-2">
             <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
-              Tier Unlocks
+              Phase Unlocks
             </p>
             <div className="space-y-1.5">
-              {(["1", "2", "3"] as const).map((tier) => {
+              {(["1", "2", "3", "4"] as const).map((tier) => {
                 const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
                 const isUnlocked = profile.level >= unlockLevel;
                 const info = TIER_INFO[tier];

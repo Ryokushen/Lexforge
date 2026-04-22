@@ -17,6 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, Lock, Plus, RotateCcw, Search } from "lucide-react";
 import { useStats } from "@/hooks/use-stats";
+import {
+  CUSTOM_CURRICULUM_INFO,
+  SEEDED_PHASE_INFO,
+  getCurriculumBadgeLabel,
+  getLexiconSummary,
+} from "@/lib/curriculum-copy";
 import type { TOTCaptureSource, Word } from "@/lib/types";
 import { TIER_UNLOCK_LEVELS, TOT_CAPTURE_SOURCES } from "@/lib/types";
 import {
@@ -27,6 +33,7 @@ import {
   normalizeWord,
   type LibraryTierFilter,
 } from "@/lib/word-library";
+import { buildWordGroups } from "./page.helpers";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import { Anvil, ChevronRight, Tome } from "@/components/rpg/sigils";
@@ -37,10 +44,8 @@ const TIER_INFO: Record<
   string,
   { label: string; numeral: string; color: string }
 > = {
-  "1": { label: "Core Articulation", numeral: "I", color: "var(--sage)" },
-  "2": { label: "Precision Vocabulary", numeral: "II", color: "var(--lapis)" },
-  "3": { label: "Power Words", numeral: "III", color: "var(--crimson)" },
-  custom: { label: "Custom", numeral: "★", color: "var(--ember)" },
+  ...SEEDED_PHASE_INFO,
+  custom: CUSTOM_CURRICULUM_INFO,
 };
 
 const TOT_SOURCE_LABELS: Record<TOTCaptureSource, string> = {
@@ -137,7 +142,7 @@ function WordRow({
           </div>
         </div>
         <span className="lex-badge shrink-0" style={tierBadgeStyle(tier.color)}>
-          {word.tier === "custom" ? "Custom" : `Tier ${word.tier}`}
+          {getCurriculumBadgeLabel(word.tier)}
         </span>
         {word.totCapture && (
           <span
@@ -328,23 +333,17 @@ export default function WordsPage() {
 
   const grouped = useMemo(() => {
     if (activeTier !== "all") return null;
-    const groups: { tier: string; words: Word[] }[] = [];
-    for (const tier of ["1", "2", "3", "custom"] as const) {
-      const tierWords = filtered.filter((w) => String(w.tier) === tier);
-      if (tierWords.length > 0) {
-        groups.push({ tier, words: tierWords });
-      }
-    }
-    return groups;
-  }, [filtered, activeTier]);
+    return buildWordGroups(filtered, playerLevel);
+  }, [filtered, activeTier, playerLevel]);
 
   const tierCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, custom: 0 };
+    const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, "4": 0, custom: 0 };
     for (const w of words) {
       counts[String(w.tier)] = (counts[String(w.tier)] || 0) + 1;
     }
     return counts;
   }, [words]);
+  const customWordCount = tierCounts.custom ?? 0;
 
   const handleAdd = async () => {
     if (!newWord.trim() || !newDef.trim() || duplicateWord) return;
@@ -431,6 +430,7 @@ export default function WordsPage() {
     { key: 1, label: "I" },
     { key: 2, label: "II" },
     { key: 3, label: "III" },
+    { key: 4, label: "IV" },
     { key: "custom", label: "★" },
   ];
 
@@ -506,7 +506,7 @@ export default function WordsPage() {
             The Lexicon
           </h1>
           <p className="italic mt-1" style={{ color: "var(--muted-foreground)" }}>
-            {words.length} words gathered across three disciplines.
+            {getLexiconSummary(words.length, customWordCount)}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -708,12 +708,10 @@ export default function WordsPage() {
       {/* Word list */}
       {grouped ? (
         <div className="space-y-5">
-          {grouped.map(({ tier, words: tierWords }) => {
-            const info = TIER_INFO[tier];
-            const unlockLevel = TIER_UNLOCK_LEVELS[tier] ?? 1;
-            const isLocked = playerLevel < unlockLevel;
+          {grouped.map((group) => {
+            const info = TIER_INFO[group.tier];
             return (
-              <div key={tier} className="space-y-2">
+              <div key={group.tier} className="space-y-2">
                 <div
                   className="flex items-center gap-3 pl-3 py-1"
                   style={{ borderLeft: `2px solid ${info.color}` }}
@@ -722,22 +720,22 @@ export default function WordsPage() {
                     className="uppercase-tracked text-[11px]"
                     style={{ color: info.color }}
                   >
-                    {tier === "custom" ? "Custom" : `Tier ${info.numeral}`}
+                    {group.tier === "custom" ? "Custom" : getCurriculumBadgeLabel(group.tier)}
                   </span>
                   <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                    {info.label} · {tierWords.length} gathered
+                    {info.label} · {(group.words.length + group.trackedLockedWords.length + group.hiddenLockedCount)} gathered
                   </span>
-                  {isLocked && (
+                  {group.isLocked && (
                     <span
                       className="flex items-center gap-1 text-[10px]"
                       style={{ color: "var(--muted-foreground)" }}
                     >
                       <Lock className="size-3" />
-                      Unlocks at Rank {unlockLevel}
+                      Unlocks at Rank {group.unlockLevel}
                     </span>
                   )}
                 </div>
-                {isLocked ? (
+                {group.isLocked ? (
                   <IllumCard
                     className="p-6 text-center"
                     corners={false}
@@ -748,11 +746,47 @@ export default function WordsPage() {
                       style={{ color: "var(--muted-foreground)" }}
                     />
                     <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
-                      Reach Rank {unlockLevel} to unlock {info.label}
+                      Reach Rank {group.unlockLevel} to unlock {info.label}
                     </p>
+                    {group.trackedLockedWords.length > 0 && (
+                      <div
+                        className="mt-4 space-y-2 rounded-[var(--radius)] p-3 text-left"
+                        style={{
+                          background: "color-mix(in oklab, var(--ember), transparent 94%)",
+                          border: "1px solid color-mix(in oklab, var(--ember), transparent 72%)",
+                        }}
+                      >
+                        <p
+                          className="uppercase-tracked text-[10px]"
+                          style={{ color: "var(--ember)" }}
+                        >
+                          Tracked while locked
+                        </p>
+                        <p className="text-sm italic" style={{ color: "var(--muted-foreground)" }}>
+                          These words are saved from your blanking captures. They stay tracked, but they will not enter normal sessions until this phase unlocks.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {group.trackedLockedWords.map((word) => (
+                            <span
+                              key={word.id}
+                              className="lex-badge"
+                              style={tierBadgeStyle("var(--ember)")}
+                            >
+                              {word.word}
+                              {word.totCapture ? ` · TOT ×${word.totCapture.count}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {group.hiddenLockedCount > 0 && (
+                      <p className="mt-3 text-xs italic" style={{ color: "var(--muted-foreground)" }}>
+                        {group.hiddenLockedCount} other {group.hiddenLockedCount === 1 ? "word remains" : "words remain"} locked until Rank {group.unlockLevel}.
+                      </p>
+                    )}
                   </IllumCard>
                 ) : (
-                  renderWordList(tierWords)
+                  renderWordList(group.words)
                 )}
               </div>
             );

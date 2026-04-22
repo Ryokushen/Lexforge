@@ -14,6 +14,7 @@ Development follow-up:
 
 - Started from a manually curated pool of useful abstract, academic, professional, and descriptive headwords.
 - Removed anything already present in [src/lib/seed-words.ts](../src/lib/seed-words.ts).
+- Repaired the candidate list where 35 rows still overlapped the existing seed corpus, replacing them with net-new words from the same compatibility bands.
 - Scored candidates with `wordfreq` Zipf frequency for English.
 - Kept words above a practical floor of roughly `Zipf 3.1+`, which is still uncommon enough to feel vocabulary-building but not so rare that the words are fringe.
 - Assigned a `suggested_current_tier` for compatibility with the app's current 3-tier system:
@@ -56,15 +57,15 @@ CSV columns:
 
 Tier 1 additions:
 
-`impact`, `structure`, `strategy`, `capacity`, `maintain`, `conflict`, `debate`, `secure`, `accurate`, `external`, `principal`, `trend`, `equivalent`, `contrast`, `reveal`, `capture`, `confirm`, `obtain`, `narrative`, `valid`, `vital`, `genuine`, `monitor`, `comprehensive`, `engage`, `initiative`, `objective`, `expand`, `indicate`, `outcome`, `sequence`, `contribute`, `progressive`, `foster`, `prominent`, `radical`, `sufficient`, `dynamic`, `distinct`, `eligible`, `framework`, `mutual`, `pursue`, `neutral`, `controversial`, `legitimate`, `advocate`, `implement`, `insight`, `preserve`, `scenario`, `resolve`, `exhibit`, `retain`, `protocol`, `tackle`, `precise`, `variable`, `convert`, `consensus`, `innovative`, `inevitable`, `predict`, `assess`, `ethical`, `notable`, `rational`, `interact`, `authentic`, `transform`, `gauge`, `evaluate`, `theoretical`, `transparent`
+`impact`, `structure`, `technical`, `strategy`, `transfer`, `capacity`, `ensure`, `maintain`, `conflict`, `debate`, `secure`, `instance`, `accurate`, `category`, `external`, `principal`, `trend`, `convention`, `equivalent`, `contrast`, `publication`, `reveal`, `capture`, `priority`, `confirm`, `obtain`, `narrative`, `valid`, `vital`, `currency`, `monitor`, `ratio`, `engage`, `initiative`, `expand`, `indicate`, `outcome`, `contribute`, `progressive`, `prominent`, `radical`, `component`, `ongoing`, `sufficient`, `stability`, `distinct`, `eligible`, `parallel`, `mutual`, `pursue`, `neutral`, `controversial`, `advocate`, `insight`, `preserve`, `structural`, `notion`, `resolve`, `exhibit`, `retain`, `tackle`, `precise`, `variable`, `convert`, `predict`, `assess`, `ethical`, `notable`, `rational`, `interact`, `gauge`, `evaluate`, `theoretical`, `transparent`
 
 Tier 2 additions:
 
-`evident`, `facilitate`, `adapt`, `construct`, `dense`, `doctrine`, `expose`, `grasp`, `incentive`, `mandate`, `enforce`, `integral`, `viable`, `aggregate`, `robust`, `mentor`, `sustain`, `accountable`, `landmark`, `leverage`, `selective`, `verify`, `consult`, `informal`, `logistics`, `symbolic`, `autonomous`, `clarify`, `desirable`, `incorporate`, `obscure`, `disclose`, `convey`, `imply`, `persuade`, `interpret`, `confront`, `hierarchy`, `precedent`, `specify`, `credible`, `initiate`, `anticipate`, `eventual`, `quantitative`, `feasible`, `integrate`, `friction`, `illustrate`, `durable`, `reinforce`, `govern`, `stimulate`, `earnest`, `plausible`, `coherent`, `endorse`, `inspect`, `maximize`, `empirical`, `attain`, `isolate`
+`evident`, `offset`, `adapt`, `colleague`, `construct`, `dense`, `doctrine`, `expose`, `compatible`, `grasp`, `inclusive`, `enforce`, `integral`, `prediction`, `tendency`, `aggregate`, `sustain`, `indicator`, `inequality`, `shortage`, `accountable`, `persistent`, `landmark`, `consume`, `selective`, `consult`, `informal`, `cooperative`, `logistics`, `symbolic`, `autonomous`, `clarify`, `desirable`, `incorporate`, `obscure`, `disclose`, `convey`, `statute`, `persuade`, `revision`, `interpret`, `confront`, `decisive`, `minimize`, `specify`, `credible`, `anticipate`, `eventual`, `quantitative`, `perceive`, `friction`, `illustrate`, `durable`, `govern`, `stimulate`, `earnest`, `endorse`, `inspect`, `maximize`, `differentiate`, `attain`, `isolate`
 
 Tier 3 additions:
 
-`disrupt`, `parameter`, `discrete`, `amend`, `prevail`, `persist`, `collaborate`, `dedicate`, `derive`, `correspond`, `provoke`, `concede`, `intrinsic`, `stabilize`, `qualitative`, `tentative`, `orient`, `simulate`, `conserve`, `escalate`, `holistic`, `invoke`, `bolster`, `prioritize`, `enrich`, `reassure`, `refine`, `converge`, `formulate`, `defer`, `devise`, `infer`, `mediate`
+`disrupt`, `parameter`, `discrete`, `amend`, `prevail`, `persist`, `collaborate`, `dedicate`, `derive`, `correspond`, `provoke`, `concede`, `intrinsic`, `stabilize`, `qualitative`, `tentative`, `orient`, `simulate`, `ambiguity`, `conserve`, `escalate`, `holistic`, `invoke`, `prioritize`, `enrich`, `reassure`, `refine`, `converge`, `formulate`, `defer`, `devise`, `infer`, `mediate`
 
 ## Notes
 

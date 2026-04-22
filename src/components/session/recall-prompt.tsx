@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getCurriculumBadgeLabel } from "@/lib/curriculum-copy";
 import type { AnswerMetadata, SessionWord } from "@/lib/types";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { Sword, Lantern } from "@/components/rpg/sigils";
@@ -29,7 +30,7 @@ export function RecallPrompt({ sessionWord, onSubmit }: RecallPromptProps) {
     }
   };
 
-  const tierLabel = word.tier === "custom" ? "Custom" : `Tier ${word.tier}`;
+  const tierLabel = getCurriculumBadgeLabel(word.tier);
 
   return (
     <motion.div

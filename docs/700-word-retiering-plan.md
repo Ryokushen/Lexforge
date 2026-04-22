@@ -54,14 +54,20 @@ The full seeded corpus should be re-ranked together, not by preserving the curre
 
 ### Deliverables
 
-- A canonical ranking export covering all 700 seeded words.
+- A canonical ranking export covering the full seeded curriculum.
 - A four-phase assignment for every seeded word.
-- Updated seed data that reflects the new phase for each word.
+- A machine-generated summary that reports corpus size, overlap status, and phase counts.
+- Updated seed-candidate data that eliminates accidental overlap between the existing seed list and the candidate-addition set.
 
 ### Likely files
 
 - `docs/word-frequency-ranking.csv`
 - `docs/word-addition-candidates.csv`
+- `docs/seed-curriculum-ranking.csv`
+- `docs/seed-curriculum-summary.md`
+- `scripts/curriculum-ranking.mjs`
+- `scripts/curriculum-ranking.test.mjs`
+- `scripts/generate-curriculum-ranking.mjs`
 - `src/lib/seed-words.ts`
 - any helper/scripts introduced to regenerate ranking artifacts
 

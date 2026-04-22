@@ -2,13 +2,16 @@ import type { Card } from "ts-fsrs";
 
 // ── Word ────────────────────────────────────────────────────────────────
 
+export type SeedTier = 1 | 2 | 3 | 4;
+export type WordTier = SeedTier | "custom";
+
 export interface Word {
   id?: number;
   word: string;
   definition: string;
   examples: string[];
   pronunciation?: string;
-  tier: 1 | 2 | 3 | "custom";
+  tier: WordTier;
   synonyms: string[];
   association?: string;
   associationUpdatedAt?: string;
@@ -100,6 +103,7 @@ export const TIER_UNLOCK_LEVELS: Record<string, number> = {
   "1": 1,
   "2": 5,
   "3": 10,
+  "4": 15,
   custom: 1,
 };
 
@@ -204,6 +208,6 @@ export interface SeedWord {
   definition: string;
   examples: string[];
   synonyms: string[];
-  tier: 1 | 2 | 3;
+  tier: SeedTier;
   contextSentences?: ContextSentence[];
 }
