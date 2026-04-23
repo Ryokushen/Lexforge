@@ -33,7 +33,10 @@ import {
   normalizeWord,
   type LibraryTierFilter,
 } from "@/lib/word-library";
-import { buildWordGroups } from "./page.helpers";
+import {
+  buildTierFilterLayout,
+  buildWordGroups,
+} from "./page.helpers";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import { Anvil, ChevronRight, Tome } from "@/components/rpg/sigils";
@@ -433,6 +436,7 @@ export default function WordsPage() {
     { key: 4, label: "IV" },
     { key: "custom", label: "★" },
   ];
+  const tierFilterLayout = buildTierFilterLayout();
 
   const renderWordList = (wordList: Word[]) => (
     <IllumCard className="p-0 overflow-hidden" corners={false} innerBorder={false}>
@@ -670,38 +674,40 @@ export default function WordsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div
-          className="inline-flex overflow-hidden"
-          style={{ border: "1px solid var(--line)", borderRadius: 3 }}
-        >
-          {tierFilters.map(({ key, label }, i) => {
-            const active = activeTier === key;
-            const count = tierCounts[String(key)] || 0;
-            const locked = isTierLocked(key, playerLevel);
-            return (
-              <button
-                key={String(key)}
-                onClick={() => setActiveTier(key)}
-                disabled={locked}
-                className="font-display uppercase text-[11px] px-3 py-2 flex items-center gap-1.5 disabled:opacity-40"
-                style={{
-                  letterSpacing: ".18em",
-                  background: active ? "var(--gold)" : "transparent",
-                  color: active ? "#1b1204" : "var(--muted-foreground)",
-                  borderRight: i < tierFilters.length - 1 ? "1px solid var(--line)" : "none",
-                }}
-              >
-                {locked && <Lock className="size-3" />}
-                {label}
-                <span
-                  className="tabular-nums text-[10px]"
-                  style={{ opacity: active ? 0.8 : 0.6 }}
+        <div className={tierFilterLayout.viewportClassName}>
+          <div
+            className={tierFilterLayout.stripClassName}
+            style={{ border: "1px solid var(--line)", borderRadius: 3 }}
+          >
+            {tierFilters.map(({ key, label }, i) => {
+              const active = activeTier === key;
+              const count = tierCounts[String(key)] || 0;
+              const locked = isTierLocked(key, playerLevel);
+              return (
+                <button
+                  key={String(key)}
+                  onClick={() => setActiveTier(key)}
+                  disabled={locked}
+                  className="font-display uppercase text-[11px] px-3 py-2 flex items-center gap-1.5 disabled:opacity-40"
+                  style={{
+                    letterSpacing: ".18em",
+                    background: active ? "var(--gold)" : "transparent",
+                    color: active ? "#1b1204" : "var(--muted-foreground)",
+                    borderRight: i < tierFilters.length - 1 ? "1px solid var(--line)" : "none",
+                  }}
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+                  {locked && <Lock className="size-3" />}
+                  {label}
+                  <span
+                    className="tabular-nums text-[10px]"
+                    style={{ opacity: active ? 0.8 : 0.6 }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

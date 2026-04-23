@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TOTCapture, Word } from "@/lib/types";
-import { buildWordGroups } from "./page.helpers";
+import { buildTierFilterLayout, buildWordGroups } from "./page.helpers";
 
 function makeCapture(count: number): TOTCapture {
   return {
@@ -26,6 +26,17 @@ function makeWord(
     ...overrides,
   };
 }
+
+describe("buildTierFilterLayout", () => {
+  it("keeps all phase filters reachable on narrow screens via horizontal scrolling", () => {
+    const layout = buildTierFilterLayout();
+
+    expect(layout.viewportClassName).toContain("max-w-full");
+    expect(layout.viewportClassName).toContain("overflow-x-auto");
+    expect(layout.stripClassName).toContain("inline-flex");
+    expect(layout.stripClassName).toContain("min-w-max");
+  });
+});
 
 describe("buildWordGroups", () => {
   it("keeps locked seeded phases hidden while surfacing tracked TOT words", () => {

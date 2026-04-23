@@ -3,6 +3,13 @@ import { TIER_UNLOCK_LEVELS } from "@/lib/types";
 
 const GROUP_ORDER = ["1", "2", "3", "4", "custom"] as const;
 
+export function buildTierFilterLayout() {
+  return {
+    viewportClassName: "max-w-full overflow-x-auto",
+    stripClassName: "inline-flex min-w-max overflow-hidden",
+  } as const;
+}
+
 export type WordGroup = {
   tier: (typeof GROUP_ORDER)[number];
   words: Word[];
