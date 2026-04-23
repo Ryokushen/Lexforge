@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReviewCard, Word } from "./types";
 
 const dbMock = vi.hoisted(() => ({
+  transaction: vi.fn(),
   reviewCards: {
     add: vi.fn(),
     put: vi.fn(),
     toArray: vi.fn(),
   },
   words: {
+    add: vi.fn(),
     toArray: vi.fn(),
   },
 }));
@@ -17,7 +19,14 @@ vi.mock("./db", () => ({
   db: dbMock,
 }));
 
-import { Rating, createReviewCard, getDueCards, getNewCards, gradeCard } from "./scheduler";
+import {
+  Rating,
+  addWordWithCard,
+  createReviewCard,
+  getDueCards,
+  getNewCards,
+  gradeCard,
+} from "./scheduler";
 
 function makeReviewCard({
   wordId,
@@ -56,6 +65,14 @@ describe("scheduler", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-10T12:00:00.000Z"));
     vi.clearAllMocks();
+    dbMock.transaction.mockImplementation(
+      async (
+        _mode: string,
+        _wordsStore: unknown,
+        _reviewCardsStore: unknown,
+        callback: () => Promise<void>,
+      ) => callback(),
+    );
   });
 
   it("creates a review card and persists it", async () => {
@@ -124,5 +141,33 @@ describe("scheduler", () => {
     const newCards = await getNewCards(3, [1, "custom"]);
 
     expect(newCards.map((card) => card.wordId)).toEqual([1, 3]);
+  });
+
+  it("defaults newly added words to queued pipeline metadata", async () => {
+    dbMock.words.add.mockResolvedValue(42);
+    dbMock.reviewCards.add.mockResolvedValue(99);
+
+    const result = await addWordWithCard({
+      word: "lucid",
+      definition: "clear and easy to understand",
+      examples: ["A lucid explanation."],
+      synonyms: [],
+      tier: 1,
+      createdAt: new Date("2026-04-01T00:00:00.000Z"),
+    });
+
+    expect(dbMock.words.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        word: "lucid",
+        pipelineStage: "queued",
+        pipelineUpdatedAt: "2026-04-10T12:00:00.000Z",
+      }),
+    );
+    expect(result.word).toMatchObject({
+      id: 42,
+      pipelineStage: "queued",
+      pipelineUpdatedAt: "2026-04-10T12:00:00.000Z",
+    });
+    expect(result.reviewCard.id).toBe(99);
   });
 });

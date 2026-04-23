@@ -88,8 +88,14 @@ export async function addWordWithCard(word: Omit<Word, "id">): Promise<{
   let savedCard!: ReviewCard;
 
   await db.transaction("rw", db.words, db.reviewCards, async () => {
-    const wordId = (await db.words.add(word as Word)) as number;
-    savedWord = { ...word, id: wordId } as Word;
+    const now = new Date().toISOString();
+    const wordToSave: Word = {
+      ...word,
+      pipelineStage: word.pipelineStage ?? "queued",
+      pipelineUpdatedAt: word.pipelineUpdatedAt ?? now,
+    } as Word;
+    const wordId = (await db.words.add(wordToSave)) as number;
+    savedWord = { ...wordToSave, id: wordId } as Word;
     const card = createEmptyCard();
     const rc: ReviewCard = {
       wordId,

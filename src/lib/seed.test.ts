@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SeedWord, Word } from "./types";
+import type { ReviewLog, SeedWord, Word } from "./types";
 
 const dbMock = vi.hoisted(() => ({
   words: {
     toArray: vi.fn(),
     update: vi.fn(),
+  },
+  reviewLogs: {
+    toArray: vi.fn(),
   },
 }));
 
@@ -59,7 +62,22 @@ function makeExistingWord(
     examples: [],
     synonyms: [],
     tier: 1,
+    pipelineStage: "queued",
     createdAt: new Date("2026-04-01T00:00:00.000Z"),
+    ...overrides,
+  };
+}
+
+function makeLog(overrides: Partial<ReviewLog> = {}): ReviewLog {
+  return {
+    id: 1,
+    wordId: 1,
+    rating: 3,
+    responseTimeMs: 1500,
+    correct: true,
+    cueLevel: 0,
+    retrievalKind: "exact",
+    reviewedAt: new Date("2026-04-10T12:00:00.000Z"),
     ...overrides,
   };
 }
@@ -67,6 +85,7 @@ function makeExistingWord(
 describe("seed database", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbMock.reviewLogs.toArray.mockResolvedValue([]);
   });
 
   it("adds only missing seed words and leaves existing progress alone", async () => {
@@ -83,6 +102,8 @@ describe("seed database", () => {
         word: "tenuous",
         tier: 2,
         association: undefined,
+        pipelineStage: "queued",
+        pipelineUpdatedAt: expect.any(String),
       }),
     );
     expect(dbMock.words.update).not.toHaveBeenCalled();
@@ -116,5 +137,57 @@ describe("seed database", () => {
 
     expect(dbMock.words.update).not.toHaveBeenCalled();
     expect(addWordWithCardMock).not.toHaveBeenCalled();
+  });
+
+  it("backfills missing pipeline stage for existing words without changing existing stages", async () => {
+    dbMock.words.toArray.mockResolvedValue([
+      makeExistingWord("lucid", { id: 11, pipelineStage: undefined }),
+      makeExistingWord("tenuous", {
+        id: 12,
+        tier: 2,
+        pipelineStage: "productive",
+      }),
+      makeExistingWord("recondite", {
+        id: 13,
+        tier: 4,
+        pipelineStage: undefined,
+        totCapture: {
+          source: "speech",
+          capturedAt: "2026-04-10T12:00:00.000Z",
+          count: 1,
+        },
+      }),
+    ]);
+
+    await seedDatabase();
+
+    expect(dbMock.words.update).toHaveBeenCalledWith(11, {
+      pipelineStage: "queued",
+      pipelineUpdatedAt: expect.any(String),
+    });
+    expect(dbMock.words.update).toHaveBeenCalledWith(13, {
+      pipelineStage: "captured",
+      pipelineUpdatedAt: expect.any(String),
+    });
+    expect(dbMock.words.update).not.toHaveBeenCalledWith(
+      12,
+      expect.objectContaining({ pipelineStage: expect.any(String) }),
+    );
+  });
+
+  it("uses review history when backfilling missing pipeline stage", async () => {
+    dbMock.words.toArray.mockResolvedValue([
+      makeExistingWord("lucid", { id: 11, pipelineStage: undefined }),
+    ]);
+    dbMock.reviewLogs.toArray.mockResolvedValue([
+      makeLog({ wordId: 11, retrievalKind: "exact", correct: true }),
+    ]);
+
+    await seedDatabase();
+
+    expect(dbMock.words.update).toHaveBeenCalledWith(11, {
+      pipelineStage: "reviewing",
+      pipelineUpdatedAt: expect.any(String),
+    });
   });
 });
