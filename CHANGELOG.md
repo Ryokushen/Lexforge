@@ -17,6 +17,7 @@ All notable changes to this project should be documented in this file.
 - Rapid Retrieval mode now uses a typed definition-to-word prompt with a rescue cue and stricter grading for assisted and near-miss answers
 - Context mode now starts with typed replacement before offering assisted multiple-choice fallback
 - TOT capture flow in the word library now records real-world blanking moments with source, weak substitute, and context, and can create a new custom word if needed
+- Word Library Archive now lets archived blanking captures be browsed and restored to pending triage without immediately re-entering training
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
 - Automated coverage now spans 127 tests across scheduler, session, sync, stats helpers, and hook logic
@@ -71,6 +72,7 @@ All notable changes to this project should be documented in this file.
 - Cleaned minor lint issues across the app
 - Seed database now reconciles tier on existing non-custom words so rebalanced seed tiers propagate to users whose local DB was already populated (custom words untouched)
 - Nav bar collapses to icon-only items below the `sm` breakpoint (Compass/Sword/Tome/Scroll) with a smaller HeronWheel and logo, so the four nav items no longer wrap and overflow into the page body on narrow phones
+- App status banner now prioritizes the starter-library seeding state during initial render to avoid a seeding/offline hydration mismatch
 
 ### Verified
 

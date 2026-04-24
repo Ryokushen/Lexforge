@@ -22,7 +22,7 @@ What it does not currently claim:
 - 700 seeded words across four phases, plus custom words
 - Four live training modes: Recall, Context, Rapid Retrieval, and Association
 - TOT capture flow for real-world blanking moments, including source, weak substitute, and context
-- Word Library Inbox triage for captured words, with Keep and Archive decisions before captures enter normal queued training
+- Word Library Inbox and Archive triage for captured words, with Keep, Archive, and Restore decisions before captures enter normal queued training
 - Vocabulary pipeline stage tracking across seeded, custom, and TOT-captured words
 - Difficulty settings that control daily new-word intake
 - Phase gating that unlocks harder vocabulary as the player levels up
@@ -57,6 +57,7 @@ Lexforge now supports a dedicated TOT capture flow in the word library.
 - Review pending captures in the Word Library Inbox before they enter normal queued training.
 - Keep accepted captures in a higher-support drill state until they earn repeated clean exact recalls.
 - Archive captures without deleting the underlying word or losing the recoverable capture record.
+- Browse archived captures in the Word Library Archive and restore them back to pending triage when needed.
 - Sync capture summaries across devices once the Supabase migrations are applied; triage decisions stay local in this slice and are preserved during remote capture merges.
 
 ## Adaptive Drilling
@@ -210,7 +211,7 @@ These foundations are already in `master` and should be treated as existing beha
 - Partial session save-on-exit flow and dashboard resume message
 - Canonical 700-word, four-phase seeded curriculum with unlock gating
 - Vocabulary pipeline stage tracking for seeded, custom, and TOT-captured words
-- Word Library Inbox triage for captured words before they enter normal queued training
+- Word Library Inbox and Archive triage for captured words before they enter normal queued training
 - Dashboard distinction between eligible new training words and pending capture Inbox items
 
 ## Near-Term Roadmap
@@ -220,4 +221,4 @@ For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](
 - deepen Context transfer beyond the new fluent rewrite slice into richer scenario variation only if deterministic grading can stay sane
 - broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
-- evolve the vocabulary pipeline beyond v2 with archive browsing/restore, duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling
+- evolve the vocabulary pipeline beyond v2 with duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling

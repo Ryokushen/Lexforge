@@ -17,8 +17,9 @@ Status as of 2026-04-24:
 - Pipeline v2 triage inbox has been implemented, merged into `master`, verified, and pushed.
 - Completed commits include capture triage helpers, seed backfill, training/session gating, Word Library Inbox UI, sync merge preservation, and docs.
 - Follow-up commits added dashboard separation of eligible new training words vs. pending capture Inbox items, plus a local-only Supabase auth fallback for session completion without cloud env vars.
+- Follow-up commit added Word Library Archive browsing and Restore for archived captures, plus AppStatusBanner hydration stabilization.
 - Verification passed on `master`: `npm.cmd run lint`, `npm.cmd test`, and `npm.cmd run build`.
-- Next pipeline slice: archive browsing/restore for captured words that were archived without deletion.
+- Next pipeline slice: duplicate/merge workflows for captured, custom, and seeded vocabulary entries.
 
 ---
 
@@ -1217,7 +1218,7 @@ git commit -m "fix: preserve local capture triage during sync"
 In `README.md`, under `## Current Status`, add:
 
 ```md
-- Word Library Inbox triage for captured words, with Keep and Archive decisions before captures enter normal queued training.
+- Word Library Inbox and Archive triage for captured words, with Keep, Archive, and Restore decisions before captures enter normal queued training.
 ```
 
 In the capture-loop section, add:
@@ -1225,6 +1226,7 @@ In the capture-loop section, add:
 ```md
 - Review pending captures in the Word Library Inbox before they enter normal queued training.
 - Archive captures without deleting the underlying word or losing the recoverable capture record.
+- Browse archived captures in the Word Library Archive and restore them back to pending triage when needed.
 ```
 
 - [ ] **Step 2: Update project status**
@@ -1232,7 +1234,7 @@ In the capture-loop section, add:
 In `PROJECT_STATUS.md`, under `## Shipped Foundations`, add:
 
 ```md
-- Word Library Inbox triage for pending captured words, including archive-without-delete behavior
+- Word Library Inbox and Archive triage for pending or archived captured words, including restore-without-training behavior
 ```
 
 In `## Current Product Gap`, replace the phrase:
@@ -1244,7 +1246,7 @@ post-v1 pipeline depth: triage inbox, first-class vocabulary item entities, gene
 with:
 
 ```md
-post-v2 pipeline depth: archive browsing/restore, duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
+post-v2 pipeline depth: duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
 ```
 
 - [ ] **Step 3: Run full verification**
@@ -1291,5 +1293,5 @@ git commit -m "docs: document capture triage inbox"
 ## Self-Review Notes
 
 - Spec coverage: the tasks cover Inbox UI, pending backfill, Keep, Archive, training gating, capture-priority gating, sync preservation, docs, and verification.
-- Scope: this plan intentionally excludes archive browsing/restore UI, duplicate merge workflows, first-class `VocabularyItem`, generated practice lanes, coverage metrics, collocation modeling, and cloud schema migration.
+- Scope: this plan originally excluded archive browsing/restore UI, which later shipped as a follow-up; duplicate merge workflows, first-class `VocabularyItem`, generated practice lanes, coverage metrics, collocation modeling, and cloud schema migration remain outside this plan.
 - Type consistency: `CaptureTriageStatus`, `triageStatus`, `triagedAt`, `isPendingCapture`, `isCaptureTrainingActive`, `keepTOTCapture`, and `archiveTOTCapture` are consistently named across tasks.

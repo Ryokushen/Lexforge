@@ -21,18 +21,18 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Unlock gating for unseen higher-phase words, while preserving already-introduced reviews and custom words
 - Vocabulary pipeline stage tracking across seeded, custom, and TOT-captured words
 - Word library pipeline badges and stats-page acquisition flow summary
-- Word Library Inbox triage for pending captured words, including archive-without-delete behavior
+- Word Library Inbox and Archive triage for pending or archived captured words, including restore-without-training behavior
 
 ## Current Product Gap
 
-- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, and a first fluent rewrite-transfer prompt, and the vocabulary pipeline now tracks acquisition stage from capture through mature production with Inbox triage for captured words. The dashboard distinguishes eligible new training words from pending capture Inbox items. The remaining gaps are broader stat-aware personalization in other training surfaces, deeper Context transfer if deterministic grading can stay sane, and post-v2 pipeline depth: archive browsing/restore, duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
+- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, and a first fluent rewrite-transfer prompt, and the vocabulary pipeline now tracks acquisition stage from capture through mature production with Inbox and Archive triage for captured words. The dashboard distinguishes eligible new training words from pending capture Inbox items. The remaining gaps are broader stat-aware personalization in other training surfaces, deeper Context transfer if deterministic grading can stay sane, and post-v2 pipeline depth: duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
 
 ## Active Next Priorities
 
-1. Add archive browsing and restore for captured words that have been archived without deletion.
+1. Add duplicate/merge workflows for captured, custom, and seeded vocabulary entries.
 2. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
 3. Deepen Context transfer beyond the current rewrite slice without introducing LLM grading or bloated UX.
-4. Evolve the vocabulary pipeline beyond v2 with duplicate merge workflows, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
+4. Evolve the vocabulary pipeline beyond duplicate triage with first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
 5. Keep the canonical 700-word ranking authoritative for future seed updates. Reference material: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md), [docs/word-frequency-audit.md](docs/word-frequency-audit.md), [docs/word-addition-candidates.md](docs/word-addition-candidates.md).
 
 ## Active Work In Progress
@@ -43,6 +43,7 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Completed Pipeline v2 Tasks 1-6 covering capture triage helpers, seed backfill, training/session gating, Word Library Inbox UI, sync merge preservation, documentation, and full verification.
 - Completed follow-up: dashboard now shows pending capture Inbox count separately from eligible new training words.
 - Completed follow-up: local-only Supabase auth fallback prevents post-session crashes when cloud env vars are absent.
+- Completed follow-up: Word Library Archive browsing and Restore for archived captures, plus AppStatusBanner hydration stabilization.
 
 ## Verification Baseline
 
