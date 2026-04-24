@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ReviewLog } from "@/lib/types";
-import { getRecentRetrievalMetrics } from "./page.helpers";
+import type { ReviewLog, Word } from "@/lib/types";
+import { getPipelineStats, getRecentRetrievalMetrics } from "./page.helpers";
 
 function makeReviewLog(
   reviewedAt: string,
@@ -15,6 +15,19 @@ function makeReviewLog(
     retrievalKind: "exact",
     reviewedAt: new Date(reviewedAt),
     ...overrides,
+  };
+}
+
+function makeWord(id: number, stage: Word["pipelineStage"]): Word {
+  return {
+    id,
+    word: `word-${id}`,
+    definition: "definition",
+    examples: [],
+    synonyms: [],
+    tier: 1,
+    pipelineStage: stage,
+    createdAt: new Date("2026-04-01T00:00:00.000Z"),
   };
 }
 
@@ -64,5 +77,37 @@ describe("getRecentRetrievalMetrics", () => {
       cueUseRate: 33,
       retrievalLogCount: 3,
     });
+  });
+});
+
+describe("getPipelineStats", () => {
+  it("summarizes lifecycle distribution and production conversion", () => {
+    const stats = getPipelineStats([
+      makeWord(1, "captured"),
+      makeWord(2, "queued"),
+      makeWord(3, "learning"),
+      makeWord(4, "reviewing"),
+      makeWord(5, "contextualizing"),
+      makeWord(6, "productive"),
+      makeWord(7, "mature"),
+    ]);
+
+    expect(stats.summary.counts).toMatchObject({
+      captured: 1,
+      queued: 1,
+      learning: 1,
+      reviewing: 1,
+      contextualizing: 1,
+      productive: 1,
+      mature: 1,
+    });
+    expect(stats.summary.recognitionToProductionRate).toBe(50);
+    expect(stats.tiles).toEqual([
+      { label: "Captured", value: 1, stage: "captured" },
+      { label: "Learning", value: 1, stage: "learning" },
+      { label: "Reviewing", value: 1, stage: "reviewing" },
+      { label: "Productive", value: 1, stage: "productive" },
+      { label: "Mature", value: 1, stage: "mature" },
+    ]);
   });
 });

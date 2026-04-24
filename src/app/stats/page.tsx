@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { useRetrievalHealth } from "@/hooks/use-retrieval-health";
 import { SEEDED_PHASE_INFO } from "@/lib/curriculum-copy";
-import type { ReviewLog } from "@/lib/types";
+import type { ReviewLog, Word } from "@/lib/types";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "@/lib/types";
-import { getRecentRetrievalMetrics } from "./page.helpers";
+import { getPipelineStats, getRecentRetrievalMetrics } from "./page.helpers";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import {
@@ -76,6 +76,7 @@ export default function StatsPage() {
   const { profile, dueCount, wordCount, loading } = useStats();
   const retrieval = useRetrievalHealth();
   const [recentLogs, setRecentLogs] = useState<ReviewLog[]>([]);
+  const [words, setWords] = useState<Word[]>([]);
   const [trend, setTrend] = useState<number[]>(() => Array(14).fill(0));
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export default function StatsPage() {
       .limit(50)
       .toArray()
       .then(setRecentLogs);
+    db.words.toArray().then(setWords);
   }, [seedStatus]);
 
   useEffect(() => {
@@ -134,6 +136,7 @@ export default function StatsPage() {
       ? recentLogs.reduce((sum, l) => sum + l.responseTimeMs, 0) / recentLogs.length / 1000
       : 0;
   const recentRetrievalMetrics = getRecentRetrievalMetrics(recentLogs);
+  const pipelineStats = getPipelineStats(words);
 
   const maxStat = Math.max(...Object.values(profile.stats), 40);
   const diffDisplay = DIFFICULTY_DISPLAY[profile.difficulty];
@@ -623,8 +626,72 @@ export default function StatsPage() {
         </motion.div>
       )}
 
-      {/* Training history */}
+      <HeronDivider label="Vocabulary Pipeline" />
+
       <motion.div {...fadeUp(0.42)}>
+        <IllumCard>
+          <div
+            className="uppercase-tracked text-[11px] mb-3"
+            style={{ color: "var(--gold-deep)" }}
+          >
+            Acquisition Flow
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {pipelineStats.tiles.map((tile) => (
+              <div
+                key={tile.stage}
+                className="rounded-[2px] py-3 px-2 text-center"
+                style={{
+                  background: "color-mix(in oklab, var(--paper), var(--gold) 2%)",
+                  border: "1px solid var(--line-soft)",
+                }}
+              >
+                <div
+                  className="font-display text-2xl font-bold tabular-nums"
+                  style={{ color: "var(--lapis)" }}
+                >
+                  {tile.value}
+                </div>
+                <div
+                  className="uppercase-tracked text-[9px] mt-0.5"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  {tile.label}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div
+            className="mt-4 rounded-[2px] px-3 py-2"
+            style={{
+              background: "color-mix(in oklab, var(--lapis), transparent 94%)",
+              border: "1px solid color-mix(in oklab, var(--lapis), transparent 72%)",
+            }}
+          >
+            <span
+              className="uppercase-tracked text-[10px]"
+              style={{ color: "var(--lapis)" }}
+            >
+              Recognition to production
+            </span>
+            <span
+              className="ml-2 font-display font-bold tabular-nums"
+              style={{ color: "var(--ink)" }}
+            >
+              {pipelineStats.summary.recognitionToProductionRate !== null
+                ? `${pipelineStats.summary.recognitionToProductionRate}%`
+                : "--"}
+            </span>
+            <span className="ml-2 text-xs italic" style={{ color: "var(--muted-foreground)" }}>
+              {pipelineStats.summary.productiveOrMatureCount} of{" "}
+              {pipelineStats.summary.reviewingOrLaterCount} reviewing-or-later words
+            </span>
+          </div>
+        </IllumCard>
+      </motion.div>
+
+      {/* Training history */}
+      <motion.div {...fadeUp(0.46)}>
         <IllumCard>
           <div
             className="uppercase-tracked text-[11px] mb-3"
