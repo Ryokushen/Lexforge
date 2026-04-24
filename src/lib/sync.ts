@@ -268,6 +268,8 @@ function mergeTOTCapture(
     count: mergedCount,
     eventIds: mergedEventIds.length > 0 ? mergedEventIds : undefined,
     updatedAt: maxIso(localUpdatedAt, remoteUpdatedAt),
+    triageStatus: localCapture?.triageStatus,
+    triagedAt: localCapture?.triagedAt,
   };
 }
 

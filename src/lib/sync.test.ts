@@ -639,6 +639,50 @@ describe("sync review logs", () => {
       },
     });
   });
+
+  it("preserves local capture triage when remote TOT rows lack triage fields", async () => {
+    tableState.word_tot_captures.rows = [
+      {
+        user_id: "user-1",
+        word_key: "lucid",
+        normalized_word_key: "lucid",
+        source: "speech",
+        weak_substitute: null,
+        context: null,
+        captured_at: "2026-04-11T00:00:00.000Z",
+        count: 1,
+        event_ids: ["remote-event"],
+        updated_at: "2026-04-11T00:00:00.000Z",
+      },
+    ];
+    dbMock.words.toArray.mockResolvedValue([
+      {
+        ...makeWord(1, "lucid"),
+        totCapture: {
+          source: "speech",
+          capturedAt: "2026-04-10T00:00:00.000Z",
+          updatedAt: "2026-04-12T00:00:00.000Z",
+          count: 1,
+          eventIds: ["local-event"],
+          triageStatus: "archived",
+          triagedAt: "2026-04-13T00:00:00.000Z",
+        },
+      },
+    ]);
+
+    await syncOnLogin(makeUser());
+
+    expect(dbMock.words.update).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        totCapture: expect.objectContaining({
+          triageStatus: "archived",
+          triagedAt: "2026-04-13T00:00:00.000Z",
+        }),
+      }),
+    );
+  });
+
   it("pulls remote custom words and TOT capture summaries on login", async () => {
     tableState.custom_words.rows = [
       {
