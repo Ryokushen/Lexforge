@@ -1,16 +1,18 @@
 # Lexforge 700-Word Retiering and 4-Phase Curriculum Plan
 
-_Last updated: 2026-04-22_
+_Last updated: 2026-04-24_
+
+Status: implemented in `master`. This file is retained as the historical implementation brief and source rationale for the shipped 700-word, four-phase seeded curriculum.
 
 ## Decision Snapshot
 
-This is the current development direction for Lexforge's seed curriculum:
+This was the development direction for Lexforge's seed curriculum and now describes the shipped baseline:
 
-- The seeded vocabulary should be treated as a single **700-word curriculum**, not a 531-word base plus a separate add-on list.
-- All 700 seeded words should be **re-tiered from easiest / most commonly used to hardest / least commonly used**.
-- Lexforge should move from **3 seeded tiers/phases to 4**.
-- Lower-level players should **not be shown unseen words from locked higher phases**.
-- The existing audit and candidate docs remain useful source material, but this file is the working implementation brief for the curriculum refactor.
+- The seeded vocabulary is treated as a single **700-word curriculum**, not a 531-word base plus a separate add-on list.
+- All 700 seeded words are **re-tiered from easiest / most commonly used to hardest / least commonly used**.
+- Lexforge uses **4 seeded phases**.
+- Lower-level players are not shown unseen words from locked higher phases.
+- The existing audit and candidate docs remain useful source material, but this file is no longer an active implementation brief.
 
 Supporting source docs:
 
@@ -201,11 +203,11 @@ Difficulty should keep controlling **how many** new words are introduced per day
 
 ---
 
-## Recommended Delivery Order
+## Implemented Delivery Order
 
 1. Finalize the canonical 700-word ranking and four-phase assignment.
 2. Update seed data and any ranking artifacts.
-3. Refactor types/config/constants from 3 seeded phases to 4.
+3. Refactor types/config/constants from legacy seeded phases to 4.
 4. Update session generation, scheduler filters, stats, and library UI.
 5. Add/refresh tests for unlock thresholds, session gating, and grandfathered review behavior.
 6. Refresh public and contributor-facing docs once the implementation lands.
@@ -214,20 +216,20 @@ Difficulty should keep controlling **how many** new words are introduced per day
 
 ## Minimum Acceptance Checklist
 
-- [ ] The full 700-word seeded corpus is ranked and assigned to 4 phases.
-- [ ] No seeded-word codepath is hard-coded to phases 1-3 only.
-- [ ] Level 1 players only get Phase 1 seeded words as new introductions.
-- [ ] Higher phases do not leak into lower-level session generation.
-- [ ] Already-introduced higher-phase words remain reviewable after the rebalance.
-- [ ] Custom words remain accessible.
-- [ ] Docs and UI copy stop implying that the seeded curriculum is permanently three-tier.
+- [x] The full 700-word seeded corpus is ranked and assigned to 4 phases.
+- [x] No seeded-word codepath is hard-coded to phases 1-3 only.
+- [x] Level 1 players only get Phase 1 seeded words as new introductions.
+- [x] Higher phases do not leak into lower-level session generation.
+- [x] Already-introduced higher-phase words remain reviewable after the rebalance.
+- [x] Custom words remain accessible.
+- [x] Docs and UI copy stop implying that the seeded curriculum is permanently three-tier.
 
 ## Summary
 
-The decision is no longer "should Lexforge maybe keep three tiers or maybe move to four." The development direction is:
+The shipped curriculum baseline is:
 
-- **retier all 700 seeded words**,
-- **move to four seeded phases**,
-- and **gate unseen higher-phase words out of lower-level play**.
+- **all 700 seeded words are re-tiered**,
+- **the app uses four seeded phases**,
+- and **unseen higher-phase words are gated out of lower-level play**.
 
-That is the curriculum refactor to execute.
+This file remains as the rationale and checklist for that completed curriculum refactor.

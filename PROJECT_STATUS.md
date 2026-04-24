@@ -1,6 +1,6 @@
 # Lexforge Project Status
 
-_Last updated: 2026-04-22_
+_Last updated: 2026-04-24_
 
 This file is the quick "do not redo work" reference for contributors.
 
@@ -16,24 +16,27 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Background sync retry and recovery behavior
 - Partial session save-on-exit flow with dashboard resume messaging
 - Quest-card separation of total backlog vs next-session mix
+- Canonical 700-word curriculum across four seeded phases
+- Unlock gating for unseen higher-phase words, while preserving already-introduced reviews and custom words
+- Vocabulary pipeline stage tracking across seeded, custom, and TOT-captured words
+- Word library pipeline badges and stats-page acquisition flow summary
 
 ## Current Product Gap
 
-- RPG stats now drive both session mode weighting and retrieval-drill timing, and Context mode now spans replacement, target-word production, and a first fluent rewrite-transfer prompt. The remaining gaps are broader stat-aware personalization in other training surfaces, targeted regression coverage around newer sync changes, and the curriculum refactor to retier the full 700-word seed corpus from easiest/most common to hardest/least common, expand the seeded progression from 3 phases to 4, and harden unlock gating so lower levels do not see unseen higher-phase words too early.
+- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, and a first fluent rewrite-transfer prompt, and the vocabulary pipeline now tracks acquisition stage from capture through mature production. The remaining gaps are broader stat-aware personalization in other training surfaces, targeted regression coverage around newer sync changes, deeper Context transfer if deterministic grading can stay sane, and post-v1 pipeline depth: triage inbox, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
 
 ## Active Next Priorities
 
 1. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
 2. Add targeted regression tests around newly introduced sync changes (without reworking shipped sync architecture).
-3. Finalize the canonical 700-word ranking by merging the current 531 seeded words with the curated 169-word addition set, then retier the entire corpus from easiest/most common to hardest/least common. Working brief: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md). Source material: [docs/word-frequency-audit.md](docs/word-frequency-audit.md), [docs/word-addition-candidates.md](docs/word-addition-candidates.md).
-4. Refactor the app from 3 seeded phases to 4, including unlock thresholds, tier/phase metadata, session generation, stats views, and word-library displays.
-5. Implement and verify a gating method that keeps unseen higher-phase words out of lower-level play while still allowing already-introduced reviews and custom words.
-6. If Context mode needs another step after the curriculum work, deepen transfer beyond the current rewrite slice without introducing LLM grading or bloated UX.
+3. Deepen Context transfer beyond the current rewrite slice without introducing LLM grading or bloated UX.
+4. Evolve the vocabulary pipeline beyond v1 with triage inbox, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
+5. Keep the canonical 700-word ranking authoritative for future seed updates. Reference material: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md), [docs/word-frequency-audit.md](docs/word-frequency-audit.md), [docs/word-addition-candidates.md](docs/word-addition-candidates.md).
 
 ## Verification Baseline
 
 - `npm run lint`
-- `npm run test` (132 passing tests)
+- `npm run test` (full Vitest suite)
 - `npm run build` (Next.js production build + TypeScript checks)
 
 ## Scope Guardrail

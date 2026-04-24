@@ -8,11 +8,11 @@ Check whether the current seeded vocabulary phases are ordered by English usage 
 
 Development follow-up:
 
-- The working plan is now to retier the full 700-word seeded corpus into four phases and add stronger gating so lower levels do not see unseen higher-phase words too early. See [docs/700-word-retiering-plan.md](700-word-retiering-plan.md).
+- Implemented follow-up: the app now ships the full 700-word seeded corpus across four phases, with gating so lower levels do not see unseen higher-phase words too early. See [docs/700-word-retiering-plan.md](700-word-retiering-plan.md).
 
 ## Method
 
-- Parsed all 531 seeded words from [src/lib/seed-words.ts](../src/lib/seed-words.ts).
+- Parsed the legacy 531-word seed list as it existed when this audit was generated.
 - Scored each headword with `wordfreq` 3.1.1 using `zipf_frequency(word, "en")`.
 - Interpreted higher Zipf values as more common usage.
 

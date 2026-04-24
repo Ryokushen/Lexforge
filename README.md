@@ -19,11 +19,12 @@ What it does not currently claim:
 
 ## Current Status
 
-- 531 seeded words across three tiers, plus custom words
+- 700 seeded words across four phases, plus custom words
 - Four live training modes: Recall, Context, Rapid Retrieval, and Association
 - TOT capture flow for real-world blanking moments, including source, weak substitute, and context
+- Vocabulary pipeline stage tracking across seeded, custom, and TOT-captured words
 - Difficulty settings that control daily new-word intake
-- Tier gating that unlocks harder vocabulary as the player levels up
+- Phase gating that unlocks harder vocabulary as the player levels up
 - Local-first storage with Dexie/IndexedDB
 - Optional Supabase sync with GitHub OAuth for cross-device backup of profile state, review data, custom words, associations, and TOT capture summaries
 - Review-log sync that keeps daily limits consistent across browsers
@@ -79,7 +80,7 @@ Other progression systems:
 - XP comes from session performance, streak bonuses, and fast clean retrieval.
 - HP decays on missed days and restores on level-up.
 - Difficulty changes session size and new-word intake.
-- Tier gating unlocks Tier 2 at level 5 and Tier 3 at level 10.
+- Phase gating unlocks Phase II at level 5, Phase III at level 10, and Phase IV at level 15.
 
 ## Technical Backbone
 
@@ -114,9 +115,10 @@ src/
     |-- db.ts               Dexie schema (words, reviewCards, reviewLogs, userProfile)
     |-- scheduler.ts        ts-fsrs wrapper
     |-- session-engine.ts   Word selection, grading, and mode picking
+    |-- pipeline-stage.ts   Vocabulary acquisition lifecycle inference
     |-- gamification.ts     XP, leveling, HP decay, and stat growth
     |-- sync.ts             Supabase merge and reconciliation logic
-    |-- seed-words.ts       531 seeded vocabulary words across three tiers
+    |-- seed-words.ts       700 seeded vocabulary words across four phases
     |-- sounds.ts           Web Audio API synthesized sound effects
     `-- types.ts            Shared TypeScript types
 ```
@@ -176,11 +178,22 @@ The app intentionally avoids stronger claims until the mechanics and data suppor
 
 The stats page includes a Retrieval Health section that tracks whether training is actually improving retrieval over time:
 
-- **Unassisted Recall** — percentage of reviews that were clean exact recalls without cues, with a week-over-week trend arrow
-- **Retrieval Speed** — median latency for correct unassisted recalls, with a week-over-week trend arrow
-- **Cue-Dependent Words** — words where at least 2 of the last 3 reviews required a cue
-- **TOT This Week** — words with a real-world tip-of-the-tongue capture this calendar week
-- **In Rescue Stage** — words currently classified as struggling by the adaptive drill system
+- **Unassisted Recall** -- percentage of reviews that were clean exact recalls without cues, with a week-over-week trend arrow
+- **Retrieval Speed** -- median latency for correct unassisted recalls, with a week-over-week trend arrow
+- **Cue-Dependent Words** -- words where at least 2 of the last 3 reviews required a cue
+- **TOT This Week** -- words with a real-world tip-of-the-tongue capture this calendar week
+- **In Rescue Stage** -- words currently classified as struggling by the adaptive drill system
+
+## Vocabulary Pipeline Stats
+
+The stats page also tracks acquisition lifecycle distribution:
+
+- **Captured** -- words saved from real-world blanking moments
+- **Learning** -- words with training started but no stable clean recall
+- **Reviewing** -- words with clean recall under FSRS review
+- **Productive** -- words successfully used in production or rewrite prompts
+- **Mature** -- words with stable recall plus successful production history
+- **Recognition to production** -- productive or mature words divided by reviewing-or-later words
 
 ## Already Shipped (Do Not Re-Implement)
 
@@ -191,6 +204,8 @@ These foundations are already in `master` and should be treated as existing beha
 - Explicit `session_id` handling in review logs to preserve same-day multi-device sessions
 - Background sync recovery + retry behavior
 - Partial session save-on-exit flow and dashboard resume message
+- Canonical 700-word, four-phase seeded curriculum with unlock gating
+- Vocabulary pipeline stage tracking for seeded, custom, and TOT-captured words
 
 ## Near-Term Roadmap
 
@@ -199,6 +214,4 @@ For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](
 - deepen Context transfer beyond the new fluent rewrite slice into richer scenario variation only if deterministic grading can stay sane
 - broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
-- retier the full 700-word seeded corpus from easiest/most common to hardest/least common and make that ranking authoritative for future seed updates; working brief: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md)
-- refactor Lexforge from 3 seeded tiers/phases to 4 across seed data, unlock rules, stats/library views, and session selection
-- implement a gating method so lower levels do not see unseen higher-phase words in session generation, while already-introduced reviews and custom words remain available
+- evolve the vocabulary pipeline beyond v1 with a true triage inbox, first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling

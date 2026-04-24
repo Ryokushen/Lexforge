@@ -1,5 +1,7 @@
 ﻿# Vocabulary Pipeline Layer Implementation Plan
 
+Status: implemented through the v1 app slice in `master`. This plan is retained as the execution record and implementation reference; do not treat the unchecked task boxes below as current backlog without first checking `PROJECT_STATUS.md`.
+
 > **For implementation workers:** Execute this plan task-by-task. Use the checkbox (`- [ ]`) syntax for tracking, run the focused verification commands after each task, and commit each completed task separately.
 
 **Goal:** Add a thin universal vocabulary lifecycle layer for all Lexforge words while preserving current FSRS scheduling, local-first storage, sync behavior, and session generation.
