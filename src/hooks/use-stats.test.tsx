@@ -7,9 +7,13 @@ const getOrCreateProfileMock = vi.hoisted(() => vi.fn());
 const getDueCountMock = vi.hoisted(() => vi.fn());
 const getWordCountMock = vi.hoisted(() => vi.fn());
 const getAvailableNewCountMock = vi.hoisted(() => vi.fn());
+const wordsToArrayMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db", () => ({
   db: {
+    words: {
+      toArray: wordsToArrayMock,
+    },
     userProfile: {
       update: vi.fn(),
     },
@@ -67,6 +71,7 @@ describe("useStats", () => {
     getDueCountMock.mockResolvedValue(2);
     getWordCountMock.mockResolvedValue(100);
     getAvailableNewCountMock.mockResolvedValue(5);
+    wordsToArrayMock.mockResolvedValue([]);
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       value: "visible",
@@ -88,6 +93,25 @@ describe("useStats", () => {
     getWordCountMock
       .mockResolvedValueOnce(100)
       .mockResolvedValueOnce(100);
+    wordsToArrayMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          word: "lucid",
+          definition: "clear",
+          examples: [],
+          synonyms: [],
+          tier: 1,
+          createdAt: new Date("2026-04-01T00:00:00.000Z"),
+          totCapture: {
+            source: "speech",
+            capturedAt: "2026-04-10T12:00:00.000Z",
+            count: 1,
+            triageStatus: "pending",
+          },
+        },
+      ]);
 
     const { result } = renderHook(() => useStats());
 
@@ -96,6 +120,7 @@ describe("useStats", () => {
       expect(result.current.profile?.level).toBe(1);
       expect(result.current.dueCount).toBe(2);
       expect(result.current.newCount).toBe(5);
+      expect(result.current.inboxCount).toBe(0);
     });
 
     await act(async () => {
@@ -111,6 +136,7 @@ describe("useStats", () => {
       expect(result.current.profile?.totalReviewed).toBe(20);
       expect(result.current.dueCount).toBe(6);
       expect(result.current.newCount).toBe(1);
+      expect(result.current.inboxCount).toBe(1);
     });
   });
 

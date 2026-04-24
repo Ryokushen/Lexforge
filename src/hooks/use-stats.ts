@@ -5,6 +5,7 @@ import { db, getOrCreateProfile } from "@/lib/db";
 import { useBootstrap } from "@/lib/bootstrap-context";
 import { getDueCount, getWordCount } from "@/lib/scheduler";
 import { getAvailableNewCount } from "@/lib/session-engine";
+import { getPendingCaptureWords } from "@/lib/word-library";
 import {
   CLOUD_SYNC_EVENT,
   type CloudSyncEventDetail,
@@ -13,13 +14,15 @@ import type { Difficulty, UserProfile } from "@/lib/types";
 
 async function loadStatsSnapshot() {
   const profile = await getOrCreateProfile();
-  const [dueCount, newCount, wordCount] = await Promise.all([
+  const [dueCount, newCount, wordCount, words] = await Promise.all([
     getDueCount(),
     getAvailableNewCount(profile.difficulty, profile.level),
     getWordCount(),
+    db.words.toArray(),
   ]);
+  const inboxCount = getPendingCaptureWords(words).length;
 
-  return { profile, dueCount, newCount, wordCount };
+  return { profile, dueCount, newCount, inboxCount, wordCount };
 }
 
 export function useStats() {
@@ -27,6 +30,7 @@ export function useStats() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [dueCount, setDueCount] = useState(0);
   const [newCount, setNewCount] = useState(0);
+  const [inboxCount, setInboxCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +38,7 @@ export function useStats() {
     setProfile(snapshot.profile);
     setDueCount(snapshot.dueCount);
     setNewCount(snapshot.newCount);
+    setInboxCount(snapshot.inboxCount);
     setWordCount(snapshot.wordCount);
     setLoading(seedStatus === "seeding" && snapshot.wordCount === 0);
   }, [seedStatus]);
@@ -106,5 +111,5 @@ export function useStats() {
     await refresh();
   }, [refresh]);
 
-  return { profile, dueCount, newCount, wordCount, loading, refresh, setDifficulty };
+  return { profile, dueCount, newCount, inboxCount, wordCount, loading, refresh, setDifficulty };
 }
