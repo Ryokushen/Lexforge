@@ -33,6 +33,12 @@ function createUnavailableClient(): SupabaseClient {
           },
         };
       },
+      async getSession() {
+        return {
+          data: { session: null },
+          error: null,
+        };
+      },
       async signInWithOAuth() {
         return {
           data: { provider: "github", url: null },
