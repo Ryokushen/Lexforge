@@ -2,14 +2,17 @@ import { describe, expect, it } from "vitest";
 import type { TOTCapture, Word } from "./types";
 import {
   archiveTOTCapture,
+  getArchivedCaptureWords,
   getCaptureTriageStatus,
   getPendingCaptureWords,
+  isArchivedCapture,
   isCaptureTrainingActive,
   isDuplicateWord,
   isPendingCapture,
   isTierLocked,
   keepTOTCapture,
   normalizeWord,
+  restoreArchivedTOTCapture,
   shouldIncludeNewWordInTraining,
 } from "./word-library";
 
@@ -98,6 +101,33 @@ describe("capture triage helpers", () => {
     ]);
   });
 
+  it("filters archived captures separately from pending and accepted captures", () => {
+    const pending = makeWord({
+      id: 1,
+      word: "pending",
+      totCapture: makeCapture({ triageStatus: "pending" }),
+    });
+    const accepted = makeWord({
+      id: 2,
+      word: "accepted",
+      totCapture: makeCapture({ triageStatus: "accepted" }),
+    });
+    const archived = makeWord({
+      id: 3,
+      word: "archived",
+      totCapture: makeCapture({ triageStatus: "archived" }),
+    });
+    const normal = makeWord({ id: 4, word: "normal" });
+
+    expect(isArchivedCapture(archived)).toBe(true);
+    expect(isArchivedCapture(pending)).toBe(false);
+    expect(isArchivedCapture(accepted)).toBe(false);
+    expect(isArchivedCapture(normal)).toBe(false);
+    expect(getArchivedCaptureWords([accepted, pending, archived, normal])).toEqual([
+      archived,
+    ]);
+  });
+
   it("keeps captures without demoting advanced pipeline stages", () => {
     const kept = keepTOTCapture(
       makeWord({
@@ -179,6 +209,39 @@ describe("capture triage helpers", () => {
     expect(
       shouldIncludeNewWordInTraining(
         makeWord({ totCapture: makeCapture({ triageStatus: "archived" }) }),
+      ),
+    ).toBe(false);
+  });
+
+  it("restores archived captures to pending without activating training", () => {
+    const restored = restoreArchivedTOTCapture(
+      makeWord({
+        pipelineStage: "captured",
+        pipelineUpdatedAt: "2026-04-01T00:00:00.000Z",
+        totCapture: makeCapture({
+          triageStatus: "archived",
+          triagedAt: "2026-04-20T12:00:00.000Z",
+          updatedAt: "2026-04-20T12:00:00.000Z",
+        }),
+      }),
+      "2026-04-24T12:00:00.000Z",
+    );
+
+    expect(restored).not.toHaveProperty("pipelineStage");
+    expect(restored).not.toHaveProperty("pipelineUpdatedAt");
+    expect(restored.totCapture).toMatchObject({
+      triageStatus: "pending",
+      updatedAt: "2026-04-24T12:00:00.000Z",
+    });
+    expect(restored.totCapture).toHaveProperty("triagedAt", undefined);
+    expect(
+      isCaptureTrainingActive(
+        makeWord({ totCapture: restored.totCapture }),
+      ),
+    ).toBe(false);
+    expect(
+      shouldIncludeNewWordInTraining(
+        makeWord({ totCapture: restored.totCapture }),
       ),
     ).toBe(false);
   });

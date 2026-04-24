@@ -36,6 +36,22 @@ export function AppStatusBanner() {
     );
   }
 
+  if (seedStatus === "seeding") {
+    return (
+      <div className="border-b border-blue-500/20 bg-blue-500/8">
+        <div className="mx-auto flex max-w-5xl items-start gap-2 px-4 py-2 text-sm text-blue-100">
+          <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin text-blue-300" />
+          <div>
+            <p>Preparing your starter library in the background.</p>
+            <p className="text-xs text-blue-100/80">
+              You can browse now, and cloud backup is available once you sign in.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isOnline) {
     return (
       <div className="border-b border-amber-500/20 bg-amber-500/8">
@@ -47,22 +63,6 @@ export function AppStatusBanner() {
               {user
                 ? "Cloud sync resumes automatically when you reconnect."
                 : "Sign in later to enable cloud backup across devices."}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (seedStatus === "seeding") {
-    return (
-      <div className="border-b border-blue-500/20 bg-blue-500/8">
-        <div className="mx-auto flex max-w-5xl items-start gap-2 px-4 py-2 text-sm text-blue-100">
-          <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin text-blue-300" />
-          <div>
-            <p>Preparing your starter library in the background.</p>
-            <p className="text-xs text-blue-100/80">
-              You can browse now, and cloud backup is available once you sign in.
             </p>
           </div>
         </div>

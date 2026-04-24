@@ -4,6 +4,7 @@ import {
   buildTierFilterLayout,
   buildWordGroups,
   filterWordsForLibraryView,
+  getArchiveCount,
   getInboxCount,
   getWordLibraryPipelineStage,
 } from "./page.helpers";
@@ -106,6 +107,58 @@ describe("inbox helpers", () => {
     ).toEqual([pending]);
     expect(
       filterWordsForLibraryView([pending, accepted], "inbox", "lucid"),
+    ).toEqual([]);
+  });
+});
+
+describe("archive helpers", () => {
+  it("counts only archived capture words", () => {
+    expect(
+      getArchiveCount([
+        makeWord(1, 1, { totCapture: makeCapture(1) }),
+        makeWord(2, 1, {
+          totCapture: makeCapture(1, { triageStatus: "accepted" }),
+        }),
+        makeWord(3, 1, {
+          totCapture: makeCapture(1, { triageStatus: "archived" }),
+        }),
+        makeWord(4, 1),
+      ]),
+    ).toBe(1);
+  });
+
+  it("filters the archive to archived captures before search", () => {
+    const archived = makeWord(1, 1, {
+      word: "meticulous",
+      definition: "careful",
+      totCapture: makeCapture(1, {
+        triageStatus: "archived",
+        weakSubstitute: "picky",
+        context: "inspection meeting",
+      }),
+    });
+    const pending = makeWord(2, 1, {
+      word: "lucid",
+      definition: "clear",
+      totCapture: makeCapture(1, { triageStatus: "pending" }),
+    });
+
+    expect(
+      filterWordsForLibraryView([archived, pending], "archive", "").map(
+        (word) => word.word,
+      ),
+    ).toEqual(["meticulous"]);
+    expect(
+      filterWordsForLibraryView([archived, pending], "archive", "inspection"),
+    ).toEqual([archived]);
+    expect(
+      filterWordsForLibraryView([archived, pending], "archive", "picky"),
+    ).toEqual([archived]);
+    expect(
+      filterWordsForLibraryView([archived, pending], "archive", "careful"),
+    ).toEqual([archived]);
+    expect(
+      filterWordsForLibraryView([archived, pending], "archive", "lucid"),
     ).toEqual([]);
   });
 });

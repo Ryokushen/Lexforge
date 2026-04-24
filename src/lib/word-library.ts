@@ -67,10 +67,20 @@ export function isPendingCapture(word: Pick<Word, "totCapture">): boolean {
   return getCaptureTriageStatus(word.totCapture) === "pending";
 }
 
+export function isArchivedCapture(word: Pick<Word, "totCapture">): boolean {
+  return getCaptureTriageStatus(word.totCapture) === "archived";
+}
+
 export function getPendingCaptureWords<T extends Pick<Word, "totCapture">>(
   words: T[],
 ): T[] {
   return words.filter(isPendingCapture);
+}
+
+export function getArchivedCaptureWords<T extends Pick<Word, "totCapture">>(
+  words: T[],
+): T[] {
+  return words.filter(isArchivedCapture);
 }
 
 export function isCaptureTrainingActive(word: Pick<Word, "totCapture">): boolean {
@@ -108,6 +118,19 @@ export function archiveTOTCapture(word: Word, triagedAt: string): Partial<Word> 
       triageStatus: "archived",
       triagedAt,
       updatedAt: triagedAt,
+    },
+  };
+}
+
+export function restoreArchivedTOTCapture(word: Word, restoredAt: string): Partial<Word> {
+  if (!word.totCapture) return {};
+
+  return {
+    totCapture: {
+      ...word.totCapture,
+      triageStatus: "pending",
+      triagedAt: undefined,
+      updatedAt: restoredAt,
     },
   };
 }

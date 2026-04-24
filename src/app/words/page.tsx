@@ -38,12 +38,14 @@ import {
   isTierLocked,
   keepTOTCapture,
   normalizeWord,
+  restoreArchivedTOTCapture,
   type LibraryTierFilter,
 } from "@/lib/word-library";
 import {
   buildTierFilterLayout,
   buildWordGroups,
   filterWordsForLibraryView,
+  getArchiveCount,
   getInboxCount,
   getWordLibraryPipelineStage,
   type WordLibraryViewFilter,
@@ -109,6 +111,7 @@ function WordRow({
   onToggle,
   onKeepCapture,
   onArchiveCapture,
+  onRestoreCapture,
   isTriaging,
   isLast,
 }: {
@@ -117,12 +120,14 @@ function WordRow({
   onToggle: () => void;
   onKeepCapture: (word: Word) => void;
   onArchiveCapture: (word: Word) => void;
+  onRestoreCapture: (word: Word) => void;
   isTriaging: boolean;
   isLast: boolean;
 }) {
   const tierKey = String(word.tier);
   const tier = TIER_INFO[tierKey] ?? TIER_INFO.custom;
   const pipelineStage = getWordLibraryPipelineStage(word);
+  const captureStatus = getCaptureTriageStatus(word.totCapture);
 
   return (
     <div
@@ -304,7 +309,7 @@ function WordRow({
                       {word.totCapture.context}
                     </p>
                   )}
-                  {getCaptureTriageStatus(word.totCapture) === "pending" && (
+                  {captureStatus === "pending" && (
                     <div className="flex flex-wrap gap-2 pt-1">
                       <Button
                         size="sm"
@@ -326,6 +331,22 @@ function WordRow({
                         }}
                       >
                         Archive
+                      </Button>
+                    </div>
+                  )}
+                  {captureStatus === "archived" && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isTriaging}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRestoreCapture(word);
+                        }}
+                      >
+                        <RotateCcw className="size-3.5" />
+                        Restore
                       </Button>
                     </div>
                   )}
@@ -360,8 +381,10 @@ export default function WordsPage() {
   const [totForm, setTotForm] = useState(INITIAL_TOT_FORM);
   const duplicateWord = isDuplicateWord(newWord, words);
   const inboxCount = useMemo(() => getInboxCount(words), [words]);
+  const archiveCount = useMemo(() => getArchiveCount(words), [words]);
   const selectedTierLocked =
     activeTier !== "inbox" &&
+    activeTier !== "archive" &&
     isTierLocked(activeTier as LibraryTierFilter, playerLevel);
   const normalizedTOTWord = normalizeWord(totForm.word);
   const existingTOTWord = useMemo(
@@ -560,9 +583,37 @@ export default function WordsPage() {
     }
   };
 
+  const handleRestoreCapture = async (word: Word) => {
+    if (!word.id || triagingWordIdRef.current !== null) return;
+    triagingWordIdRef.current = word.id;
+    setTriagingWordId(word.id);
+
+    try {
+      const current = await db.words.get(word.id);
+      if (
+        !current?.totCapture ||
+        getCaptureTriageStatus(current.totCapture) !== "archived"
+      ) {
+        await loadWords();
+        return;
+      }
+
+      await db.words.update(
+        word.id,
+        restoreArchivedTOTCapture(current, new Date().toISOString()),
+      );
+      setExpandedId(null);
+      await loadWords();
+    } finally {
+      triagingWordIdRef.current = null;
+      setTriagingWordId(null);
+    }
+  };
+
   const tierFilters: { key: WordLibraryViewFilter; label: string; count?: number }[] = [
     { key: "all", label: "All" },
     { key: "inbox", label: "Inbox", count: inboxCount },
+    { key: "archive", label: "Archive", count: archiveCount },
     { key: 1, label: "I" },
     { key: 2, label: "II" },
     { key: 3, label: "III" },
@@ -582,6 +633,7 @@ export default function WordsPage() {
             onToggle={() => setExpandedId(expandedId === w.id ? null : (w.id ?? null))}
             onKeepCapture={handleKeepCapture}
             onArchiveCapture={handleArchiveCapture}
+            onRestoreCapture={handleRestoreCapture}
             isTriaging={triagingWordId !== null}
             isLast={i === wordList.length - 1}
           />
@@ -820,7 +872,9 @@ export default function WordsPage() {
               const active = activeTier === key;
               const count = tierCounts[String(key)] || 0;
               const locked =
-                key !== "inbox" && isTierLocked(key as LibraryTierFilter, playerLevel);
+                key !== "inbox" &&
+                key !== "archive" &&
+                isTierLocked(key as LibraryTierFilter, playerLevel);
               return (
                 <button
                   key={String(key)}
@@ -836,10 +890,12 @@ export default function WordsPage() {
                 >
                   {locked && <Lock className="size-3" />}
                   {filter.label}
-                  {filter.key === "inbox" && filter.count !== undefined && filter.count > 0
+                  {(filter.key === "inbox" || filter.key === "archive") &&
+                  filter.count !== undefined &&
+                  filter.count > 0
                     ? ` ${filter.count}`
                     : ""}
-                  {filter.key !== "inbox" && (
+                  {filter.key !== "inbox" && filter.key !== "archive" && (
                     <span
                       className="tabular-nums text-[10px]"
                       style={{ opacity: active ? 0.8 : 0.6 }}
@@ -971,8 +1027,26 @@ export default function WordsPage() {
       )}
 
       {filtered.length === 0 &&
+        activeTier === "archive" &&
+        archiveCount === 0 &&
+        !search && (
+        <IllumCard className="text-center py-10">
+          <span className="block mx-auto mb-3 w-fit" style={{ color: "var(--gold-deep)" }}>
+            <Tome size={40} />
+          </span>
+          <p className="font-display text-xl font-bold" style={{ color: "var(--ink)" }}>
+            Archive Empty
+          </p>
+          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+            Archived blanking captures will appear here for recovery.
+          </p>
+        </IllumCard>
+      )}
+
+      {filtered.length === 0 &&
         !selectedTierLocked &&
-        (activeTier !== "inbox" || inboxCount > 0) && (
+        (activeTier !== "inbox" || inboxCount > 0) &&
+        (activeTier !== "archive" || archiveCount > 0 || search) && (
         <div className="text-center py-10">
           <Tome
             size={28}

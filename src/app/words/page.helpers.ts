@@ -1,10 +1,10 @@
 import type { PipelineStage, Word } from "@/lib/types";
-import { isPendingCapture } from "@/lib/word-library";
+import { isArchivedCapture, isPendingCapture } from "@/lib/word-library";
 import { TIER_UNLOCK_LEVELS } from "@/lib/types";
 
 const GROUP_ORDER = ["1", "2", "3", "4", "custom"] as const;
 
-export type WordLibraryViewFilter = "all" | Word["tier"] | "inbox";
+export type WordLibraryViewFilter = "all" | Word["tier"] | "inbox" | "archive";
 
 export function buildTierFilterLayout() {
   return {
@@ -31,6 +31,10 @@ export function getInboxCount(words: Word[]): number {
   return words.filter(isPendingCapture).length;
 }
 
+export function getArchiveCount(words: Word[]): number {
+  return words.filter(isArchivedCapture).length;
+}
+
 export function filterWordsForLibraryView(
   words: Word[],
   activeFilter: WordLibraryViewFilter,
@@ -40,6 +44,7 @@ export function filterWordsForLibraryView(
   return words
     .filter((word) => {
       if (activeFilter === "inbox") return isPendingCapture(word);
+      if (activeFilter === "archive") return isArchivedCapture(word);
       if (activeFilter === "all") return true;
       return word.tier === activeFilter;
     })
