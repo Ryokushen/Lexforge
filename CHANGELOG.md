@@ -19,6 +19,9 @@ All notable changes to this project should be documented in this file.
 - TOT capture flow in the word library now records real-world blanking moments with source, weak substitute, and context, and can create a new custom word if needed
 - Word Library Archive now lets archived blanking captures be browsed and restored to pending triage without immediately re-entering training
 - Word Library Duplicates now groups exact normalized duplicate entries and merges them locally while preserving review logs, keeping the strongest review card, and conservatively combining metadata
+- First-class `VocabularyItem` bridge now projects trainable concepts from existing `Word` rows with coverage scaffolding for retrieval, context, association, and collocation lanes
+- Practice-lane routing now feeds session assembly so missing retrieval/context/association/collocation coverage can steer the next prompt mode without adding new persistence tables
+- Collocation practice now has a live context-style prompt path that asks the player to preserve the original scene while replacing the weaker phrase with the stronger target word
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
 - Automated coverage now spans 127 tests across scheduler, session, sync, stats helpers, and hook logic
@@ -57,7 +60,9 @@ All notable changes to this project should be documented in this file.
 - Session mode selection now blends drill stage + RPG stats so Recall / Perception / Creativity influence Recall / Rapid Retrieval / Association weighting while preserving rescue/stabilize/fluent guardrails
 - Retrieval drill timing is now stat-aware too: live profile stats feed into session loading so Perception tightens Rapid Retrieval timeout pressure, Recall delays rescue cue reveal when stabilizing words recover, and fluent no-cue safeguards remain intact
 - Context mode now adds a fluent rewrite-transfer prompt on top of replacement + production drills: fluent words can be asked to rewrite the original weak sentence using the target word while preserving scenario anchors, with deterministic grading and cue-aware fallback
+- Context mode now also supports collocation rewrite prompts from practice-lane routing, and `context_prompt_kind: "collocation"` is preserved in local review logs and sync normalization
 - Retrieval-health and review-result semantics now treat rewrite transfer prompts like production prompts so they do not masquerade as clean recall drills
+- Retrieval-health, vocabulary coverage, and pipeline-stage semantics now treat collocation prompts as transfer/production practice rather than clean recall
 - Cloud sync now preserves `context_prompt_kind: "rewrite"` on review-log import/backfill so transfer semantics survive across devices
 - Rewrite grading now accepts exact canonical source-sentence rewrites from the shipped prompt bank while still rejecting malformed fragment answers
 - Fluent rewrite prompts now use each context sentence's canonical answer form (including inflected/plural variants like `concurred` and `modalities`) so the prompt and grader stay aligned

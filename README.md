@@ -25,6 +25,7 @@ What it does not currently claim:
 - Word Library Inbox and Archive triage for captured words, with Keep, Archive, and Restore decisions before captures enter normal queued training
 - Word Library Duplicates workflow for exact normalized duplicate entries, with merge preview, review-history preservation, and conservative metadata cleanup
 - Vocabulary pipeline stage tracking across seeded, custom, and TOT-captured words
+- `VocabularyItem` coverage routing for retrieval, context, association, and collocation practice lanes
 - Difficulty settings that control daily new-word intake
 - Phase gating that unlocks harder vocabulary as the player levels up
 - Local-first storage with Dexie/IndexedDB
@@ -35,7 +36,7 @@ What it does not currently claim:
 - Partial session progress now saves when you leave training early
 - Dashboard quest card now separates due reviews, eligible new words, and pending capture Inbox items
 - Session generation is now stat-aware across both mode selection and retrieval drill timing: Recall / Perception / Creativity bias Recall / Rapid Retrieval / Association, and live profile stats now tune rapid-retrieval timeout pressure and rescue-cue timing while preserving rescue/stabilize/fluent drill-stage constraints
-- Context mode now has three typed-first variants: replacement prompts for rescue words, target-word sentence production for stabilize words, and fluent rewrite prompts that preserve the original scenario with deterministic grading and cue-aware fallback
+- Context mode now has four typed-first variants: replacement prompts for rescue words, target-word sentence production for stabilize words, fluent rewrite prompts, and collocation rewrite prompts that preserve the original scenario with deterministic grading and cue-aware fallback
 - Automated test coverage across scheduler, session, sync, stats helpers, and hooks
 - PWA support with offline fallback via Serwist
 
@@ -119,6 +120,8 @@ src/
     |-- db.ts               Dexie schema (words, reviewCards, reviewLogs, userProfile)
     |-- scheduler.ts        ts-fsrs wrapper
     |-- session-engine.ts   Word selection, grading, and mode picking
+    |-- vocabulary-item.ts  Transitional concept bridge and lane coverage projection
+    |-- practice-lanes.ts   Coverage-driven practice-lane routing
     |-- pipeline-stage.ts   Vocabulary acquisition lifecycle inference
     |-- gamification.ts     XP, leveling, HP decay, and stat growth
     |-- sync.ts             Supabase merge and reconciliation logic
@@ -198,6 +201,7 @@ The stats page also tracks acquisition lifecycle distribution:
 - **Learning** -- words with training started but no stable clean recall
 - **Reviewing** -- words with clean recall under FSRS review
 - **Productive** -- words successfully used in production or rewrite prompts
+- **Coverage lanes** -- `VocabularyItem` projections track retrieval, context, association, and collocation coverage so sessions can steer missing lanes into the next compatible prompt
 - **Mature** -- words with stable recall plus successful production history
 - **Recognition to production** -- productive or mature words divided by reviewing-or-later words
 
@@ -214,12 +218,13 @@ These foundations are already in `master` and should be treated as existing beha
 - Vocabulary pipeline stage tracking for seeded, custom, and TOT-captured words
 - Word Library Inbox and Archive triage for captured words before they enter normal queued training
 - Dashboard distinction between eligible new training words and pending capture Inbox items
+- `VocabularyItem` bridge, practice-lane routing, and collocation session prompts
 
 ## Near-Term Roadmap
 
 For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-- deepen Context transfer beyond the new fluent rewrite slice into richer scenario variation only if deterministic grading can stay sane
+- deepen Context transfer beyond the new fluent rewrite and collocation slices into richer scenario variation only if deterministic grading can stay sane
 - broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
-- evolve the vocabulary pipeline beyond v2 with first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling
+- evolve the vocabulary pipeline beyond the transitional `VocabularyItem` bridge only after a concrete persistence design exists

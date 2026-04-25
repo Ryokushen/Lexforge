@@ -23,17 +23,19 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Word library pipeline badges and stats-page acquisition flow summary
 - Word Library Inbox and Archive triage for pending or archived captured words, including restore-without-training behavior
 - Word Library Duplicates workflow for exact normalized duplicate entries, with local merge preview, review-log reassignment, strongest-card preservation, conservative metadata merge, and absorbed local-row cleanup
+- First-class `VocabularyItem` bridge over `Word`, generated practice-lane routing, vocabulary coverage summaries, and collocation practice-unit scaffolding
+- Practice-lane session integration: session words carry coverage routes, missing lanes can force the relevant mode, and collocation routes now produce deterministic context-style rewrite prompts
 
 ## Current Product Gap
 
-- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, and a first fluent rewrite-transfer prompt, and the vocabulary pipeline now tracks acquisition stage from capture through mature production with Inbox, Archive, and Duplicates workflows for captured/custom/seeded words. The dashboard distinguishes eligible new training words from pending capture Inbox items. The remaining gaps are broader stat-aware personalization in other training surfaces, deeper Context transfer if deterministic grading can stay sane, and post-v2 pipeline depth: first-class vocabulary item entities, generated practice lanes, coverage metrics, and collocation/chunk modeling.
+- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, fluent rewrite-transfer, and collocation rewrite prompts, and the vocabulary pipeline now tracks acquisition stage from capture through mature production with Inbox, Archive, Duplicates, `VocabularyItem`, coverage, and generated practice-lane foundations. The dashboard distinguishes eligible new training words from pending capture Inbox items. The remaining gaps are making coverage and lane recommendations more visible to users, broadening stat-aware personalization in other training surfaces, and deeper Context transfer if deterministic grading can stay sane.
 
 ## Active Next Priorities
 
-1. Plan first-class `VocabularyItem` entities as the foundation for richer pipeline lanes, coverage metrics, and collocation/chunk modeling.
+1. Surface vocabulary coverage and practice-lane recommendations in user-facing progress views without adding busywork UI.
 2. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
-3. Deepen Context transfer beyond the current rewrite slice without introducing LLM grading or bloated UX.
-4. Evolve the vocabulary pipeline beyond triage and duplicate cleanup with generated practice lanes, coverage metrics, and collocation/chunk modeling.
+3. Deepen Context transfer beyond the current rewrite/collocation slices without introducing LLM grading or bloated UX.
+4. Evolve the vocabulary pipeline beyond the transitional `VocabularyItem` bridge only after a persistence design is concrete.
 5. Keep the canonical 700-word ranking authoritative for future seed updates. Reference material: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md), [docs/word-frequency-audit.md](docs/word-frequency-audit.md), [docs/word-addition-candidates.md](docs/word-addition-candidates.md).
 
 ## Active Work In Progress
@@ -46,6 +48,7 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Completed follow-up: local-only Supabase auth fallback prevents post-session crashes when cloud env vars are absent.
 - Completed follow-up: Word Library Archive browsing and Restore for archived captures, plus AppStatusBanner hydration stabilization.
 - Completed follow-up: Word Library Duplicates browsing and local merge workflow for exact normalized duplicates, preserving review continuity while removing absorbed duplicate rows.
+- Completed follow-up: `VocabularyItem` bridge, generated practice-lane routing, coverage summaries, collocation practice scaffolding, and session integration for missing lane practice.
 
 ## Verification Baseline
 
