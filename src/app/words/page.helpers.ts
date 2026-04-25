@@ -1,10 +1,20 @@
 import type { PipelineStage, Word } from "@/lib/types";
-import { isArchivedCapture, isPendingCapture } from "@/lib/word-library";
+import {
+  findDuplicateWordGroups,
+  isArchivedCapture,
+  isPendingCapture,
+  type WordDuplicateGroup,
+} from "@/lib/word-library";
 import { TIER_UNLOCK_LEVELS } from "@/lib/types";
 
 const GROUP_ORDER = ["1", "2", "3", "4", "custom"] as const;
 
-export type WordLibraryViewFilter = "all" | Word["tier"] | "inbox" | "archive";
+export type WordLibraryViewFilter =
+  | "all"
+  | Word["tier"]
+  | "inbox"
+  | "archive"
+  | "duplicates";
 
 export function buildTierFilterLayout() {
   return {
@@ -35,6 +45,21 @@ export function getArchiveCount(words: Word[]): number {
   return words.filter(isArchivedCapture).length;
 }
 
+export function getDuplicateCount(words: Word[]): number {
+  return findDuplicateWordGroups(words).length;
+}
+
+export function getDuplicateGroupsForLibraryView(
+  words: Word[],
+  search: string,
+): WordDuplicateGroup<Word>[] {
+  const normalizedSearch = search.trim().toLowerCase();
+
+  return findDuplicateWordGroups(words).filter((group) =>
+    group.words.some((word) => matchesLibrarySearch(word, normalizedSearch)),
+  );
+}
+
 export function filterWordsForLibraryView(
   words: Word[],
   activeFilter: WordLibraryViewFilter,
@@ -45,6 +70,7 @@ export function filterWordsForLibraryView(
     .filter((word) => {
       if (activeFilter === "inbox") return isPendingCapture(word);
       if (activeFilter === "archive") return isArchivedCapture(word);
+      if (activeFilter === "duplicates") return false;
       if (activeFilter === "all") return true;
       return word.tier === activeFilter;
     })

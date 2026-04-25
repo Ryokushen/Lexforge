@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { TOTCapture, Word } from "./types";
 import {
   archiveTOTCapture,
+  buildMergedDuplicateWord,
+  findDuplicateWordGroups,
   getArchivedCaptureWords,
   getCaptureTriageStatus,
   getPendingCaptureWords,
@@ -67,6 +69,103 @@ describe("word library helpers", () => {
     expect(isTierLocked(3, 10)).toBe(false);
     expect(isTierLocked(4, 14)).toBe(true);
     expect(isTierLocked(4, 15)).toBe(false);
+  });
+
+  it("groups exact normalized duplicate words without fuzzy matching", () => {
+    const groups = findDuplicateWordGroups([
+      makeWord({ id: 1, word: "Lucid" }),
+      makeWord({ id: 2, word: " lucid " }),
+      makeWord({ id: 3, word: "lucidity" }),
+      makeWord({ id: 4, word: "Tenuous" }),
+      makeWord({ id: 5, word: "tenuous" }),
+    ]);
+
+    expect(groups.map((group) => group.key)).toEqual(["lucid", "tenuous"]);
+    expect(groups[0].words.map((word) => word.id)).toEqual([1, 2]);
+    expect(groups[1].words.map((word) => word.id)).toEqual([4, 5]);
+  });
+
+  it("merges duplicate metadata conservatively into the survivor", () => {
+    const merged = buildMergedDuplicateWord(
+      makeWord({
+        id: 1,
+        word: "Lucid",
+        definition: "clear",
+        examples: ["A lucid note."],
+        synonyms: ["clear"],
+        association: "lamp",
+        associationUpdatedAt: "2026-04-03T00:00:00.000Z",
+        contextSentences: [
+          {
+            sentence: "The explanation was clear.",
+            weakWord: "clear",
+            answer: "lucid",
+            distractors: [],
+          },
+        ],
+        pipelineStage: "queued",
+        pipelineUpdatedAt: "2026-04-03T00:00:00.000Z",
+        totCapture: makeCapture({
+          count: 1,
+          eventIds: ["capture-a"],
+          capturedAt: "2026-04-04T00:00:00.000Z",
+          updatedAt: "2026-04-04T00:00:00.000Z",
+          weakSubstitute: "clear",
+        }),
+      }),
+      [
+        makeWord({
+          id: 2,
+          word: "lucid",
+          definition: "easy to understand",
+          examples: ["A lucid answer."],
+          synonyms: ["plain", "clear"],
+          pronunciation: "LOO-sid",
+          association: "window",
+          associationUpdatedAt: "2026-04-06T00:00:00.000Z",
+          contextSentences: [
+            {
+              sentence: "Her speech was plain.",
+              weakWord: "plain",
+              answer: "lucid",
+              distractors: [],
+            },
+          ],
+          pipelineStage: "reviewing",
+          pipelineUpdatedAt: "2026-04-07T00:00:00.000Z",
+          totCapture: makeCapture({
+            source: "meeting",
+            count: 2,
+            eventIds: ["capture-b", "capture-a"],
+            capturedAt: "2026-04-05T00:00:00.000Z",
+            updatedAt: "2026-04-06T00:00:00.000Z",
+            context: "team meeting",
+          }),
+        }),
+      ],
+      "2026-04-08T00:00:00.000Z",
+    );
+
+    expect(merged).toMatchObject({
+      definition: "clear",
+      pronunciation: "LOO-sid",
+      examples: ["A lucid note.", "A lucid answer."],
+      synonyms: ["clear", "plain"],
+      association: "window",
+      associationUpdatedAt: "2026-04-06T00:00:00.000Z",
+      pipelineStage: "reviewing",
+      pipelineUpdatedAt: "2026-04-08T00:00:00.000Z",
+    });
+    expect(merged.contextSentences).toHaveLength(2);
+    expect(merged.totCapture).toMatchObject({
+      source: "meeting",
+      count: 2,
+      eventIds: ["capture-a", "capture-b"],
+      capturedAt: "2026-04-05T00:00:00.000Z",
+      updatedAt: "2026-04-08T00:00:00.000Z",
+      weakSubstitute: "clear",
+      context: "team meeting",
+    });
   });
 });
 

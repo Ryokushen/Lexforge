@@ -11,11 +11,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Lock, Plus, RotateCcw, Search } from "lucide-react";
+import { AlertTriangle, GitMerge, Lock, Plus, RotateCcw, Search } from "lucide-react";
 import { useStats } from "@/hooks/use-stats";
 import {
   CUSTOM_CURRICULUM_INFO,
@@ -28,6 +29,7 @@ import {
   getPipelineStageLabel,
 } from "@/lib/pipeline-stage";
 import type { TOTCaptureSource, Word } from "@/lib/types";
+import type { ReviewCard, ReviewLog } from "@/lib/types";
 import { TIER_UNLOCK_LEVELS, TOT_CAPTURE_SOURCES } from "@/lib/types";
 import {
   archiveTOTCapture,
@@ -46,10 +48,17 @@ import {
   buildWordGroups,
   filterWordsForLibraryView,
   getArchiveCount,
+  getDuplicateCount,
+  getDuplicateGroupsForLibraryView,
   getInboxCount,
   getWordLibraryPipelineStage,
   type WordLibraryViewFilter,
 } from "./page.helpers";
+import {
+  chooseCanonicalDuplicateWord,
+  chooseStrongestReviewCard,
+  mergeDuplicateWords,
+} from "@/lib/word-merge";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import { Anvil, ChevronRight, Tome } from "@/components/rpg/sigils";
@@ -360,6 +369,123 @@ function WordRow({
   );
 }
 
+function formatReviewState(card?: ReviewCard): string {
+  if (!card) return "No card";
+  if (card.card.state === 0) return "New";
+  if (card.card.state === 1) return "Learning";
+  if (card.card.state === 2) return "Review";
+  if (card.card.state === 3) return "Relearning";
+  return "Tracked";
+}
+
+function getGroupCards(groupWords: Word[], reviewCards: ReviewCard[]): ReviewCard[] {
+  const ids = new Set(groupWords.map((word) => word.id).filter(Boolean));
+  return reviewCards.filter((card) => ids.has(card.wordId));
+}
+
+function getGroupLogs(groupWords: Word[], reviewLogs: ReviewLog[]): ReviewLog[] {
+  const ids = new Set(groupWords.map((word) => word.id).filter(Boolean));
+  return reviewLogs.filter((log) => ids.has(log.wordId));
+}
+
+function DuplicateGroupPanel({
+  group,
+  reviewCards,
+  reviewLogs,
+  onPreviewMerge,
+  isMerging,
+}: {
+  group: { key: string; words: Word[] };
+  reviewCards: ReviewCard[];
+  reviewLogs: ReviewLog[];
+  onPreviewMerge: (key: string) => void;
+  isMerging: boolean;
+}) {
+  const groupCards = getGroupCards(group.words, reviewCards);
+  const groupLogs = getGroupLogs(group.words, reviewLogs);
+  const canonical =
+    chooseCanonicalDuplicateWord(group.words, groupCards, groupLogs) ?? group.words[0];
+  const absorbed = group.words.filter((word) => word.id !== canonical?.id);
+  const keptCard = chooseStrongestReviewCard(groupCards);
+  const definitions = new Set(
+    group.words.map((word) => word.definition.trim()).filter(Boolean),
+  );
+  const captureCount = group.words.reduce(
+    (total, word) => total + (word.totCapture?.count ?? 0),
+    0,
+  );
+  const exampleCount = group.words.reduce(
+    (total, word) => total + word.examples.length,
+    0,
+  );
+
+  return (
+    <IllumCard className="p-4" corners={false} innerBorder={false}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p
+              className="font-display text-xl font-bold"
+              style={{ color: "var(--ink)" }}
+            >
+              {group.key}
+            </p>
+            <span className="lex-badge" style={tierBadgeStyle("var(--ember)")}>
+              {group.words.length} entries
+            </span>
+          </div>
+          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+            Keeps {canonical?.word ?? group.key}; absorbs{" "}
+            {absorbed.map((word) => word.word).join(", ") || "none"}.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          disabled={isMerging || !canonical?.id || absorbed.length === 0}
+          onClick={() => onPreviewMerge(group.key)}
+        >
+          <GitMerge className="size-3.5" />
+          Merge
+        </Button>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-4">
+        <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+          <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+            Survivor
+          </p>
+          <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+            {canonical?.word ?? group.key}
+          </p>
+        </div>
+        <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+          <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+            Training
+          </p>
+          <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+            {formatReviewState(keptCard)} · {groupLogs.length} logs
+          </p>
+        </div>
+        <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+          <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+            Metadata
+          </p>
+          <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+            {definitions.size} defs · {exampleCount} examples
+          </p>
+        </div>
+        <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+          <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+            Captures
+          </p>
+          <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+            {captureCount}
+          </p>
+        </div>
+      </div>
+    </IllumCard>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────
 
 export default function WordsPage() {
@@ -367,11 +493,15 @@ export default function WordsPage() {
   const { seedStatus, seedError, retrySeed } = useBootstrap();
   const playerLevel = profile?.level ?? 1;
   const [words, setWords] = useState<Word[]>([]);
+  const [reviewCards, setReviewCards] = useState<ReviewCard[]>([]);
+  const [reviewLogs, setReviewLogs] = useState<ReviewLog[]>([]);
   const [search, setSearch] = useState("");
   const [activeTier, setActiveTier] = useState<WordLibraryViewFilter>("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [triagingWordId, setTriagingWordId] = useState<number | null>(null);
   const triagingWordIdRef = useRef<number | null>(null);
+  const [mergePreviewKey, setMergePreviewKey] = useState<string | null>(null);
+  const [mergingDuplicateKey, setMergingDuplicateKey] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [totDialogOpen, setTotDialogOpen] = useState(false);
 
@@ -382,9 +512,11 @@ export default function WordsPage() {
   const duplicateWord = isDuplicateWord(newWord, words);
   const inboxCount = useMemo(() => getInboxCount(words), [words]);
   const archiveCount = useMemo(() => getArchiveCount(words), [words]);
+  const duplicateCount = useMemo(() => getDuplicateCount(words), [words]);
   const selectedTierLocked =
     activeTier !== "inbox" &&
     activeTier !== "archive" &&
+    activeTier !== "duplicates" &&
     isTierLocked(activeTier as LibraryTierFilter, playerLevel);
   const normalizedTOTWord = normalizeWord(totForm.word);
   const existingTOTWord = useMemo(
@@ -394,17 +526,29 @@ export default function WordsPage() {
   const totNeedsDefinition = Boolean(normalizedTOTWord) && !existingTOTWord;
 
   const loadWords = useCallback(async () => {
-    const all = await db.words.toArray();
+    const [all, cards, logs] = await Promise.all([
+      db.words.toArray(),
+      db.reviewCards.toArray(),
+      db.reviewLogs.toArray(),
+    ]);
     setWords(all.sort((a, b) => a.word.localeCompare(b.word)));
+    setReviewCards(cards);
+    setReviewLogs(logs);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadInitialWords() {
-      const all = await db.words.toArray();
+      const [all, cards, logs] = await Promise.all([
+        db.words.toArray(),
+        db.reviewCards.toArray(),
+        db.reviewLogs.toArray(),
+      ]);
       if (cancelled) return;
       setWords(all.sort((a, b) => a.word.localeCompare(b.word)));
+      setReviewCards(cards);
+      setReviewLogs(logs);
     }
 
     void loadInitialWords();
@@ -422,6 +566,14 @@ export default function WordsPage() {
     if (activeTier !== "all") return null;
     return buildWordGroups(filtered, playerLevel);
   }, [filtered, activeTier, playerLevel]);
+  const duplicateGroups = useMemo(
+    () => getDuplicateGroupsForLibraryView(words, search),
+    [words, search],
+  );
+  const previewDuplicateGroup = useMemo(
+    () => duplicateGroups.find((group) => group.key === mergePreviewKey),
+    [duplicateGroups, mergePreviewKey],
+  );
 
   const tierCounts = useMemo(() => {
     const counts: Record<string, number> = { all: words.length, "1": 0, "2": 0, "3": 0, "4": 0, custom: 0 };
@@ -610,10 +762,34 @@ export default function WordsPage() {
     }
   };
 
+  const handleMergeDuplicateGroup = async (group: { key: string; words: Word[] }) => {
+    if (mergingDuplicateKey !== null) return;
+    const groupCards = getGroupCards(group.words, reviewCards);
+    const groupLogs = getGroupLogs(group.words, reviewLogs);
+    const canonical = chooseCanonicalDuplicateWord(group.words, groupCards, groupLogs);
+    if (!canonical?.id) return;
+
+    const duplicateIds = group.words
+      .map((word) => word.id)
+      .filter((id): id is number => Boolean(id && id !== canonical.id));
+    if (duplicateIds.length === 0) return;
+
+    setMergingDuplicateKey(group.key);
+    try {
+      await mergeDuplicateWords(canonical.id, duplicateIds, new Date().toISOString());
+      setMergePreviewKey(null);
+      setExpandedId(null);
+      await loadWords();
+    } finally {
+      setMergingDuplicateKey(null);
+    }
+  };
+
   const tierFilters: { key: WordLibraryViewFilter; label: string; count?: number }[] = [
     { key: "all", label: "All" },
     { key: "inbox", label: "Inbox", count: inboxCount },
     { key: "archive", label: "Archive", count: archiveCount },
+    { key: "duplicates", label: "Duplicates", count: duplicateCount },
     { key: 1, label: "I" },
     { key: 2, label: "II" },
     { key: 3, label: "III" },
@@ -621,6 +797,23 @@ export default function WordsPage() {
     { key: "custom", label: "★" },
   ];
   const tierFilterLayout = buildTierFilterLayout();
+  const previewGroupCards = previewDuplicateGroup
+    ? getGroupCards(previewDuplicateGroup.words, reviewCards)
+    : [];
+  const previewGroupLogs = previewDuplicateGroup
+    ? getGroupLogs(previewDuplicateGroup.words, reviewLogs)
+    : [];
+  const previewCanonical = previewDuplicateGroup
+    ? chooseCanonicalDuplicateWord(
+        previewDuplicateGroup.words,
+        previewGroupCards,
+        previewGroupLogs,
+      )
+    : undefined;
+  const previewAbsorbed = previewDuplicateGroup
+    ? previewDuplicateGroup.words.filter((word) => word.id !== previewCanonical?.id)
+    : [];
+  const previewKeptCard = chooseStrongestReviewCard(previewGroupCards);
 
   const renderWordList = (wordList: Word[]) => (
     <IllumCard className="p-0 overflow-hidden" corners={false} innerBorder={false}>
@@ -845,6 +1038,112 @@ export default function WordsPage() {
         </div>
       </div>
 
+      <Dialog
+        open={Boolean(previewDuplicateGroup)}
+        onOpenChange={(open) => {
+          if (!open) setMergePreviewKey(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Merge Duplicate Entries</DialogTitle>
+            <DialogDescription>
+              This keeps one word, moves review history to it, and removes the absorbed entries locally.
+            </DialogDescription>
+          </DialogHeader>
+          {previewDuplicateGroup && previewCanonical && (
+            <div className="space-y-3">
+              <div
+                className="rounded-[var(--radius)] p-3"
+                style={{
+                  background: "color-mix(in oklab, var(--sage), transparent 92%)",
+                  border: "1px solid color-mix(in oklab, var(--sage), transparent 72%)",
+                }}
+              >
+                <p className="uppercase-tracked text-[10px]" style={{ color: "var(--sage)" }}>
+                  Survivor
+                </p>
+                <p className="font-display text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  {previewCanonical.word}
+                </p>
+                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                  {previewCanonical.definition}
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+                  <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    Absorbed
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                    {previewAbsorbed.length}
+                  </p>
+                </div>
+                <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+                  <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    Kept Card
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                    {formatReviewState(previewKeptCard)}
+                  </p>
+                </div>
+                <div className="rounded-[var(--radius)] border border-[var(--line-soft)] p-2">
+                  <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    Logs Moved
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                    {
+                      previewGroupLogs.filter((log) =>
+                        previewAbsorbed.some((word) => word.id === log.wordId),
+                      ).length
+                    }
+                  </p>
+                </div>
+              </div>
+              {previewAbsorbed.length > 0 && (
+                <div className="space-y-1">
+                  <p className="uppercase-tracked text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                    Entries Removed
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {previewAbsorbed.map((word) => (
+                      <span key={word.id} className="lex-badge">
+                        {word.word}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={mergingDuplicateKey !== null}
+              onClick={() => setMergePreviewKey(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                !previewDuplicateGroup ||
+                !previewCanonical?.id ||
+                previewAbsorbed.length === 0 ||
+                mergingDuplicateKey !== null
+              }
+              onClick={() => {
+                if (previewDuplicateGroup) {
+                  void handleMergeDuplicateGroup(previewDuplicateGroup);
+                }
+              }}
+            >
+              <GitMerge className="size-3.5" />
+              {mergingDuplicateKey ? "Merging…" : "Merge Entries"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <HeronDivider />
 
       {/* Search + tier filter */}
@@ -874,6 +1173,7 @@ export default function WordsPage() {
               const locked =
                 key !== "inbox" &&
                 key !== "archive" &&
+                key !== "duplicates" &&
                 isTierLocked(key as LibraryTierFilter, playerLevel);
               return (
                 <button
@@ -890,12 +1190,16 @@ export default function WordsPage() {
                 >
                   {locked && <Lock className="size-3" />}
                   {filter.label}
-                  {(filter.key === "inbox" || filter.key === "archive") &&
+                  {(filter.key === "inbox" ||
+                    filter.key === "archive" ||
+                    filter.key === "duplicates") &&
                   filter.count !== undefined &&
                   filter.count > 0
                     ? ` ${filter.count}`
                     : ""}
-                  {filter.key !== "inbox" && filter.key !== "archive" && (
+                  {filter.key !== "inbox" &&
+                    filter.key !== "archive" &&
+                    filter.key !== "duplicates" && (
                     <span
                       className="tabular-nums text-[10px]"
                       style={{ opacity: active ? 0.8 : 0.6 }}
@@ -911,7 +1215,20 @@ export default function WordsPage() {
       </div>
 
       {/* Word list */}
-      {grouped ? (
+      {activeTier === "duplicates" && duplicateGroups.length > 0 ? (
+        <div className="space-y-3">
+          {duplicateGroups.map((group) => (
+            <DuplicateGroupPanel
+              key={group.key}
+              group={group}
+              reviewCards={reviewCards}
+              reviewLogs={reviewLogs}
+              onPreviewMerge={setMergePreviewKey}
+              isMerging={mergingDuplicateKey !== null}
+            />
+          ))}
+        </div>
+      ) : grouped ? (
         <div className="space-y-5">
           {grouped.map((group) => {
             const info = TIER_INFO[group.tier];
@@ -1043,10 +1360,25 @@ export default function WordsPage() {
         </IllumCard>
       )}
 
+      {activeTier === "duplicates" && duplicateGroups.length === 0 && duplicateCount === 0 && !search && (
+        <IllumCard className="text-center py-10">
+          <span className="block mx-auto mb-3 w-fit" style={{ color: "var(--gold-deep)" }}>
+            <Tome size={40} />
+          </span>
+          <p className="font-display text-xl font-bold" style={{ color: "var(--ink)" }}>
+            No Duplicates Found
+          </p>
+          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+            Exact duplicate words will appear here for review and merge.
+          </p>
+        </IllumCard>
+      )}
+
       {filtered.length === 0 &&
         !selectedTierLocked &&
         (activeTier !== "inbox" || inboxCount > 0) &&
-        (activeTier !== "archive" || archiveCount > 0 || search) && (
+        (activeTier !== "archive" || archiveCount > 0 || search) &&
+        (activeTier !== "duplicates" || duplicateCount > 0 || search) && (
         <div className="text-center py-10">
           <Tome
             size={28}

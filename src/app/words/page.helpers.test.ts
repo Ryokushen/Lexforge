@@ -5,6 +5,8 @@ import {
   buildWordGroups,
   filterWordsForLibraryView,
   getArchiveCount,
+  getDuplicateCount,
+  getDuplicateGroupsForLibraryView,
   getInboxCount,
   getWordLibraryPipelineStage,
 } from "./page.helpers";
@@ -160,6 +162,96 @@ describe("archive helpers", () => {
     expect(
       filterWordsForLibraryView([archived, pending], "archive", "lucid"),
     ).toEqual([]);
+  });
+});
+
+describe("duplicate helpers", () => {
+  it("counts only exact normalized duplicate groups", () => {
+    expect(
+      getDuplicateCount([
+        makeWord(1, 1, { word: "Lucid" }),
+        makeWord(2, "custom", { word: " lucid " }),
+        makeWord(3, 1, { word: "lucidity" }),
+        makeWord(4, 1, { word: "Tenuous" }),
+        makeWord(5, "custom", { word: "tenuous" }),
+      ]),
+    ).toBe(2);
+  });
+
+  it("filters duplicate groups by word, definition, weak substitute, and context", () => {
+    const duplicateA = makeWord(1, 1, {
+      word: "Lucid",
+      definition: "clear",
+      totCapture: makeCapture(1, {
+        weakSubstitute: "plain",
+        context: "inspection meeting",
+      }),
+    });
+    const duplicateB = makeWord(2, "custom", {
+      word: " lucid ",
+      definition: "easy to understand",
+    });
+    const singleton = makeWord(3, 1, {
+      word: "Tenuous",
+      definition: "thin",
+      totCapture: makeCapture(1, {
+        weakSubstitute: "weak",
+        context: "debate",
+      }),
+    });
+
+    expect(
+      getDuplicateGroupsForLibraryView(
+        [duplicateA, duplicateB, singleton],
+        "",
+      ).map((group) => group.key),
+    ).toEqual(["lucid"]);
+    expect(
+      getDuplicateGroupsForLibraryView(
+        [duplicateA, duplicateB, singleton],
+        "inspection",
+      )[0].words,
+    ).toEqual([duplicateA, duplicateB]);
+    expect(
+      getDuplicateGroupsForLibraryView(
+        [duplicateA, duplicateB, singleton],
+        "plain",
+      )[0].words,
+    ).toEqual([duplicateA, duplicateB]);
+    expect(
+      getDuplicateGroupsForLibraryView(
+        [duplicateA, duplicateB, singleton],
+        "easy",
+      )[0].words,
+    ).toEqual([duplicateA, duplicateB]);
+    expect(
+      getDuplicateGroupsForLibraryView(
+        [duplicateA, duplicateB, singleton],
+        "debate",
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps non-duplicate library filters unchanged", () => {
+    const pending = makeWord(1, 1, {
+      word: "lucid",
+      totCapture: makeCapture(1, { triageStatus: "pending" }),
+    });
+    const archived = makeWord(2, 1, {
+      word: "lucid",
+      totCapture: makeCapture(1, { triageStatus: "archived" }),
+    });
+    const normal = makeWord(3, "custom", { word: "tenuous" });
+
+    expect(
+      filterWordsForLibraryView([pending, archived, normal], "inbox", ""),
+    ).toEqual([pending]);
+    expect(
+      filterWordsForLibraryView([pending, archived, normal], "archive", ""),
+    ).toEqual([archived]);
+    expect(
+      filterWordsForLibraryView([pending, archived, normal], "custom", ""),
+    ).toEqual([normal]);
   });
 });
 
