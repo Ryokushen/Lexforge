@@ -5,6 +5,11 @@ import { db, getOrCreateProfile } from "@/lib/db";
 import { useBootstrap } from "@/lib/bootstrap-context";
 import { getDueCount, getWordCount } from "@/lib/scheduler";
 import { getAvailableNewCount } from "@/lib/session-engine";
+import {
+  routeVocabularyPracticeLanes,
+  summarizePracticeLaneRoutes,
+} from "@/lib/practice-lanes";
+import { wordsToVocabularyItems } from "@/lib/vocabulary-item";
 import { getPendingCaptureWords } from "@/lib/word-library";
 import {
   CLOUD_SYNC_EVENT,
@@ -14,15 +19,24 @@ import type { Difficulty, UserProfile } from "@/lib/types";
 
 async function loadStatsSnapshot() {
   const profile = await getOrCreateProfile();
-  const [dueCount, newCount, wordCount, words] = await Promise.all([
+  const [dueCount, newCount, wordCount, words, reviewLogs] = await Promise.all([
     getDueCount(),
     getAvailableNewCount(profile.difficulty, profile.level),
     getWordCount(),
     db.words.toArray(),
+    db.reviewLogs.toArray(),
   ]);
   const inboxCount = getPendingCaptureWords(words).length;
+  const laneSummary = summarizePracticeLaneRoutes(
+    routeVocabularyPracticeLanes(wordsToVocabularyItems(words, { reviewLogs })),
+  );
+  const coverageSignalCount =
+    laneSummary.retrieval +
+    laneSummary.context +
+    laneSummary.association +
+    laneSummary.collocation;
 
-  return { profile, dueCount, newCount, inboxCount, wordCount };
+  return { profile, dueCount, newCount, inboxCount, wordCount, coverageSignalCount };
 }
 
 export function useStats() {
@@ -32,6 +46,7 @@ export function useStats() {
   const [newCount, setNewCount] = useState(0);
   const [inboxCount, setInboxCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
+  const [coverageSignalCount, setCoverageSignalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const applySnapshot = useCallback((snapshot: Awaited<ReturnType<typeof loadStatsSnapshot>>) => {
@@ -40,6 +55,7 @@ export function useStats() {
     setNewCount(snapshot.newCount);
     setInboxCount(snapshot.inboxCount);
     setWordCount(snapshot.wordCount);
+    setCoverageSignalCount(snapshot.coverageSignalCount);
     setLoading(seedStatus === "seeding" && snapshot.wordCount === 0);
   }, [seedStatus]);
 
@@ -111,5 +127,15 @@ export function useStats() {
     await refresh();
   }, [refresh]);
 
-  return { profile, dueCount, newCount, inboxCount, wordCount, loading, refresh, setDifficulty };
+  return {
+    profile,
+    dueCount,
+    newCount,
+    inboxCount,
+    wordCount,
+    coverageSignalCount,
+    loading,
+    refresh,
+    setDifficulty,
+  };
 }

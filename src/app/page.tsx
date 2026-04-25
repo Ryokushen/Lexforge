@@ -16,7 +16,16 @@ const SESSION_EXIT_STORAGE_KEY = "lexforge-session-exit-summary";
 
 export default function Dashboard() {
   const { seedStatus, seedError, retrySeed } = useBootstrap();
-  const { profile, dueCount, newCount, inboxCount, wordCount, loading, setDifficulty } = useStats();
+  const {
+    profile,
+    dueCount,
+    newCount,
+    inboxCount,
+    wordCount,
+    coverageSignalCount,
+    loading,
+    setDifficulty,
+  } = useStats();
   const [savedProgressMessage] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
 
@@ -94,6 +103,7 @@ export default function Dashboard() {
         wordCount={wordCount}
         sessionSize={DIFFICULTY_CONFIG[profile.difficulty].sessionSize}
         difficulty={profile.difficulty}
+        coverageSignalCount={coverageSignalCount}
       />
       <DifficultySelector current={profile.difficulty} onChange={setDifficulty} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

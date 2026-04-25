@@ -8,11 +8,15 @@ const getDueCountMock = vi.hoisted(() => vi.fn());
 const getWordCountMock = vi.hoisted(() => vi.fn());
 const getAvailableNewCountMock = vi.hoisted(() => vi.fn());
 const wordsToArrayMock = vi.hoisted(() => vi.fn());
+const reviewLogsToArrayMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db", () => ({
   db: {
     words: {
       toArray: wordsToArrayMock,
+    },
+    reviewLogs: {
+      toArray: reviewLogsToArrayMock,
     },
     userProfile: {
       update: vi.fn(),
@@ -72,6 +76,7 @@ describe("useStats", () => {
     getWordCountMock.mockResolvedValue(100);
     getAvailableNewCountMock.mockResolvedValue(5);
     wordsToArrayMock.mockResolvedValue([]);
+    reviewLogsToArrayMock.mockResolvedValue([]);
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       value: "visible",
@@ -112,6 +117,9 @@ describe("useStats", () => {
           },
         },
       ]);
+    reviewLogsToArrayMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
 
     const { result } = renderHook(() => useStats());
 
@@ -121,6 +129,7 @@ describe("useStats", () => {
       expect(result.current.dueCount).toBe(2);
       expect(result.current.newCount).toBe(5);
       expect(result.current.inboxCount).toBe(0);
+      expect(result.current.coverageSignalCount).toBe(0);
     });
 
     await act(async () => {

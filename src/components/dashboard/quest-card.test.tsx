@@ -15,13 +15,15 @@ describe("QuestCard", () => {
         wordCount={700}
         sessionSize={10}
         difficulty="normal"
+        coverageSignalCount={4}
       />,
     );
 
     expect(screen.getByText("Eligible New")).toBeInTheDocument();
     expect(screen.getByText("Inbox")).toBeInTheDocument();
     expect(screen.getByText(/2 captures pending triage/)).toBeInTheDocument();
-    expect(screen.getByText(/Next normal trial: 5 reviews/)).toBeInTheDocument();
+    expect(screen.getByText(/Next normal trial: 5 FSRS reviews/)).toBeInTheDocument();
+    expect(screen.getByText("Coverage signals")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /take the field/i })).toHaveAttribute("href", "/session");
   });
 
@@ -34,6 +36,7 @@ describe("QuestCard", () => {
         wordCount={700}
         sessionSize={10}
         difficulty="normal"
+        coverageSignalCount={0}
       />,
     );
 

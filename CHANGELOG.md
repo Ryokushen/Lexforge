@@ -25,6 +25,7 @@ All notable changes to this project should be documented in this file.
 - Collocation practice now has a live context-style prompt path that asks the player to preserve the original scene while replacing the weaker phrase with the stronger target word
 - Word Library expanded-row details now show per-word lane coverage as automatic training-engine signals
 - Stats now surfaces aggregate practice-lane coverage and automatic fill inputs while keeping FSRS/session assembly in charge of what gets trained
+- Dashboard quest cards now explain the automatic session plan: FSRS reviews first, eligible new-word backfill second, and coverage signals shaping prompt type without manual drill selection
 - Adaptive retrieval drilling now keeps recent TOT words in rescue/stabilize phases until they regain repeated clean exact recalls, with hint access and rapid timers changing by recent performance
 - Cross-device sync now carries custom words and TOT capture summaries, with merge logic that restores custom entries locally before replaying cards, logs, associations, and TOT state
 - Automated coverage now spans 219 tests across scheduler, session, sync, stats helpers, hooks, word-library workflows, and vocabulary pipeline helpers
@@ -36,6 +37,7 @@ All notable changes to this project should be documented in this file.
 - PWA icons updated with Lexforge branding
 - Quest card now shows "to review" and "new" separately instead of one overwhelming total
 - Quest card now also separates total backlog from the exact next-quest mix, so players can see when review overflow is blocking new words
+- Quest card next-trial copy now describes scheduler order instead of presenting lane recommendations
 - Dashboard work counts now respect the selected difficulty and current tier unlocks instead of showing all unseen words as available new work
 - Fixed dashboard stats initialization so changing difficulty no longer leaves the new-word count stale on first load
 - Dashboard stats now refresh automatically after cloud sync completes and when the tab regains focus, so cross-device progress appears without a manual reload
