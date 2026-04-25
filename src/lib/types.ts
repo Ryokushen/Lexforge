@@ -1,4 +1,5 @@
 import type { Card } from "ts-fsrs";
+import type { PracticeLaneRoute } from "./practice-lanes";
 
 // ── Word ────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,7 @@ export interface SessionWord {
   word: Word;
   reviewCard: ReviewCard;
   drillProfile?: RetrievalDrillProfile;
+  practiceLaneRoute?: PracticeLaneRoute;
 }
 
 export interface SessionResult {
