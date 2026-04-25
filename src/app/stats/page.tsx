@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/db";
 import { useBootstrap } from "@/lib/bootstrap-context";
@@ -19,7 +19,12 @@ import { useRetrievalHealth } from "@/hooks/use-retrieval-health";
 import { SEEDED_PHASE_INFO } from "@/lib/curriculum-copy";
 import type { ReviewLog, Word } from "@/lib/types";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "@/lib/types";
-import { getPipelineStats, getRecentRetrievalMetrics } from "./page.helpers";
+import { wordsToVocabularyItems } from "@/lib/vocabulary-item";
+import {
+  getPipelineStats,
+  getRecentRetrievalMetrics,
+  getTrainingCoverageTransparency,
+} from "./page.helpers";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import {
@@ -76,6 +81,7 @@ export default function StatsPage() {
   const { profile, dueCount, wordCount, loading } = useStats();
   const retrieval = useRetrievalHealth();
   const [recentLogs, setRecentLogs] = useState<ReviewLog[]>([]);
+  const [reviewLogs, setReviewLogs] = useState<ReviewLog[]>([]);
   const [words, setWords] = useState<Word[]>([]);
   const [trend, setTrend] = useState<number[]>(() => Array(14).fill(0));
 
@@ -83,9 +89,11 @@ export default function StatsPage() {
     db.reviewLogs
       .orderBy("reviewedAt")
       .reverse()
-      .limit(50)
       .toArray()
-      .then(setRecentLogs);
+      .then((logs) => {
+        setReviewLogs(logs);
+        setRecentLogs(logs.slice(0, 50));
+      });
     db.words.toArray().then(setWords);
   }, [seedStatus]);
 
@@ -109,6 +117,12 @@ export default function StatsPage() {
     }
     void loadTrend();
   }, [seedStatus, recentLogs.length]);
+
+  const vocabularyItems = useMemo(
+    () => wordsToVocabularyItems(words, { reviewLogs }),
+    [reviewLogs, words],
+  );
+  const coverageTransparency = getTrainingCoverageTransparency(vocabularyItems);
 
   if (loading || !profile) {
     return (
@@ -686,6 +700,114 @@ export default function StatsPage() {
               {pipelineStats.summary.productiveOrMatureCount} of{" "}
               {pipelineStats.summary.reviewingOrLaterCount} reviewing-or-later words
             </span>
+          </div>
+        </IllumCard>
+      </motion.div>
+
+      <motion.div {...fadeUp(0.44)}>
+        <IllumCard>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div
+                className="uppercase-tracked text-[11px]"
+                style={{ color: "var(--gold-deep)" }}
+              >
+                Training Coverage Signals
+              </div>
+              <p className="text-sm italic mt-1 max-w-2xl" style={{ color: "var(--muted-foreground)" }}>
+                {coverageTransparency.engineCopy}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {[
+                {
+                  label: "Eligible",
+                  value: coverageTransparency.summary.eligibleCount,
+                  color: "var(--lapis)",
+                },
+                {
+                  label: "Fill inputs",
+                  value: coverageTransparency.summary.automaticFillCount,
+                  color: "var(--gold-deep)",
+                },
+                {
+                  label: "Held out",
+                  value: coverageTransparency.summary.blockedCount,
+                  color:
+                    coverageTransparency.summary.blockedCount > 0
+                      ? "var(--ember)"
+                      : "var(--sage)",
+                },
+              ].map((tile) => (
+                <div
+                  key={tile.label}
+                  className="min-w-[82px] rounded-[2px] px-2 py-2"
+                  style={{ border: "1px solid var(--line-soft)" }}
+                >
+                  <div
+                    className="font-display text-xl font-bold tabular-nums"
+                    style={{ color: tile.color }}
+                  >
+                    {tile.value}
+                  </div>
+                  <div
+                    className="uppercase-tracked text-[9px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {tile.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {coverageTransparency.lanes.map((lane) => (
+              <div
+                key={lane.lane}
+                className="rounded-[2px] p-3"
+                style={{
+                  background: "color-mix(in oklab, var(--paper), var(--sage) 2%)",
+                  border: "1px solid var(--line-soft)",
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div
+                    className="uppercase-tracked text-[10px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {lane.label}
+                  </div>
+                  <div
+                    className="font-display text-lg font-bold tabular-nums"
+                    style={{ color: "var(--sage)" }}
+                  >
+                    {lane.coveragePercent !== null ? `${lane.coveragePercent}%` : "--"}
+                  </div>
+                </div>
+                <div
+                  className="mt-2 h-1.5 overflow-hidden rounded-[2px]"
+                  style={{ background: "var(--line-soft)" }}
+                  aria-hidden
+                >
+                  <div
+                    className="h-full"
+                    style={{
+                      width: `${lane.coveragePercent ?? 0}%`,
+                      background: "var(--sage)",
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+                  <span style={{ color: "var(--muted-foreground)" }}>
+                    {lane.practicedCount} of {lane.eligibleCount} covered
+                  </span>
+                  <span className="tabular-nums" style={{ color: "var(--gold-deep)" }}>
+                    {lane.automaticFillCount} auto
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </IllumCard>
       </motion.div>

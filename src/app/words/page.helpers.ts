@@ -105,38 +105,38 @@ export function getNextPracticeLaneDisplay(
   if (route.reason === "maintenance") {
     return {
       label: "Maintenance: Recall",
-      description: "All lanes have coverage; keep recall fresh.",
+      description: "All lanes have coverage; FSRS reviews keep recall fresh.",
       blocked: false,
     };
   }
 
   if (route.lane === "retrieval") {
     return {
-      label: "Next: Recall",
-      description: "Start with clean definition-to-word retrieval.",
+      label: "Automatic: Recall",
+      description: "Lexforge can use clean definition-to-word retrieval when session mix allows.",
       blocked: false,
     };
   }
 
   if (route.lane === "context") {
     return {
-      label: "Next: Context",
-      description: "Use the word in sentence-level practice.",
+      label: "Automatic: Context",
+      description: "Lexforge can use sentence-level prompts when session mix allows.",
       blocked: false,
     };
   }
 
   if (route.lane === "association") {
     return {
-      label: "Next: Association",
-      description: "Build or recall a mnemonic link.",
+      label: "Automatic: Association",
+      description: "Lexforge can use mnemonic prompts when session mix allows.",
       blocked: false,
     };
   }
 
   return {
-    label: "Next: Collocation",
-    description: "Practice replacing a weaker phrase in the same scene.",
+    label: "Automatic: Collocation",
+    description: "Lexforge can use same-scene phrase replacement when session mix allows.",
     blocked: false,
   };
 }

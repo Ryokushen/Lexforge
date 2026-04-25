@@ -57,8 +57,9 @@ Lexforge now projects existing `Word` rows into transitional `VocabularyItem` co
 - Missing context coverage routes to Context.
 - Missing association coverage routes to Association.
 - Missing collocation coverage routes to a context-style rewrite prompt that keeps the same scene while replacing the weaker phrase.
-- Expanded Word Library rows show which lanes are practiced or still needed, plus the next recommended practice lane for that word.
-- Current aggregate coverage is still lightweight; a later product slice should make lane progress easier to inspect across Stats or the dashboard.
+- Expanded Word Library rows show which lanes are practiced or still needed, plus the automatic coverage signal Lexforge can use when session mix allows.
+- Stats shows aggregate lane coverage and automatic fill inputs so the training engine is transparent without asking the player to choose drills manually.
+- Dashboard quest cards show the same automatic order in plain language: FSRS reviews fill sessions first, eligible new words backfill open slots, and coverage signals shape prompt type inside selected words.
 
 ## Real-World Capture Loop
 
@@ -228,15 +229,14 @@ These foundations are already in `master` and should be treated as existing beha
 - Canonical 700-word, four-phase seeded curriculum with unlock gating
 - Vocabulary pipeline stage tracking for seeded, custom, and TOT-captured words
 - Word Library Inbox and Archive triage for captured words before they enter normal queued training
-- Dashboard distinction between eligible new training words and pending capture Inbox items
-- `VocabularyItem` bridge, practice-lane routing, and collocation session prompts
+- Dashboard distinction between eligible new training words, pending capture Inbox items, and automatic session-plan order
+- `VocabularyItem` bridge, practice-lane routing, collocation session prompts, and aggregate coverage transparency
 
 ## Near-Term Roadmap
 
 For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-- surface richer aggregate practice-lane coverage and recommendations in Stats or dashboard views
-- deepen Context transfer beyond the new fluent rewrite and collocation slices into richer scenario variation only if deterministic grading can stay sane
 - broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces
+- deepen Context transfer beyond the new fluent rewrite and collocation slices into richer scenario variation only if deterministic grading can stay sane
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
 - evolve the vocabulary pipeline beyond the transitional `VocabularyItem` bridge only after a concrete persistence design exists

@@ -296,7 +296,7 @@ function WordRow({
                       className="uppercase-tracked text-[10px]"
                       style={{ color: "var(--sage)" }}
                     >
-                      Practice Coverage
+                      Coverage Signals
                     </p>
                     <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
                       {nextPracticeLane.description}

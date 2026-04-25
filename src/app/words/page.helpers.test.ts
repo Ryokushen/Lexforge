@@ -271,7 +271,7 @@ describe("practice lane display helpers", () => {
     ]);
   });
 
-  it("describes the next practice lane from item coverage", () => {
+  it("describes the automatic coverage signal from item coverage", () => {
     expect(
       getNextPracticeLaneDisplay(
         makeItem({
@@ -284,8 +284,8 @@ describe("practice lane display helpers", () => {
         }),
       ),
     ).toEqual({
-      label: "Next: Context",
-      description: "Use the word in sentence-level practice.",
+      label: "Automatic: Context",
+      description: "Lexforge can use sentence-level prompts when session mix allows.",
       blocked: false,
     });
   });
@@ -304,7 +304,7 @@ describe("practice lane display helpers", () => {
       ),
     ).toEqual({
       label: "Maintenance: Recall",
-      description: "All lanes have coverage; keep recall fresh.",
+      description: "All lanes have coverage; FSRS reviews keep recall fresh.",
       blocked: false,
     });
 

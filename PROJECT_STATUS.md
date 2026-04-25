@@ -25,34 +25,35 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Word Library Duplicates workflow for exact normalized duplicate entries, with local merge preview, review-log reassignment, strongest-card preservation, conservative metadata merge, and absorbed local-row cleanup
 - First-class `VocabularyItem` bridge over `Word`, generated practice-lane routing, vocabulary coverage summaries, and collocation practice-unit scaffolding
 - Practice-lane session integration: session words carry coverage routes, missing lanes can force the relevant mode, and collocation routes now produce deterministic context-style rewrite prompts
+- Stats-page training coverage transparency: aggregate lane coverage, automatic fill-input counts, and explicit FSRS-first copy without manual drill selection
+- Dashboard quest-card session-plan transparency: FSRS reviews first, eligible new-word backfill second, coverage signals shape prompt type, and Inbox captures stay held out
 
 ## Current Product Gap
 
-- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, fluent rewrite-transfer, and collocation rewrite prompts, and the vocabulary pipeline now tracks acquisition stage from capture through mature production with Inbox, Archive, Duplicates, `VocabularyItem`, coverage, and generated practice-lane foundations. The dashboard distinguishes eligible new training words from pending capture Inbox items, and the Word Library exposes per-word lane coverage in expanded rows. The remaining gaps are richer aggregate coverage views, broader stat-aware personalization in other training surfaces, and deeper Context transfer if deterministic grading can stay sane.
+- RPG stats now drive both session mode weighting and retrieval-drill timing, Context mode spans replacement, target-word production, fluent rewrite-transfer, and collocation rewrite prompts, and the vocabulary pipeline now tracks acquisition stage from capture through mature production with Inbox, Archive, Duplicates, `VocabularyItem`, coverage, and generated practice-lane foundations. The dashboard distinguishes eligible new training words from pending capture Inbox items, explains the automatic next-session order, the Word Library exposes per-word lane coverage in expanded rows, and Stats shows aggregate lane coverage as automatic training-engine signals. The remaining gaps are broader stat-aware personalization in other training surfaces and deeper Context transfer if deterministic grading can stay sane.
 
 ## Active Next Priorities
 
-1. Surface richer aggregate coverage and practice-lane recommendations in Stats or dashboard views without adding busywork UI.
-2. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
-3. Deepen Context transfer beyond the current rewrite/collocation slices without introducing LLM grading or bloated UX.
+1. Broaden stat-aware personalization beyond current retrieval-drill timing into other training surfaces.
+2. Deepen Context transfer beyond the current rewrite/collocation slices without introducing LLM grading or bloated UX.
+3. Decide whether coverage transparency needs a compact dashboard trend after real usage, rather than adding more busywork UI now.
 4. Evolve the vocabulary pipeline beyond the transitional `VocabularyItem` bridge only after a persistence design is concrete.
 5. Keep the canonical 700-word ranking authoritative for future seed updates. Reference material: [docs/700-word-retiering-plan.md](docs/700-word-retiering-plan.md), [docs/word-frequency-audit.md](docs/word-frequency-audit.md), [docs/word-addition-candidates.md](docs/word-addition-candidates.md).
 
 ## Recent Completion Record
 
 - Completed Pipeline v2 Tasks 1-6 covering capture triage helpers, seed backfill, training/session gating, Word Library Inbox UI, sync merge preservation, documentation, and full verification.
-- Completed follow-up: dashboard now shows pending capture Inbox count separately from eligible new training words.
+- Completed follow-up: dashboard now shows pending capture Inbox count separately from eligible new training words and explains automatic session-plan order.
 - Completed follow-up: local-only Supabase auth fallback prevents post-session crashes when cloud env vars are absent.
 - Completed follow-up: Word Library Archive browsing and Restore for archived captures, plus AppStatusBanner hydration stabilization.
 - Completed follow-up: Word Library Duplicates browsing and local merge workflow for exact normalized duplicates, preserving review continuity while removing absorbed duplicate rows.
-- Completed follow-up: `VocabularyItem` bridge, generated practice-lane routing, coverage summaries, collocation practice scaffolding, and session integration for missing lane practice.
+- Completed follow-up: `VocabularyItem` bridge, generated practice-lane routing, coverage summaries, collocation practice scaffolding, session integration for missing lane practice, and Stats/Word Library/dashboard coverage transparency.
 - Historical triage design doc: [docs/superpowers/specs/2026-04-24-pipeline-v2-triage-inbox-design.md](docs/superpowers/specs/2026-04-24-pipeline-v2-triage-inbox-design.md).
 - Historical triage implementation plan: [docs/superpowers/plans/2026-04-24-pipeline-v2-triage-inbox.md](docs/superpowers/plans/2026-04-24-pipeline-v2-triage-inbox.md).
 
 ## Active Work In Progress
 
-- No active feature branch is open after PR #14 merged.
-- Current branch: coverage/progress UI for practice lanes, starting with per-word Word Library row details.
+- Current branch: training coverage transparency with dashboard session-plan explanation.
 
 ## Verification Baseline
 

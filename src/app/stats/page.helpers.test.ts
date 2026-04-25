@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ReviewLog, Word } from "@/lib/types";
-import { getPipelineStats, getRecentRetrievalMetrics } from "./page.helpers";
+import type { VocabularyItem } from "@/lib/vocabulary-item";
+import {
+  getPipelineStats,
+  getRecentRetrievalMetrics,
+  getTrainingCoverageTransparency,
+} from "./page.helpers";
 
 function makeReviewLog(
   reviewedAt: string,
@@ -28,6 +33,39 @@ function makeWord(id: number, stage: Word["pipelineStage"]): Word {
     tier: 1,
     pipelineStage: stage,
     createdAt: new Date("2026-04-01T00:00:00.000Z"),
+  };
+}
+
+function makeVocabularyItem(
+  overrides: Partial<VocabularyItem> = {},
+): VocabularyItem {
+  return {
+    id: 1,
+    backingWordId: 1,
+    word: "lucid",
+    definition: "clear",
+    examples: [],
+    synonyms: [],
+    contextSentences: [],
+    tier: 1,
+    createdAt: new Date("2026-04-01T00:00:00.000Z"),
+    trainingEligible: true,
+    source: {
+      kind: "seeded",
+      isSeeded: true,
+      isCustom: false,
+      isCaptured: false,
+      captureCount: 0,
+      captureTriageStatus: null,
+      captureEventIds: [],
+    },
+    coverage: {
+      retrieval: "unknown",
+      context: "unknown",
+      association: "unknown",
+      collocation: "unknown",
+    },
+    ...overrides,
   };
 }
 
@@ -119,5 +157,101 @@ describe("getPipelineStats", () => {
       { label: "Productive", value: 1, stage: "productive" },
       { label: "Mature", value: 1, stage: "mature" },
     ]);
+  });
+});
+
+describe("getTrainingCoverageTransparency", () => {
+  it("summarizes eligible lane coverage and blocked captures without making manual drill choices", () => {
+    const transparency = getTrainingCoverageTransparency([
+      makeVocabularyItem({ id: 1, backingWordId: 1 }),
+      makeVocabularyItem({
+        id: 2,
+        backingWordId: 2,
+        coverage: {
+          retrieval: "practiced",
+          context: "unknown",
+          association: "unknown",
+          collocation: "unknown",
+        },
+      }),
+      makeVocabularyItem({
+        id: 3,
+        backingWordId: 3,
+        trainingEligible: false,
+      }),
+      makeVocabularyItem({
+        id: 4,
+        backingWordId: 4,
+        coverage: {
+          retrieval: "practiced",
+          context: "practiced",
+          association: "practiced",
+          collocation: "practiced",
+        },
+      }),
+    ]);
+
+    expect(transparency.summary).toEqual({
+      eligibleCount: 3,
+      blockedCount: 1,
+      fullyCoveredCount: 1,
+      automaticFillCount: 2,
+    });
+    expect(transparency.engineCopy).toContain("FSRS due reviews stay first");
+    expect(transparency.engineCopy).not.toMatch(/choose|recommend/i);
+    expect(transparency.lanes).toEqual([
+      {
+        lane: "retrieval",
+        label: "Recall",
+        practicedCount: 2,
+        missingCount: 1,
+        eligibleCount: 3,
+        coveragePercent: 67,
+        automaticFillCount: 1,
+      },
+      {
+        lane: "context",
+        label: "Context",
+        practicedCount: 1,
+        missingCount: 2,
+        eligibleCount: 3,
+        coveragePercent: 33,
+        automaticFillCount: 1,
+      },
+      {
+        lane: "association",
+        label: "Association",
+        practicedCount: 1,
+        missingCount: 2,
+        eligibleCount: 3,
+        coveragePercent: 33,
+        automaticFillCount: 0,
+      },
+      {
+        lane: "collocation",
+        label: "Collocation",
+        practicedCount: 1,
+        missingCount: 2,
+        eligibleCount: 3,
+        coveragePercent: 33,
+        automaticFillCount: 0,
+      },
+    ]);
+  });
+
+  it("handles an empty eligible training pool", () => {
+    const transparency = getTrainingCoverageTransparency([
+      makeVocabularyItem({ trainingEligible: false }),
+    ]);
+
+    expect(transparency.summary).toEqual({
+      eligibleCount: 0,
+      blockedCount: 1,
+      fullyCoveredCount: 0,
+      automaticFillCount: 0,
+    });
+    expect(transparency.lanes.every((lane) => lane.coveragePercent === null)).toBe(
+      true,
+    );
   });
 });

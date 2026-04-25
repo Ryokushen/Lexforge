@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Difficulty } from "@/lib/types";
 import { Sword, ChevronRight } from "@/components/rpg/sigils";
+import { getAutomaticTrainingPlan } from "./quest-card.helpers";
 
 interface QuestCardProps {
   dueCount: number;
@@ -12,6 +13,7 @@ interface QuestCardProps {
   wordCount: number;
   sessionSize: number;
   difficulty: Difficulty;
+  coverageSignalCount: number;
 }
 
 function pluralize(count: number, singular: string) {
@@ -25,13 +27,20 @@ export function QuestCard({
   wordCount,
   sessionSize,
   difficulty,
+  coverageSignalCount,
 }: QuestCardProps) {
   const hasTrainingWork = dueCount > 0 || newCount > 0;
   const hasInboxWork = inboxCount > 0;
   const hasWork = hasTrainingWork || hasInboxWork;
+  const trainingPlan = getAutomaticTrainingPlan({
+    dueCount,
+    newCount,
+    inboxCount,
+    sessionSize,
+    difficulty,
+    coverageSignalCount,
+  });
 
-  const nextReviewCount = Math.min(dueCount, sessionSize);
-  const nextNewCount = Math.min(newCount, Math.max(0, sessionSize - nextReviewCount));
   const backlogParts = [
     dueCount > 0 ? `${pluralize(dueCount, "review")} waiting` : null,
     newCount > 0 ? `${pluralize(newCount, "eligible new word")} available today` : null,
@@ -41,15 +50,6 @@ export function QuestCard({
   const backlog = backlogParts.length > 0
     ? backlogParts.join(", ")
     : `${wordCount} words in library`;
-
-  const summary =
-    nextReviewCount > 0 && nextNewCount > 0
-      ? `Next ${difficulty} trial: ${pluralize(nextReviewCount, "review")} + ${pluralize(nextNewCount, "eligible new word")}`
-      : nextReviewCount > 0
-        ? `Next ${difficulty} trial: ${pluralize(nextReviewCount, "review")}`
-        : nextNewCount > 0
-          ? `Next ${difficulty} trial: ${pluralize(nextNewCount, "eligible new word")}`
-          : `${wordCount} words in library`;
 
   const accent = hasTrainingWork
     ? "var(--crimson)"
@@ -189,8 +189,58 @@ export function QuestCard({
             )}
           </div>
 
+          <div
+            className="mt-4 rounded-[2px] px-3 py-3"
+            style={{
+              background: "color-mix(in oklab, var(--paper), var(--gold) 3%)",
+              border: "1px solid var(--line-soft)",
+            }}
+          >
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <p
+                  className="uppercase-tracked text-[10px]"
+                  style={{ color: "var(--gold-deep)" }}
+                >
+                  {trainingPlan.headline}
+                </p>
+                <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
+                  {trainingPlan.detail}
+                </p>
+              </div>
+              <p className="text-xs tabular-nums" style={{ color: "var(--ink)" }}>
+                {trainingPlan.summary}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+              {trainingPlan.steps.map((step) => (
+                <div
+                  key={step.key}
+                  className="rounded-[2px] px-2 py-2"
+                  style={{ border: "1px solid var(--line-soft)" }}
+                >
+                  <div
+                    className="font-display text-lg font-bold tabular-nums"
+                    style={{ color: step.key === "inbox" ? "var(--gold-deep)" : accent }}
+                  >
+                    {step.value}
+                  </div>
+                  <div
+                    className="uppercase-tracked text-[9px]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {step.label}
+                  </div>
+                  <div className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                    {step.caption}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <p className="mt-3 text-xs" style={{ color: "var(--muted-foreground)" }}>
-            {backlog} - {summary}
+            {backlog}
           </p>
         </div>
 
