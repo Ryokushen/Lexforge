@@ -19,6 +19,7 @@ import {
   pickMode,
   buildContextPrompt,
 } from "@/lib/session-engine";
+import { getForcedSessionModeForPracticeLane } from "@/lib/practice-lane-session";
 import {
   playCorrect,
   playStreakCorrect,
@@ -68,9 +69,10 @@ export function useSession() {
   }, [summary]);
 
   const configurePrompt = useCallback((word: SessionWord) => {
+    const forcedMode = getForcedSessionModeForPracticeLane(word) ?? undefined;
     const mode = pickMode(
       word.word,
-      undefined,
+      forcedMode,
       word.drillProfile,
       sessionStatsRef.current,
     );

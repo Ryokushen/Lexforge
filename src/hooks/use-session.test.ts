@@ -279,6 +279,35 @@ describe("useSession", () => {
     );
   });
 
+  it("uses the attached practice lane route as a preferred session mode", async () => {
+    const words = [
+      {
+        ...makeSessionWord(1),
+        practiceLaneRoute: {
+          itemId: 1,
+          lane: "association",
+          reason: "missing-association",
+        },
+      } satisfies SessionWord,
+    ];
+    loadSessionWordsMock.mockResolvedValue(words);
+    pickModeMock.mockReturnValue("association");
+
+    const { result } = renderHook(() => useSession());
+
+    await act(async () => {
+      await result.current.startSession("normal", 1);
+    });
+
+    expect(pickModeMock).toHaveBeenCalledWith(
+      words[0].word,
+      "association",
+      words[0].drillProfile,
+      undefined,
+    );
+    expect(result.current.currentMode).toBe("association");
+  });
+
   it("passes context prompt metadata into grading when context mode is active", async () => {
     const words = [makeSessionWord(1)];
     loadSessionWordsMock.mockResolvedValue(words);

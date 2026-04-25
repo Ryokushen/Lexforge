@@ -1,5 +1,13 @@
-import { getContextSentence } from "./session-engine";
+import { CONTEXT_SENTENCES } from "./context-sentences";
 import type { GameMode, SessionWord } from "./types";
+
+function hasContextPromptSource(sessionWord: SessionWord): boolean {
+  const word = sessionWord.word;
+  return Boolean(
+    (word.contextSentences && word.contextSentences.length > 0)
+      || CONTEXT_SENTENCES[word.word]?.length,
+  );
+}
 
 export function getSessionPracticeRoute(
   sessionWord: SessionWord,
@@ -29,7 +37,7 @@ export function getForcedSessionModeForPracticeLane(
   }
 
   if (route.lane === "context" || route.lane === "collocation") {
-    return getContextSentence(sessionWord.word) ? "context" : null;
+    return hasContextPromptSource(sessionWord) ? "context" : null;
   }
 
   return null;

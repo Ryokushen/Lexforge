@@ -1721,6 +1721,26 @@ describe("session engine", () => {
     expect(sessionWord.drillProfile?.rapidCueRevealMs).not.toBeNull();
   });
 
+  it("attaches practice lane routes from vocabulary coverage when loading session words", async () => {
+    schedulerMock.getDueCards.mockResolvedValue([makeReviewCard(1, 1)]);
+    schedulerMock.getNewCards.mockResolvedValue([]);
+    dbMock.reviewLogs.toArray.mockResolvedValue([
+      makeReviewLog(1, "2026-04-09T11:45:00.000Z", {
+        retrievalKind: "exact",
+        correct: true,
+      }),
+    ]);
+    dbMock.words.get.mockResolvedValue(makeWord(1));
+
+    const [sessionWord] = await loadSessionWords("easy", 1);
+
+    expect(sessionWord.practiceLaneRoute).toEqual({
+      itemId: 1,
+      lane: "context",
+      reason: "missing-context",
+    });
+  });
+
   it("backs off hints after repeated clean exact recalls on a TOT word", async () => {
     schedulerMock.getDueCards.mockResolvedValue([makeReviewCard(1, 1)]);
     schedulerMock.getNewCards.mockResolvedValue([]);

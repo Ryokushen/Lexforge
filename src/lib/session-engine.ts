@@ -8,6 +8,8 @@ import { getDueCards, getNewCards, gradeCard, Rating } from "./scheduler";
 import { completeSession } from "./gamification";
 import { CONTEXT_SENTENCES } from "./context-sentences";
 import { isCaptureTrainingActive } from "./word-library";
+import { getPracticeLaneRoute } from "./practice-lanes";
+import { wordToVocabularyItem } from "./vocabulary-item";
 import type {
   AnswerMetadata,
   CueLevel,
@@ -1052,10 +1054,12 @@ export async function loadSessionWords(
     const word = await db.words.get(rc.wordId);
     if (word) {
       const wordLogs = reviewLogs.filter((log) => log.wordId === rc.wordId);
+      const vocabularyItem = wordToVocabularyItem(word, { reviewLogs: wordLogs });
       sessionWords.push({
         word,
         reviewCard: rc,
         drillProfile: buildRetrievalDrillProfile(word, wordLogs, stats),
+        practiceLaneRoute: getPracticeLaneRoute(vocabularyItem),
       });
     }
   }
