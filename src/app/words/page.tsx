@@ -44,13 +44,14 @@ import {
   type LibraryTierFilter,
 } from "@/lib/word-library";
 import {
+  buildWordLibraryItems,
   buildTierFilterLayout,
   buildWordGroups,
-  filterWordsForLibraryView,
-  getArchiveCount,
+  filterWordLibraryItemsForView,
+  getArchiveItemCount,
   getDuplicateCount,
   getDuplicateGroupsForLibraryView,
-  getInboxCount,
+  getInboxItemCount,
   getWordLibraryPipelineStage,
   type WordLibraryViewFilter,
 } from "./page.helpers";
@@ -59,6 +60,15 @@ import {
   chooseStrongestReviewCard,
   mergeDuplicateWords,
 } from "@/lib/word-merge";
+import { summarizeVocabularyItemCoverage } from "@/lib/vocabulary-item";
+import {
+  routeVocabularyPracticeLanes,
+  summarizePracticeLaneRoutes,
+} from "@/lib/practice-lanes";
+import {
+  buildCollocationPracticeUnits,
+  summarizeCollocationPracticeUnits,
+} from "@/lib/collocation-units";
 import { IllumCard } from "@/components/rpg/illum-card";
 import { HeronDivider } from "@/components/rpg/heron-divider";
 import { Anvil, ChevronRight, Tome } from "@/components/rpg/sigils";
@@ -510,8 +520,33 @@ export default function WordsPage() {
   const [newExample, setNewExample] = useState("");
   const [totForm, setTotForm] = useState(INITIAL_TOT_FORM);
   const duplicateWord = isDuplicateWord(newWord, words);
-  const inboxCount = useMemo(() => getInboxCount(words), [words]);
-  const archiveCount = useMemo(() => getArchiveCount(words), [words]);
+  const libraryItems = useMemo(
+    () => buildWordLibraryItems(words, reviewLogs),
+    [reviewLogs, words],
+  );
+  const inboxCount = useMemo(() => getInboxItemCount(libraryItems), [libraryItems]);
+  const archiveCount = useMemo(
+    () => getArchiveItemCount(libraryItems),
+    [libraryItems],
+  );
+  const coverageSummary = useMemo(
+    () => summarizeVocabularyItemCoverage(libraryItems.map((entry) => entry.item)),
+    [libraryItems],
+  );
+  const laneSummary = useMemo(
+    () =>
+      summarizePracticeLaneRoutes(
+        routeVocabularyPracticeLanes(libraryItems.map((entry) => entry.item)),
+      ),
+    [libraryItems],
+  );
+  const collocationSummary = useMemo(
+    () =>
+      summarizeCollocationPracticeUnits(
+        buildCollocationPracticeUnits(libraryItems.map((entry) => entry.item)),
+      ),
+    [libraryItems],
+  );
   const duplicateCount = useMemo(() => getDuplicateCount(words), [words]);
   const selectedTierLocked =
     activeTier !== "inbox" &&
@@ -557,9 +592,13 @@ export default function WordsPage() {
     };
   }, [seedStatus]);
 
+  const filteredItems = useMemo(
+    () => filterWordLibraryItemsForView(libraryItems, activeTier, search),
+    [libraryItems, activeTier, search],
+  );
   const filtered = useMemo(
-    () => filterWordsForLibraryView(words, activeTier, search),
-    [words, activeTier, search],
+    () => filteredItems.map((entry) => entry.word),
+    [filteredItems],
   );
 
   const grouped = useMemo(() => {
@@ -1145,6 +1184,41 @@ export default function WordsPage() {
       </Dialog>
 
       <HeronDivider />
+
+      <div className="grid gap-2 sm:grid-cols-4">
+        {[
+          ["Recall", coverageSummary.retrievalPracticed],
+          ["Context", coverageSummary.contextPracticed],
+          ["Association", coverageSummary.associationPracticed],
+          ["Collocation", coverageSummary.collocationPracticed],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="rounded-[var(--radius)] border border-[var(--line-soft)] px-3 py-2"
+          >
+            <p
+              className="uppercase-tracked text-[10px]"
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              {label}
+            </p>
+            <p className="font-display text-lg font-bold" style={{ color: "var(--ink)" }}>
+              {value}
+              <span
+                className="ml-1 text-xs font-normal"
+                style={{ color: "var(--muted-foreground)" }}
+              >
+                / {coverageSummary.total}
+              </span>
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs italic" style={{ color: "var(--muted-foreground)" }}>
+        Next practice routing: Recall {laneSummary.retrieval} · Context{" "}
+        {laneSummary.context} · Association {laneSummary.association} · Collocation{" "}
+        {laneSummary.collocation} · {collocationSummary.total} phrase units
+      </p>
 
       {/* Search + tier filter */}
       <div className="flex items-center gap-3 flex-wrap">

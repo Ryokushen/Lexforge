@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { TOTCapture, Word } from "@/lib/types";
 import {
+  buildWordLibraryItems,
   buildTierFilterLayout,
   buildWordGroups,
+  filterWordLibraryItemsForView,
   filterWordsForLibraryView,
   getArchiveCount,
+  getArchiveItemCount,
   getDuplicateCount,
   getDuplicateGroupsForLibraryView,
   getInboxCount,
+  getInboxItemCount,
   getWordLibraryPipelineStage,
 } from "./page.helpers";
 
@@ -111,6 +115,27 @@ describe("inbox helpers", () => {
       filterWordsForLibraryView([pending, accepted], "inbox", "lucid"),
     ).toEqual([]);
   });
+
+  it("supports item-backed inbox counts and filters without changing word results", () => {
+    const pending = makeWord(1, 1, {
+      word: "meticulous",
+      definition: "careful",
+      totCapture: makeCapture(1, { context: "inspection meeting" }),
+    });
+    const accepted = makeWord(2, 1, {
+      word: "lucid",
+      definition: "clear",
+      totCapture: makeCapture(1, { triageStatus: "accepted" }),
+    });
+    const items = buildWordLibraryItems([pending, accepted]);
+
+    expect(getInboxItemCount(items)).toBe(1);
+    expect(
+      filterWordLibraryItemsForView(items, "inbox", "inspection").map(
+        (entry) => entry.word,
+      ),
+    ).toEqual([pending]);
+  });
 });
 
 describe("archive helpers", () => {
@@ -162,6 +187,30 @@ describe("archive helpers", () => {
     expect(
       filterWordsForLibraryView([archived, pending], "archive", "lucid"),
     ).toEqual([]);
+  });
+
+  it("supports item-backed archive counts and filters without changing word results", () => {
+    const archived = makeWord(1, 1, {
+      word: "meticulous",
+      definition: "careful",
+      totCapture: makeCapture(1, {
+        triageStatus: "archived",
+        weakSubstitute: "picky",
+      }),
+    });
+    const pending = makeWord(2, 1, {
+      word: "lucid",
+      definition: "clear",
+      totCapture: makeCapture(1, { triageStatus: "pending" }),
+    });
+    const items = buildWordLibraryItems([archived, pending]);
+
+    expect(getArchiveItemCount(items)).toBe(1);
+    expect(
+      filterWordLibraryItemsForView(items, "archive", "picky").map(
+        (entry) => entry.word,
+      ),
+    ).toEqual([archived]);
   });
 });
 
