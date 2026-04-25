@@ -34,7 +34,8 @@ async function loadStatsSnapshot() {
     laneSummary.retrieval +
     laneSummary.context +
     laneSummary.association +
-    laneSummary.collocation;
+    laneSummary.collocation +
+    laneSummary.transfer;
 
   return { profile, dueCount, newCount, inboxCount, wordCount, coverageSignalCount };
 }

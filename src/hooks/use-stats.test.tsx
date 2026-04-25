@@ -168,4 +168,53 @@ describe("useStats", () => {
       expect(result.current.profile?.level).toBe(2);
     });
   });
+
+  it("counts transfer coverage gaps in the automatic coverage signal total", async () => {
+    wordsToArrayMock.mockResolvedValue([
+      {
+        id: 1,
+        word: "lucid",
+        definition: "clear",
+        examples: [],
+        synonyms: [],
+        association: "A clear window makes a lucid view.",
+        tier: 1,
+        createdAt: new Date("2026-04-01T00:00:00.000Z"),
+      },
+    ]);
+    reviewLogsToArrayMock.mockResolvedValue([
+      {
+        wordId: 1,
+        rating: 3,
+        responseTimeMs: 1200,
+        correct: true,
+        retrievalKind: "exact",
+        reviewedAt: new Date("2026-04-10T09:00:00.000Z"),
+      },
+      {
+        wordId: 1,
+        rating: 2,
+        responseTimeMs: 1500,
+        correct: true,
+        retrievalKind: "assisted",
+        contextPromptKind: "produce",
+        reviewedAt: new Date("2026-04-10T10:00:00.000Z"),
+      },
+      {
+        wordId: 1,
+        rating: 2,
+        responseTimeMs: 1800,
+        correct: true,
+        retrievalKind: "assisted",
+        contextPromptKind: "collocation",
+        reviewedAt: new Date("2026-04-10T11:00:00.000Z"),
+      },
+    ]);
+
+    const { result } = renderHook(() => useStats());
+
+    await waitFor(() => {
+      expect(result.current.coverageSignalCount).toBe(1);
+    });
+  });
 });
