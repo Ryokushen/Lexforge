@@ -64,9 +64,10 @@ export function ContextPrompt({ prompt, onSubmit }: ContextPromptProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const productionPrompt = prompt.kind === "produce" ? prompt : null;
-  const rewritePrompt = prompt.kind === "rewrite" ? prompt : null;
+  const rewritePrompt = prompt.kind === "rewrite" || prompt.kind === "collocation" ? prompt : null;
   const sentencePrompt = productionPrompt ?? rewritePrompt;
-  const replacementPrompt = prompt.kind === "produce" || prompt.kind === "rewrite"
+  const replacementPrompt =
+    prompt.kind === "produce" || prompt.kind === "rewrite" || prompt.kind === "collocation"
     ? null
     : prompt;
   const isSentencePrompt = sentencePrompt !== null;
@@ -164,7 +165,9 @@ export function ContextPrompt({ prompt, onSubmit }: ContextPromptProps) {
   }, [choices, handleSelect, isSentencePrompt, selected, showChoices]);
 
   if (sentencePrompt) {
-    const isRewritePrompt = sentencePrompt.kind === "rewrite";
+    const isRewritePrompt =
+      sentencePrompt.kind === "rewrite" || sentencePrompt.kind === "collocation";
+    const isCollocationPrompt = sentencePrompt.kind === "collocation";
 
     return (
       <motion.div
@@ -180,7 +183,11 @@ export function ContextPrompt({ prompt, onSubmit }: ContextPromptProps) {
               <Replace className="size-3.5" />
               <span className="text-xs font-semibold uppercase tracking-widest">Context</span>
               <span className="text-xs text-muted-foreground ml-1">
-                {isRewritePrompt ? "Rewrite the scene with the target word" : "Use it naturally"}
+                {isCollocationPrompt
+                  ? "Keep the scene and stronger phrase"
+                  : isRewritePrompt
+                    ? "Rewrite the scene with the target word"
+                    : "Use it naturally"}
               </span>
             </div>
 
@@ -195,7 +202,9 @@ export function ContextPrompt({ prompt, onSubmit }: ContextPromptProps) {
                   {sentencePrompt.answer}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {isRewritePrompt
+                  {isCollocationPrompt
+                    ? "Rewrite the sentence with the stronger phrase while preserving the original scene."
+                    : isRewritePrompt
                     ? "Rewrite the sentence below using this word while keeping the same scene."
                     : "Write one sentence using this word naturally."}
                 </span>

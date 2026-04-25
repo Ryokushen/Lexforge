@@ -401,6 +401,76 @@ describe("useSession", () => {
     );
   });
 
+  it("defaults collocation metadata from the active prompt when the UI omits it", async () => {
+    const words = [
+      {
+        ...makeSessionWord(1),
+        word: {
+          ...makeSessionWord(1).word,
+          contextSentences: [
+            {
+              sentence: "The team **agreed** on the plan.",
+              weakWord: "agreed",
+              answer: "concurred",
+              distractors: [],
+            },
+          ],
+        },
+        practiceLaneRoute: {
+          itemId: 1,
+          lane: "collocation",
+          reason: "missing-collocation",
+        },
+      } satisfies SessionWord,
+    ];
+    loadSessionWordsMock.mockResolvedValue(words);
+    pickModeMock.mockReturnValue("context");
+    buildContextPromptMock.mockReturnValue({
+      kind: "collocation",
+      answer: "concurred",
+      sentence: "The team **agreed** on the plan.",
+      targetSentence: "The team concurred on the plan.",
+      weakWord: "agreed",
+      definition: "definition-1",
+      example: "example-1",
+    });
+    processAnswerMock.mockResolvedValue({
+      result: {
+        ...makeResult(1),
+        mode: "context",
+      },
+      updatedCard: words[0].reviewCard,
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await act(async () => {
+      await result.current.startSession("normal", 1);
+    });
+
+    await act(async () => {
+      await result.current.submitAnswer("The team concurred on the plan.");
+    });
+
+    expect(buildContextPromptMock).toHaveBeenCalledWith(
+      words[0].word,
+      words[0].drillProfile,
+      words[0].practiceLaneRoute,
+    );
+    expect(processAnswerMock).toHaveBeenCalledWith(
+      words[0],
+      "The team concurred on the plan.",
+      expect.any(Number),
+      "session-abc",
+      "context",
+      "concurred",
+      {
+        contextPromptKind: "collocation",
+        contextSourceSentence: "The team **agreed** on the plan.",
+      },
+    );
+  });
+
   it("defaults production-context metadata from the active prompt when the UI omits it", async () => {
     const words = [makeSessionWord(1)];
     loadSessionWordsMock.mockResolvedValue(words);

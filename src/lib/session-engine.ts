@@ -28,6 +28,7 @@ import type {
   Word,
   WordTier,
 } from "./types";
+import type { PracticeLaneRoute } from "./practice-lanes";
 import { DIFFICULTY_CONFIG, TIER_UNLOCK_LEVELS } from "./types";
 
 const BATCH_SIZE = 4; // working memory capacity
@@ -292,7 +293,7 @@ const CONTEXT_ANCHOR_STOPWORDS = new Set([
 ]);
 
 function isTransferContextPromptKind(kind?: ContextPrompt["kind"]): boolean {
-  return kind === "produce" || kind === "rewrite";
+  return kind === "produce" || kind === "rewrite" || kind === "collocation";
 }
 
 function getContextAnchorTokens(sourceSentence?: string): string[] {
@@ -526,7 +527,9 @@ export function gradeContextAnswer(
     answer,
     expected,
     cueLevel,
-    promptKind === "rewrite" ? sourceSentence : undefined,
+    promptKind === "rewrite" || promptKind === "collocation"
+      ? sourceSentence
+      : undefined,
   );
 }
 
@@ -581,10 +584,25 @@ export function getContextSentence(word: Word): ContextSentence | null {
 export function buildContextPrompt(
   word: Word,
   drillProfile?: RetrievalDrillProfile,
+  practiceLaneRoute?: PracticeLaneRoute,
 ): ContextPrompt | null {
   const sentence = getContextSentence(word);
   if (!sentence) {
     return null;
+  }
+
+  if (practiceLaneRoute?.lane === "collocation") {
+    return {
+      kind: "collocation",
+      sentence: sentence.sentence,
+      weakWord: sentence.weakWord,
+      answer: sentence.answer,
+      targetSentence:
+        buildCanonicalRewriteSentence(sentence.sentence, sentence.answer)
+        ?? sentence.sentence,
+      definition: word.definition,
+      example: word.examples[0],
+    };
   }
 
   const stage = drillProfile?.stage ?? "stabilize";

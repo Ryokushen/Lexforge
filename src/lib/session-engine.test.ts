@@ -824,6 +824,66 @@ describe("session engine", () => {
     });
   });
 
+  it("builds collocation prompts when the session route asks for collocation practice", () => {
+    const word: Word = {
+      ...makeWord(99),
+      word: "concurred",
+      definition: "agreed",
+      examples: ["The reviewers concurred."],
+      contextSentences: [
+        {
+          sentence: "All three reviewers **agreed** that the proposal was technically sound.",
+          weakWord: "agreed",
+          answer: "concurred",
+          distractors: ["concluded", "confirmed", "decided"],
+        },
+      ],
+    };
+
+    const prompt = buildContextPrompt(
+      word,
+      makeDrillProfile({ stage: "fluent", exactStreak: 3 }),
+      { itemId: 99, lane: "collocation", reason: "missing-collocation" },
+    );
+
+    expect(prompt).toMatchObject({
+      kind: "collocation",
+      answer: "concurred",
+      sentence: "All three reviewers **agreed** that the proposal was technically sound.",
+      targetSentence: "All three reviewers concurred that the proposal was technically sound.",
+      weakWord: "agreed",
+    });
+  });
+
+  it("grades collocation answers against the source scene anchors", () => {
+    const sourceSentence = "All three reviewers **agreed** that the proposal was technically sound.";
+
+    expect(
+      gradeContextAnswer(
+        "All three reviewers concurred that the proposal was technically sound.",
+        "concurred",
+        0,
+        "collocation",
+        sourceSentence,
+      ),
+    ).toMatchObject({
+      correct: true,
+      retrievalKind: "assisted",
+    });
+    expect(
+      gradeContextAnswer(
+        "The committee concurred after lunch.",
+        "concurred",
+        0,
+        "collocation",
+        sourceSentence,
+      ),
+    ).toMatchObject({
+      correct: false,
+      retrievalKind: "failed",
+    });
+  });
+
   it("builds replacement prompts until a word has clean retrieval history, then upgrades from produce to rewrite", () => {
     const word = makeWord(1);
 
