@@ -231,13 +231,13 @@ These foundations are already in `master` and should be treated as existing beha
 - Vocabulary pipeline stage tracking for seeded, custom, and TOT-captured words
 - Word Library Inbox and Archive triage for captured words before they enter normal queued training
 - Dashboard distinction between eligible new training words, pending capture Inbox items, and automatic session-plan order
-- `VocabularyItem` bridge, practice-lane routing, collocation session prompts, and aggregate coverage transparency
+- `VocabularyItem` bridge, practice-lane routing, collocation and transfer coverage signals, and aggregate coverage transparency
 
 ## Near-Term Roadmap
 
 For the up-to-date "already shipped vs next" checklist, see [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
+- watch whether the five-lane coverage transparency needs a compact dashboard trend after real usage
 - broaden stat-aware support only where it can be tied to existing prompt quality signals
-- decide whether scenario variation should feed a separate coverage metric after real usage, rather than adding another manual drill control
 - targeted regression tests around newly introduced sync changes (without reworking shipped sync hardening)
 - evolve the vocabulary pipeline beyond the transitional `VocabularyItem` bridge only after a concrete persistence design exists

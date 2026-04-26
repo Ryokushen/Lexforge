@@ -32,7 +32,7 @@ These capabilities are already in `master` and should be treated as baseline beh
 
 ## Current Product Gap
 
-- RPG stats now drive session mode weighting, retrieval-drill timing, and selected prompt support. Context mode spans replacement, target-word production, fluent rewrite-transfer, constrained scenario variation, and collocation rewrite prompts, with low Recall holding scaffolding longer and low Creativity holding scenario variation behind rewrite practice. Association mode can now strengthen existing mnemonics when Creativity lags. The vocabulary pipeline tracks acquisition stage from capture through mature production with Inbox, Archive, Duplicates, `VocabularyItem`, coverage, generated practice-lane foundations, and a distinct transfer signal for completed scenario variation. The dashboard distinguishes eligible new training words from pending capture Inbox items, explains the automatic next-session order, the Word Library exposes per-word lane coverage in expanded rows, and Stats shows aggregate lane coverage as automatic training-engine signals. The remaining gap is deciding which transparency surfaces are actually useful after real session usage.
+- RPG stats now drive session mode weighting, retrieval-drill timing, and selected prompt support. Context mode spans replacement, target-word production, fluent rewrite-transfer, constrained scenario variation, and collocation rewrite prompts, with low Recall holding scaffolding longer and low Creativity holding scenario variation behind rewrite practice. Association mode can now strengthen existing mnemonics when Creativity lags. The vocabulary pipeline tracks acquisition stage from capture through mature production with Inbox, Archive, Duplicates, `VocabularyItem`, coverage, generated practice-lane foundations, and a distinct transfer signal for completed scenario variation. The dashboard distinguishes eligible new training words from pending capture Inbox items, explains the automatic next-session order, includes transfer in automatic coverage signal counts, the Word Library exposes per-word lane coverage in expanded rows, and Stats shows aggregate lane coverage as automatic training-engine signals. The remaining gap is deciding which transparency surfaces are actually useful after real session usage.
 
 ## Active Next Priorities
 
@@ -48,13 +48,13 @@ These capabilities are already in `master` and should be treated as baseline beh
 - Completed follow-up: local-only Supabase auth fallback prevents post-session crashes when cloud env vars are absent.
 - Completed follow-up: Word Library Archive browsing and Restore for archived captures, plus AppStatusBanner hydration stabilization.
 - Completed follow-up: Word Library Duplicates browsing and local merge workflow for exact normalized duplicates, preserving review continuity while removing absorbed duplicate rows.
-- Completed follow-up: `VocabularyItem` bridge, generated practice-lane routing, coverage summaries, collocation practice scaffolding, transfer coverage for scenario variation, session integration for missing lane practice, Stats/Word Library/dashboard coverage transparency, stat-aware prompt support, deterministic scenario-variation prompts for deeply fluent context practice, and Creativity-aware scenario gating.
+- Completed follow-up: `VocabularyItem` bridge, generated practice-lane routing, coverage summaries, collocation practice scaffolding, transfer coverage for scenario variation, session integration for missing lane practice, Stats/Word Library/dashboard coverage transparency including transfer coverage counts, stat-aware prompt support, deterministic scenario-variation prompts for deeply fluent context practice, and Creativity-aware scenario gating.
 - Historical triage design doc: [docs/superpowers/specs/2026-04-24-pipeline-v2-triage-inbox-design.md](docs/superpowers/specs/2026-04-24-pipeline-v2-triage-inbox-design.md).
 - Historical triage implementation plan: [docs/superpowers/plans/2026-04-24-pipeline-v2-triage-inbox.md](docs/superpowers/plans/2026-04-24-pipeline-v2-triage-inbox.md).
 
 ## Active Work In Progress
 
-- Current branch: stat-aware prompt support plus scenario context transfer.
+- No open feature branch. Current work is on `master`; start a new branch for the next slice.
 
 ## Verification Baseline
 
