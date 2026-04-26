@@ -162,9 +162,8 @@ function WordRow({
     >
       <button
         onClick={onToggle}
-        className="w-full text-left grid items-center gap-3 py-3 px-5 transition-colors hover:bg-[color-mix(in_oklab,var(--paper),var(--gold)_4%)]"
+        className="w-full text-left grid grid-cols-[20px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-3 px-5 transition-colors hover:bg-[color-mix(in_oklab,var(--paper),var(--gold)_4%)] sm:grid-cols-[20px_minmax(0,1fr)_auto]"
         style={{
-          gridTemplateColumns: "20px 1fr auto auto auto",
           borderLeft: `4px solid ${tier.color}`,
         }}
       >
@@ -192,20 +191,22 @@ function WordRow({
             {word.definition}
           </div>
         </div>
-        <span className="lex-badge shrink-0" style={tierBadgeStyle(tier.color)}>
-          {getCurriculumBadgeLabel(word.tier)}
-        </span>
-        <span className="lex-badge shrink-0" style={tierBadgeStyle("var(--lapis)")}>
-          {getPipelineStageLabel(pipelineStage)}
-        </span>
-        {word.totCapture && (
-          <span
-            className="lex-badge shrink-0"
-            style={tierBadgeStyle("var(--ember)")}
-          >
-            TOT ×{word.totCapture.count}
+        <div className="col-start-2 flex min-w-0 flex-wrap gap-2 sm:col-start-3 sm:row-start-1 sm:justify-end">
+          <span className="lex-badge shrink-0" style={tierBadgeStyle(tier.color)}>
+            {getCurriculumBadgeLabel(word.tier)}
           </span>
-        )}
+          <span className="lex-badge shrink-0" style={tierBadgeStyle("var(--lapis)")}>
+            {getPipelineStageLabel(pipelineStage)}
+          </span>
+          {word.totCapture && (
+            <span
+              className="lex-badge shrink-0"
+              style={tierBadgeStyle("var(--ember)")}
+            >
+              TOT ×{word.totCapture.count}
+            </span>
+          )}
+        </div>
       </button>
 
       <AnimatePresence>
